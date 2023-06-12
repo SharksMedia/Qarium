@@ -3,6 +3,8 @@
     "description": "A objectionjs inspired ORM",
     "type": "library",
     "license": "MIT",
+    "minimum-stability": "dev",
+    "prefer-stable" : true,
     "autoload": {
         "psr-4": {
             "Sharksmedia\\Objection\\": "src/"
@@ -14,5 +16,18 @@
             "email": "magnus@sharksmedia.dk"
         }
     ],
-    "require": {}
+    "require": {
+        "sharksmedia/query-builder": "master"
+    },
+    "repositories":
+    {
+        "sharksmedia/query-builder":
+        {
+            "type": "vcs",
+            "url": "git@github.com:SharkMagnus/QueryBuilder.git"
+        }
+    },
+    "require-dev": {
+        "codeception/codeception": "^5.0"
+    }
 }
