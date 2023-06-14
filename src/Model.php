@@ -63,7 +63,7 @@ abstract class Model
         }
         else
         {
-            $iClient = $iTransactionOrClient;
+            $iClient = Objection::getClient();
             $iTransaction = null;
         }
 
