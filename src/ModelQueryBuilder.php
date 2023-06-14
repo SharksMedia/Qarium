@@ -65,11 +65,13 @@ class ModelQueryBuilder extends QueryBuilder
 
         $statement = $this->getClient()->query($iQuery);
 
-        $result = ($this->getMethod() === self::METHOD_FIRST)
+        $result = ($this->getSelectMethod() === self::METHOD_FIRST)
             ? $statement->fetchObject($this->modelClass)
             : $statement->fetchAll(\PDO::FETCH_CLASS, $this->modelClass);
 
         $statement->closeCursor();
+
+        if($result === false) return null;
 
         return $result;
     }
