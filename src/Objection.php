@@ -9,30 +9,30 @@ declare(strict_types=1);
 
 namespace Sharksmedia\Objection;
 
-use Sharksmedia\Database\Database;
+use Sharksmedia\QueryBuilder\Client;
 
 class Objection
 {
-    private static array $iDatabases = [];
+    private static array $iClients = [];
 
-    public static function setDatabase(Database $iDatabase): void
+    public static function setClient(Client $iClient): void
     {// 2023-06-12
         // FIXME: Use an identifier from the database config instead of the object itself.
-        self::$iDatabases['default'] = $iDatabase;
+        self::$iClients['default'] = $iClient;
     }
 
-    public static function getClient(?string $databaseID=null): Database
+    public static function getClient(?string $databaseID=null): Client
     {// 2023-06-12
         // FIXME: Use an identifier from the database config instead of the object itself.
 
-        $databaseID = $databaseID ?? self::getDefaultDatabaseID();
+        $databaseID = $databaseID ?? self::getDefaultClientID();
 
-        if(!isset(self::$iDatabases[$databaseID])) throw new \Exception('Database with ID "'.$databaseID.'" does not exis');
+        if(!isset(self::$iClients[$databaseID])) throw new \Exception('Database with ID "'.$databaseID.'" does not exis');
 
-        return self::$iDatabases[$databaseID];
+        return self::$iClients[$databaseID];
     }
 
-    public static function getDefaultDatabaseID(): string
+    public static function getDefaultClientID(): string
     {// 2023-06-12
         return 'default';
     }
