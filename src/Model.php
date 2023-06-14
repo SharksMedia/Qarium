@@ -43,6 +43,34 @@ abstract class Model
         return [];
     }
 
+    public function __construct(array $data)
+    {
+        foreach($data as $columnName=>$columnValue)
+        {
+            $this->{$columnName} = $columnValue;
+        }
+    }
+
+    /**
+     * 2023-06-12
+     * @param array<string, mixed> $data
+     * @return Model
+     */
+    public static function create(array $data): self
+    {// 2023-06-14
+        return new static($data);
+
+        //
+        // $iModel = new static();
+        //
+        // foreach($data as $columnName=>$columnValue)
+        // {
+        //     $iModel->{$columnName} = $columnValue;
+        // }
+        //
+        // return $iModel;
+    }
+
     /**
      * 2023-06-12
      * @param Transaction|Client|null $iTransaction

@@ -18,7 +18,17 @@ use Sharksmedia\QueryBuilder\QueryCompiler;
 
 class ModelQueryBuilder extends QueryBuilder
 {
+    /**
+     * 2023-06-12
+     * @var Model
+     */
     private string $modelClass;
+
+    /**
+     * 2023-06-12
+     * @var array<string, Model::class>
+     */
+    private array $graphModelClasses = [];
 
     public function __construct(string $modelClass, Client $iClient, string $schema)
     {// 2023-06-12
@@ -66,15 +76,46 @@ class ModelQueryBuilder extends QueryBuilder
 
         $statement = $this->getClient()->query($iQuery);
 
-        $result = ($this->getSelectMethod() === Columns::TYPE_FIRST)
-            ? $statement->fetchObject($this->modelClass)
-            : $statement->fetchAll(\PDO::FETCH_CLASS, $this->modelClass);
+        // $result = ($this->getSelectMethod() === Columns::TYPE_FIRST)
+        //     ? $statement->fetchObject($this->modelClass)
+        //     : $statement->fetchAll(\PDO::FETCH_CLASS, $this->modelClass);
+
+        // $results = $statement->fetchAll(\PDO::FETCH_NUM);
+
+        $iModels = [];
+        while($result = $statement->fetch(\PDO::FETCH_NUM))
+        {
+            // NOTE: There might be a bug if a join graph does not have any data
+
+            $tablesData = [];
+            foreach($result as $index=>$value)
+            {
+                $columnInfo = $statement->getColumnMeta($index);
+                $tablesData[$columnInfo['table']][$columnInfo['name']] = $value;
+            }
+
+            $modelClass = $this->modelClass;
+
+            $data = $tablesData[$modelClass::getTableName()];
+
+            foreach($this->graphModelClasses as $propName=>$modelClass)
+            {
+                $graphData = $modelClass::create($tablesData[$modelClass::getTableName()]);
+                $data[$propName] = $graphData;
+            }
+
+            $iMainModel = new $modelClass($tablesData[$this->modelClass::getTableName()]); //  $this->modelClass::create($tablesData[$this->modelClass::getTableName()]);
+
+            // psudeo code: if($this->fetchGenerated) yield $iMainModel;
+
+            $iModels[] = $iMainModel;
+        }
 
         $statement->closeCursor();
 
-        if($result === false) return null;
+        if($this->getSelectMethod() === Columns::TYPE_FIRST) return array_shift($iModels);
 
-        return $result;
+        return $iModels;
     }
 
 }
