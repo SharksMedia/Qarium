@@ -21,15 +21,15 @@ class Objection
         self::$iClients['default'] = $iClient;
     }
 
-    public static function getClient(?string $databaseID=null): Client
+    public static function getClient(?string $clientID=null): Client
     {// 2023-06-12
         // FIXME: Use an identifier from the database config instead of the object itself.
 
-        $databaseID = $databaseID ?? self::getDefaultClientID();
+        $clientID = $clientID ?? self::getDefaultClientID();
 
-        if(!isset(self::$iClients[$databaseID])) throw new \Exception('Database with ID "'.$databaseID.'" does not exis');
+        if(!isset(self::$iClients[$clientID])) throw new \Exception('Database with ID "'.$clientID.'" does not exis');
 
-        return self::$iClients[$databaseID];
+        return self::$iClients[$clientID];
     }
 
     public static function getDefaultClientID(): string
