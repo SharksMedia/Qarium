@@ -12,6 +12,7 @@ namespace Sharksmedia\Objection;
 // require '../vendor/sharksmedia/query-builder/src/QueryBuilder.php';
 
 use Sharksmedia\QueryBuilder\Client;
+use Sharksmedia\QueryBuilder\Statement\Columns;
 use Sharksmedia\QueryBuilder\QueryBuilder;
 use Sharksmedia\QueryBuilder\QueryCompiler;
 
@@ -65,7 +66,7 @@ class ModelQueryBuilder extends QueryBuilder
 
         $statement = $this->getClient()->query($iQuery);
 
-        $result = ($this->getSelectMethod() === self::METHOD_FIRST)
+        $result = ($this->getSelectMethod() === Columns::TYPE_FIRST)
             ? $statement->fetchObject($this->modelClass)
             : $statement->fetchAll(\PDO::FETCH_CLASS, $this->modelClass);
 
