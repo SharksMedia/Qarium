@@ -1,0 +1,37 @@
+namespace: Tests
+support_namespace: Support
+suites:
+    unit:
+        path: Unit
+        actor: UnitTester
+        modules:
+            enabled:
+                # add more modules here
+                - Asserts
+        step_decorators: ~
+    integration:
+        path: Integration
+        actor: IntegrationTester
+        modules:
+            enabled:
+                # add more modules here
+                - Asserts
+                - Db:
+                    dsn: 'mysql:host=localhost;dbname=testdb'
+                    user: 'root'
+                    password: ''
+                    dump: 'tests/_data/dump.sql'
+                    populate: true # run populator before all tests
+                    cleanup: true # run populator before each test
+                    populator: 'mysql -u $user -h $host $dbname < $dump'
+        step_decorators: ~
+
+settings:
+    shuffle: true
+    lint: true
+paths:
+    tests: tests
+    output: tests/_output
+    support: tests/Support
+    data: tests/Support/Data
+     

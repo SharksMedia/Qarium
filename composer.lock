@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ebb949bc5164dcb8e7f05c8b91e87ff6",
+    "content-hash": "759fae37bb69a2661a66dbe6afaecb3e",
     "packages": [
         {
             "name": "sharksmedia/query-builder",
@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "git@github.com:SharkMagnus/QueryBuilder.git",
-                "reference": "b751cef9ea184d86087101f38308e61739cc555a"
+                "reference": "bb20a5e5ab09dfab384132fb3b2e32614029f9f1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SharkMagnus/QueryBuilder/zipball/b751cef9ea184d86087101f38308e61739cc555a",
-                "reference": "b751cef9ea184d86087101f38308e61739cc555a",
+                "url": "https://api.github.com/repos/SharkMagnus/QueryBuilder/zipball/bb20a5e5ab09dfab384132fb3b2e32614029f9f1",
+                "reference": "bb20a5e5ab09dfab384132fb3b2e32614029f9f1",
                 "shasum": ""
             },
             "require-dev": {
@@ -53,7 +53,7 @@
                 "source": "https://github.com/SharkMagnus/QueryBuilder/tree/master",
                 "issues": "https://github.com/SharkMagnus/QueryBuilder/issues"
             },
-            "time": "2023-06-12T13:02:14+00:00"
+            "time": "2023-06-15T10:59:11+00:00"
         }
     ],
     "packages-dev": [
@@ -289,6 +289,117 @@
                 "source": "https://github.com/Codeception/lib-asserts/tree/2.1.0"
             },
             "time": "2023-02-10T18:36:23+00:00"
+        },
+        {
+            "name": "codeception/module-asserts",
+            "version": "3.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Codeception/module-asserts.git",
+                "reference": "1b6b150b30586c3614e7e5761b31834ed7968603"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Codeception/module-asserts/zipball/1b6b150b30586c3614e7e5761b31834ed7968603",
+                "reference": "1b6b150b30586c3614e7e5761b31834ed7968603",
+                "shasum": ""
+            },
+            "require": {
+                "codeception/codeception": "*@dev",
+                "codeception/lib-asserts": "^2.0",
+                "php": "^8.0"
+            },
+            "conflict": {
+                "codeception/codeception": "<5.0"
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "src/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Michael Bodnarchuk"
+                },
+                {
+                    "name": "Gintautas Miselis"
+                },
+                {
+                    "name": "Gustavo Nieves",
+                    "homepage": "https://medium.com/@ganieves"
+                }
+            ],
+            "description": "Codeception module containing various assertions",
+            "homepage": "https://codeception.com/",
+            "keywords": [
+                "assertions",
+                "asserts",
+                "codeception"
+            ],
+            "support": {
+                "issues": "https://github.com/Codeception/module-asserts/issues",
+                "source": "https://github.com/Codeception/module-asserts/tree/3.0.0"
+            },
+            "time": "2022-02-16T19:48:08+00:00"
+        },
+        {
+            "name": "codeception/module-db",
+            "version": "3.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Codeception/module-db.git",
+                "reference": "0ff358215efef8513869d407bb3bb850187975a3"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Codeception/module-db/zipball/0ff358215efef8513869d407bb3bb850187975a3",
+                "reference": "0ff358215efef8513869d407bb3bb850187975a3",
+                "shasum": ""
+            },
+            "require": {
+                "codeception/codeception": "*@dev",
+                "ext-json": "*",
+                "ext-pdo": "*",
+                "php": "^8.0"
+            },
+            "conflict": {
+                "codeception/codeception": "<5.0"
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "src/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Michael Bodnarchuk"
+                },
+                {
+                    "name": "Gintautas Miselis"
+                }
+            ],
+            "description": "DB module for Codeception",
+            "homepage": "https://codeception.com/",
+            "keywords": [
+                "codeception",
+                "database-testing",
+                "db-testing"
+            ],
+            "support": {
+                "issues": "https://github.com/Codeception/module-db/issues",
+                "source": "https://github.com/Codeception/module-db/tree/3.1.0"
+            },
+            "time": "2022-12-03T09:57:03+00:00"
         },
         {
             "name": "codeception/stub",

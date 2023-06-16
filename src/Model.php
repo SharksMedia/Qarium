@@ -18,7 +18,7 @@ abstract class Model
 {
     public const BELONGS_TO_ONE_RELATION        = 'BELONGS_TO_ONE_RELATION';
     public const HAS_MANY_RELATION              = 'HAS_MANY_RELATION';
-    public const HAS_ONE_RELATION               = 'HAS_ONE_RELATION';
+    public const AS_ONE_RELATION                = 'AS_ONE_RELATION';
     public const MANY_TO_MANY_RELATION          = 'MANY_TO_MANY_RELATION';
     public const HAS_ONE_THROUGH_RELATION       = 'HAS_ONE_THROUGH_RELATION';
 
@@ -36,29 +36,72 @@ abstract class Model
 
     /**
      * 2023-06-12
+     * @return array<string, string>
+     */
+    public static function getTableIDsMap(): array
+    {
+        return array_combine(static::getTableIDs(), static::getTableIDs());
+    }
+
+    /**
+     * 2023-06-12
      * @return array<string, array>
      */
     public static function getRelationMappings(): array
     {// 2023-06-12
         return [];
     }
-
-    public function __construct(array $data)
-    {
-        foreach($data as $columnName=>$columnValue)
-        {
-            $this->{$columnName} = $columnValue;
-        }
-    }
+    //
+    // public function __construct(array $data)
+    // {
+    //     foreach($data as $columnName=>$columnValue)
+    //     {
+    //         $this->{$columnName} = $columnValue;
+    //     }
+    // }
 
     /**
      * 2023-06-12
      * @param array<string, mixed> $data
      * @return Model
      */
-    public static function create(array $data): self
+    public static function create(array $dataGraph, array $relations=[]): ?self
     {// 2023-06-14
-        return new static($data);
+        $tableIDsMap = static::getTableIDsMap();
+        $ids = array_intersect_key($dataGraph, $tableIDsMap);
+
+        foreach($ids as $id) if($id === null) return null;
+
+        $iModel = new static();
+        foreach($dataGraph as $columnName=>$columnValue)
+        {
+            $relation = $relations[$columnName] ?? null;
+
+            if($relation === null)
+            {
+                $iModel->{$columnName} = $columnValue;
+                continue;
+            }
+
+            if(is_array($columnValue))
+            {
+                $iModel->{$relation->name} = [];
+                foreach($columnValue as $columnValueItem)
+                {
+                    $iRelatedModel = $relation->modelClass::create($columnValueItem, $relations);
+
+                    if($iRelatedModel !== null) $iModel->{$relation->name}[] = $iRelatedModel;
+                }
+
+                continue;
+            }
+
+            $iRelatedModel = $relation->modelClass::create($columnValue, $relations);
+
+            if($iRelatedModel !== null) $iModel->{$relation->name}[] = $iRelatedModel;
+        }
+
+        return $iModel;
 
         //
         // $iModel = new static();
@@ -102,6 +145,11 @@ abstract class Model
             ->table(static::getTableName());
 
         return $iQueryBuilder;
+    }
+
+    public function relatedQuery(): ModelQueryBuilder
+    {
+
     }
 
     public static function startTransaction(): Transaction
