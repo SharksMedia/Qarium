@@ -9,6 +9,9 @@ use Sharksmedia\Objection\ModelQueryBuilder;
 use Sharksmedia\QueryBuilder\Config;
 use Sharksmedia\QueryBuilder\Client;
 use Tests\Support\Person;
+use Tests\Support\School;
+use Tests\Support\Student;
+use Tests\Support\ModelTester;
 
 class ModelCreationTest extends \Codeception\Test\Unit
 {
@@ -17,13 +20,11 @@ class ModelCreationTest extends \Codeception\Test\Unit
     protected static function getClient(): Client
     {// 2023-06-15
         $iConfig = (new Config(Config::CLIENT_MYSQL))
-            // ->host('172.21.74.3')
             ->host('127.0.0.1')
-            // ->port('3306')
-            ->port('5060')
-            ->user('bluemedico_admin')
-            ->password('926689c103aeb7b7')
-            ->database('ObjectionTest')
+            ->port('3306')
+            ->user('user')
+            ->password('password')
+            ->database('db')
             ->charset('utf8mb4');
 
         $iClient = Client::create($iConfig); // MySQL client
@@ -54,6 +55,19 @@ class ModelCreationTest extends \Codeception\Test\Unit
         $iPropName = $iClassPerson->getProperty('name');
         $iPropIChildren = $iClassPerson->getProperty('iChildren');
         $iPropIParents = $iClassPerson->getProperty('iParents');
+        
+        $iClassSchool = new \ReflectionClass(School::class);
+        $iPropSchoolID = $iClassSchool->getProperty('schoolID');
+        $iPropName = $iClassSchool->getProperty('name');
+        $iPropIStudents = $iClassSchool->getProperty('iStudents');
+
+        $iClassStudent = new \ReflectionClass(Student::class);
+        $iPropPersonID = $iClassStudent->getProperty('personID');
+        $iPropParentID = $iClassStudent->getProperty('parentID');
+        $iPropName = $iClassStudent->getProperty('name');
+        $iPropIChildren = $iClassStudent->getProperty('iChildren');
+        $iPropIParents = $iClassStudent->getProperty('iParents');
+
 
         foreach([$iPropPersonID, $iPropParentID, $iPropName, $iPropIChildren] as $iProp)
         {
@@ -119,7 +133,6 @@ class ModelCreationTest extends \Codeception\Test\Unit
             $iPropPersonID->setValue($iPerson, 1);
             $iPropParentID->setValue($iPerson, null);
             $iPropName->setValue($iPerson, 'Test');
-            // $iPropIChildren->setValue($iPerson, []);
 
             $iChild1 = new Person();
             $iPropPersonID->setValue($iChild1, 2);
@@ -133,14 +146,14 @@ class ModelCreationTest extends \Codeception\Test\Unit
             $iPropName->setValue($iChild2, 'Test');
             $iPropIChildren->setValue($iChild2, []);
 
+            $iParent = clone $iPerson;
+
+            $iPropIParents->setValue($iChild1, [$iParent]);
             $iPropIChildren->setValue($iPerson, [$iChild1]);
-            $iPropIParents->setValue($iChild1, [$iPerson]);
-            
+
             $case =
             [
-                // Person::query()->withGraphJoined('iParents.iChildren')->findByID(1),
-                Person::query()->withGraphJoined('iParents.[iChildren]')->findByID(1),
-                // Person::query(),
+                Person::query()->withGraphJoined('iChildren.iParents')->findByID(1),
                 [
                     [
 			            "personID"=>1,
@@ -157,33 +170,37 @@ class ModelCreationTest extends \Codeception\Test\Unit
                 [
                     $iPerson
                 ]
-                    /*
-                [
-                    [
-                        'personID'=>1,
-                        'name'=>'Test',
-                        'parentID'=>null,
-                        'iChildren'=>
-                        [
-                            [
-                                'personID'=>2,
-                                'name'=>'Child',
-                                'parentID'=>1,
-                                'iParents'=>
-                                [
-                                    [
-                                        'personID'=>1,
-                                        'name'=>'Test',
-                                        'parentID'=>null,
-                                    ]
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-*/
             ];
 
+            return $case;
+        };
+
+        $cases['With graph joined through'] = function() use($iPropPersonID, $iPropParentID, $iPropName, $iPropIChildren)
+        {
+            $iPerson = ModelTester::create(Person::class);
+            $iPerson->personID = 1;
+            $iPerson->name = 'Test';
+            $iPerson->parentID = null;
+
+            $iSchool = ModelTester::create(School::class);
+            $iSchool->schoolID = 1;
+            $iSchool->name = 'Test School';
+
+            $iPerson->iSchools = [$iSchool];
+
+            $case =
+            [
+                Person::query()
+                    ->withGraphJoined('iSchools')
+                    ->findByID(3),
+                [
+
+                ],
+                [
+                    $iPerson
+                ]
+            ];
+            
             return $case;
         };
 
@@ -363,11 +380,18 @@ class ModelCreationTest extends \Codeception\Test\Unit
 	 */
     public function testQueryBuilder(ModelQueryBuilder $iQueryBuilder, array $queryResults, array $iExpected): void
     {
-        $iReflectionClass = new \ReflectionClass($iQueryBuilder);
-        $iMethodCreateModelsFromResults = $iReflectionClass->getMethod('createModelsFromResults');
-        $iMethodCreateModelsFromResults->setAccessible(true);
+        $iQueryBuilder->preCompile();
 
-        $iModels = $iMethodCreateModelsFromResults->invoke($iQueryBuilder, $queryResults);
+        $iReflectionClass = new \ReflectionClass($iQueryBuilder);
+        $iMethodCreateGraphFromResults = $iReflectionClass->getMethod('createGraphFromResults');
+        $iMethodCreateGraphFromResults->setAccessible(true);
+
+        $iMethodCreateModelsFromResultsGraph = $iReflectionClass->getMethod('createModelsFromResultsGraph');
+        $iMethodCreateModelsFromResultsGraph->setAccessible(true);
+
+        $resultsGraph = $iMethodCreateGraphFromResults->invoke($iQueryBuilder, $queryResults);
+
+        $iModels = $iMethodCreateModelsFromResultsGraph->invoke($iQueryBuilder, $resultsGraph);
 
         $this->assertEquals($iExpected, $iModels);
     }

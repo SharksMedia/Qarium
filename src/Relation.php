@@ -79,6 +79,13 @@ class Relation
         $this->type = $relation['relation'];
     }
 
+    public function getJoinOperation(): string
+    {
+        $options = $this->getOptions();
+
+        return $options['joinOperation'] ?? 'leftJoin';
+    }
+
     public function setOptions(array $options): void
     {// 2023-06-20
         $options['aliases'] = $options['aliases'] ?? [];
@@ -256,6 +263,57 @@ class Relation
         $aliasParts[] = $options['aliases'][$this->getName()];
 
         return implode(':', array_filter($aliasParts));
+    }
+
+    private static function getTableNameFromColumn(string $column): ?string
+    {
+        $parts = explode('.', $column);
+
+        if(count($parts) === 1) return null;
+
+        return $parts[0];
+    }
+
+    /**
+     * 2023-06-22
+     * @return ModelQueryBuilder|string
+     */
+    public function getJoinTable(?string $aliasPrefix=null)
+    {
+        $relatedModelClass = $this->getRelatedModelClass();
+
+        $relatedTableName = $relatedModelClass::getTableName();
+        $relationName = $this->getJoinTableAlias($aliasPrefix);
+
+        if($this->fromTableQueryBuilder !== null) return $this->fromTableQueryBuilder->as($relationName);
+
+        return $relatedTableName.' AS '.$relationName;
+    }
+
+    /**
+     * 2023-06-22
+     * @return ModelQueryBuilder|string
+     */
+    public function getJoinThroughTable(?string $aliasPrefix=null): string
+    {
+        $throughTableName = self::getTableNameFromColumn($this->getThroughFromColumn());
+        $throughRelationName = $this->getJoinThroughTableAlias($aliasPrefix);
+
+        return $throughTableName.' AS '.$throughRelationName;
+    }
+
+    public function getJoinTableAlias(?string $aliasPrefix=null): string
+    {
+        $relationName = implode(':', array_filter([$aliasPrefix, $this->getName()]));
+
+        return $relationName;
+    }
+
+    public function getJoinThroughTableAlias(?string $aliasPrefix=null): string
+    {
+        $throughRelationName = implode(':', array_filter([$aliasPrefix, $this->getName()])).'_through';
+
+        return $throughRelationName;
     }
 
     /**

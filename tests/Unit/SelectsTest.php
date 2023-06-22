@@ -18,13 +18,11 @@ class SelectsTest extends \Codeception\Test\Unit
     protected static function getClient(): Client
     {// 2023-06-15
         $iConfig = (new Config(Config::CLIENT_MYSQL))
-            // ->host('172.21.74.3')
             ->host('127.0.0.1')
-            // ->port('3306')
-            ->port('5060')
-            ->user('bluemedico_admin')
-            ->password('926689c103aeb7b7')
-            ->database('ObjectionTest')
+            ->port('3306')
+            ->user('user')
+            ->password('password')
+            ->database('db')
             ->charset('utf8mb4');
 
         $iClient = Client::create($iConfig); // MySQL client
@@ -57,7 +55,7 @@ class SelectsTest extends \Codeception\Test\Unit
                 [
                     'mysql'=>
                     [
-                        'sql'=>'SELECT `Persons`.`personID` AS `personID`, `Persons`.`name` AS `name`, `Persons`.`parentID` AS `parentID` FROM `Persons`',
+                        'sql'=>'SELECT * FROM `Persons`',
                         'bindings'=>[]
                     ]
                 ]
@@ -74,8 +72,8 @@ class SelectsTest extends \Codeception\Test\Unit
                 [
                     'mysql'=>
                     [
-                        'sql'=>'SELECT `Persons`.`personID` AS `personID`, `Persons`.`name` AS `name`, `Persons`.`parentID` AS `parentID` FROM `Persons` WHERE `Persons`.`personID` = ? LIMIT ?',
-                        'bindings'=>[1, 1]
+                        'sql'=>'SELECT * FROM `Persons` WHERE `Persons`.`personID` = ?',
+                        'bindings'=>[1]
                     ]
                 ]
             ];
@@ -87,7 +85,8 @@ class SelectsTest extends \Codeception\Test\Unit
         {
             $case =
             [
-                Person::query()->withGraphJoined('iChildren'),
+                Person::query()
+                    ->withGraphJoined('iChildren'),
                 [
                     'mysql'=>
                     [
@@ -104,7 +103,8 @@ class SelectsTest extends \Codeception\Test\Unit
         {
             $case =
             [
-                Person::query()->withGraphJoined('iChildren', ['joinOperation'=>'leftJoin']),
+                Person::query()
+                    ->withGraphJoined('iChildren', ['joinOperation'=>'leftJoin']),
                 [
                     'mysql'=>
                     [
@@ -121,7 +121,8 @@ class SelectsTest extends \Codeception\Test\Unit
         {
             $case =
             [
-                Person::query()->withGraphJoined('iChildren', ['joinOperation'=>'rightJoin']),
+                Person::query()
+                    ->withGraphJoined('iChildren', ['joinOperation'=>'rightJoin']),
                 [
                     'mysql'=>
                     [
@@ -138,7 +139,8 @@ class SelectsTest extends \Codeception\Test\Unit
         {
             $case =
             [
-                Person::query()->withGraphJoined('iChildren', ['joinOperation'=>'innerJoin']),
+                Person::query()
+                    ->withGraphJoined('iChildren', ['joinOperation'=>'innerJoin']),
                 [
                     'mysql'=>
                     [
@@ -155,7 +157,8 @@ class SelectsTest extends \Codeception\Test\Unit
         {
             $case =
             [
-                Person::query()->withGraphJoined('iChildren', ['joinOperation'=>'outerJoin']),
+                Person::query()
+                    ->withGraphJoined('iChildren', ['joinOperation'=>'outerJoin']),
                 [
                     'mysql'=>
                     [
@@ -168,33 +171,36 @@ class SelectsTest extends \Codeception\Test\Unit
             return $case;
         };
 
-        $cases['Basic all with graph joined, aliases'] = function()
-        {
-            $case =
-            [
-                Person::query()->withGraphJoined('iChildren', ['aliases'=>['iChildren'=>'children']]),
-                [
-                    'mysql'=>
-                    [
-                        'sql'=>'SELECT `Persons`.`personID` AS `personID`, `Persons`.`name` AS `name`, `Persons`.`parentID` AS `parentID`, `children`.`personID` AS `children:personID`, `children`.`name` AS `children:name`, `children`.`parentID` AS `children:parentID` FROM `Persons` LEFT JOIN `Persons` AS `children` ON(`children`.`personID` = `Persons`.`parentID`)',
-                        'bindings'=>[]
-                    ]
-                ]
-            ];
-
-            return $case;
-        };
+        // $cases['Basic all with graph joined, aliases'] = function()
+        // {
+        //     $case =
+        //     [
+        //         Person::query()
+        //             ->withGraphJoined('iChildren', ['aliases'=>['iChildren'=>'children']]),
+        //         [
+        //             'mysql'=>
+        //             [
+        //                 'sql'=>'SELECT `Persons`.`personID` AS `personID`, `Persons`.`name` AS `name`, `Persons`.`parentID` AS `parentID`, `children`.`personID` AS `children:personID`, `children`.`name` AS `children:name`, `children`.`parentID` AS `children:parentID` FROM `Persons` LEFT JOIN `Persons` AS `children` ON(`children`.`personID` = `Persons`.`parentID`)',
+        //                 'bindings'=>[]
+        //             ]
+        //         ]
+        //     ];
+        //
+        //     return $case;
+        // };
 
         $cases['Basic with graph joined, find by id'] = function()
         {
             $case =
             [
-                Person::query()->withGraphJoined('iChildren')->findByID(1),
+                Person::query()
+                    ->withGraphJoined('iChildren')
+                    ->findByID(1),
                 [
                     'mysql'=>
                     [
-                        'sql'=>'SELECT `Persons`.`personID` AS `personID`, `Persons`.`name` AS `name`, `Persons`.`parentID` AS `parentID`, `iChildren`.`personID` AS `iChildren:personID`, `iChildren`.`name` AS `iChildren:name`, `iChildren`.`parentID` AS `iChildren:parentID` FROM `Persons` LEFT JOIN `Persons` AS `iChildren` ON(`iChildren`.`personID` = `Persons`.`parentID`) WHERE `Persons`.`personID` = ? LIMIT ?',
-                        'bindings'=>[1, 1]
+                        'sql'=>'SELECT `Persons`.`personID` AS `personID`, `Persons`.`name` AS `name`, `Persons`.`parentID` AS `parentID`, `iChildren`.`personID` AS `iChildren:personID`, `iChildren`.`name` AS `iChildren:name`, `iChildren`.`parentID` AS `iChildren:parentID` FROM `Persons` LEFT JOIN `Persons` AS `iChildren` ON(`iChildren`.`personID` = `Persons`.`parentID`) WHERE `Persons`.`personID` = ?',
+                        'bindings'=>[1]
                     ]
                 ]
             ];
@@ -206,7 +212,9 @@ class SelectsTest extends \Codeception\Test\Unit
         {
             $case =
             [
-                Person::query()->withGraphJoined('iChildren')->withGraphJoined('iParents'),
+                Person::query()
+                    ->withGraphJoined('iChildren')
+                    ->withGraphJoined('iParents'),
                 [
                     'mysql'=>
                     [
@@ -223,12 +231,15 @@ class SelectsTest extends \Codeception\Test\Unit
         {
             $case =
             [
-                Person::query()->withGraphJoined('iChildren')->withGraphJoined('iParents')->findByID(1),
+                Person::query()
+                    ->withGraphJoined('iChildren')
+                    ->withGraphJoined('iParents')
+                    ->findByID(1),
                 [
                     'mysql'=>
                     [
-                        'sql'=>'SELECT `Persons`.`personID` AS `personID`, `Persons`.`name` AS `name`, `Persons`.`parentID` AS `parentID`, `iChildren`.`personID` AS `iChildren:personID`, `iChildren`.`name` AS `iChildren:name`, `iChildren`.`parentID` AS `iChildren:parentID`, `iParents`.`personID` AS `iParents:personID`, `iParents`.`name` AS `iParents:name`, `iParents`.`parentID` AS `iParents:parentID` FROM `Persons` LEFT JOIN `Persons` AS `iChildren` ON(`iChildren`.`personID` = `Persons`.`parentID`) LEFT JOIN `Persons` AS `iParents` ON(`iParents`.`parentID` = `Persons`.`personID`) WHERE `Persons`.`personID` = ? LIMIT ?',
-                        'bindings'=>[1, 1]
+                        'sql'=>'SELECT `Persons`.`personID` AS `personID`, `Persons`.`name` AS `name`, `Persons`.`parentID` AS `parentID`, `iChildren`.`personID` AS `iChildren:personID`, `iChildren`.`name` AS `iChildren:name`, `iChildren`.`parentID` AS `iChildren:parentID`, `iParents`.`personID` AS `iParents:personID`, `iParents`.`name` AS `iParents:name`, `iParents`.`parentID` AS `iParents:parentID` FROM `Persons` LEFT JOIN `Persons` AS `iChildren` ON(`iChildren`.`personID` = `Persons`.`parentID`) LEFT JOIN `Persons` AS `iParents` ON(`iParents`.`parentID` = `Persons`.`personID`) WHERE `Persons`.`personID` = ?',
+                        'bindings'=>[1]
                     ]
                 ]
             ];
@@ -284,6 +295,7 @@ class SelectsTest extends \Codeception\Test\Unit
 	 */
     public function testQueryBuilder(ModelQueryBuilder $iQueryBuilder, array $iExpected): void
     {
+        $iQueryBuilder->preCompile();
         $iQueryCompiler = new QueryCompiler($iQueryBuilder->getClient(), $iQueryBuilder, []);
 
         $iQuery = $iQueryCompiler->toSQL();

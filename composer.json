@@ -6,6 +6,11 @@
     "version": "0.0.1",
     "minimum-stability": "dev",
     "prefer-stable": true,
+    "config": {
+        "platform": {
+
+        }
+    },
     "scripts": {
         "unit-tests": "./vendor/bin/codecept run unit --debug"
     },

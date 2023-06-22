@@ -45,14 +45,15 @@ class ModelQueryBuilder extends QueryBuilder
 
         parent::__construct($iClient, $schema);
 
-        $this->column(self::createAliases($modelClass::getTableName()));
+        // FIXME: Only create aliases if needed. ie. When at relation is added
+        // $this->column();
     }
 
     /**
      * 2023-06-12
      * Finds a model by its ID(s).
      * @param string|int|Raw|array<string, string|int|Raw> $value
-     * @return QueryBuilder
+     * @return ModelQueryBuilder
      */
     public function findByID($value): self
     {
@@ -78,9 +79,9 @@ class ModelQueryBuilder extends QueryBuilder
     /**
      * Overrides the first function from QueryBuilder, as limiting to 1 row is not possible when using graphs.
      * @param array<int, string|Raw|QueryBuilder> $columns One or more values
-     * @return QueryBuilder
+     * @return ModelQueryBuilder
      */
-    public function first(...$columns): QueryBuilder
+    public function first(...$columns): ModelQueryBuilder
     {// 2023-05-15
         $this->iSingle->columnMethod = Columns::TYPE_FIRST;
 
@@ -90,9 +91,9 @@ class ModelQueryBuilder extends QueryBuilder
     /**
      * @param int|Raw|QueryBuilder $value
      * @param array<int,mixed> $options
-     * @return QueryBuilder
+     * @return ModelQueryBuilder
      */
-    public function limit($value, ...$options): QueryBuilder
+    public function limit($value, ...$options): ModelQueryBuilder
     {// 2023-05-26
         // TODO: Implement me!
     }
@@ -871,7 +872,7 @@ class ModelQueryBuilder extends QueryBuilder
      * 2023-06-15
      * @param string|Raw $relationName
      * @param array<string, string|array<string>> $options
-     * @return QueryBuilder
+     * @return ModelQueryBuilder
      *
      * minimize         boolean     If true the aliases of the joined tables and columns created by withGraphJoined are minimized. This is sometimes needed because of identifier length limitations of some database engines. objection throws an exception when a query exceeds the length limit. You need to use this only in those cases.
      * separator        string      Separator between relations in nested withGraphJoined query. Defaults to :. Dot (.) cannot be used at the moment because of the way knex parses the identifiers.
@@ -881,8 +882,6 @@ class ModelQueryBuilder extends QueryBuilder
      */
     public function withGraphJoined($relationName, array $options=[]): self
     {// 2023-06-15
-        $relations = call_user_func([$this->modelClass, 'getRelationMappings']);
-
         $relationsGraph = self::parseRelationQuery($relationName);
 
         $iRelations = self::createRelationsFromGraph($relationsGraph, $this->modelClass, $options);
@@ -964,7 +963,7 @@ class ModelQueryBuilder extends QueryBuilder
 
     /**
      * 2023-06-15
-     * @return QueryBuilder
+     * @return ModelQueryBuilder
      */
     private function withGraphJoinedBelongsToOne(Relation $iRelation, ?string $aliasPrefix=null): self
     {
@@ -989,7 +988,7 @@ class ModelQueryBuilder extends QueryBuilder
 
     /**
      * 2023-06-15
-     * @return QueryBuilder
+     * @return ModelQueryBuilder
      */
     private function withGraphJoinedHasMany(Relation $iRelation, ?string $aliasPrefix=null): self
     {
@@ -998,8 +997,9 @@ class ModelQueryBuilder extends QueryBuilder
 
         $relationName = implode(':', array_filter([$aliasPrefix, $iRelation->getName()]));
 
-        // FIXME: from column should be previous alised table
-        $this->leftJoin($relatedTableName.' AS '.$relationName, $iRelation->getToColumn($relationName), $iRelation->getFromColumn());
+        $joinOperation = $iRelation->getJoinOperation();
+
+        $this->{$joinOperation}($relatedTableName.' AS '.$relationName, $iRelation->getToColumn($relationName), $iRelation->getFromColumn());
 
         $aliasses = self::createAliases($relatedTableName, $relationName);
 
@@ -1015,7 +1015,7 @@ class ModelQueryBuilder extends QueryBuilder
 
     /**
      * 2023-06-15
-     * @return QueryBuilder
+     * @return ModelQueryBuilder
      */
     private function withGraphJoinedAsOne(Relation $iRelation): self
     {
@@ -1024,31 +1024,51 @@ class ModelQueryBuilder extends QueryBuilder
 
     /**
      * 2023-06-15
-     * @return QueryBuilder
+     * @return ModelQueryBuilder
      */
-    private function withGraphJoinedManyToMany(Relation $iRelation, $aliasPrefix): self
+    private function withGraphJoinedManyToMany(Relation $iRelation, ?string $aliasPrefix=null): self
     {
-        $relatedModelClass = $iRelation->getRelatedModelClass();
-        $relatedTableName = $relatedModelClass::getTableName();
-        $relationName = implode(':', array_filter([$aliasPrefix, $iRelation->getName()]));
+        $throughTableAlias = $iRelation->getJoinThroughTableAlias($aliasPrefix);
+        $tableAlias = $iRelation->getJoinTableAlias($aliasPrefix);
 
-        $throughTableName = self::getTableName($iRelation->getThroughFromColumn());
-        $throughRelationName = implode(':', array_filter([$aliasPrefix, $iRelation->getName()])).'_through';
+        $joinOperation = $iRelation->getJoinOperation();
 
-        $this->leftJoin($throughTableName.' AS '.$throughRelationName, $iRelation->getThroughFromColumn($throughRelationName), $iRelation->getFromColumn());
-        $this->leftJoin($relatedTableName.' AS '.$relationName, $iRelation->getToColumn($relationName), $iRelation->getThroughToColumn($throughRelationName));
+        $this->{$joinOperation}($iRelation->getJoinThroughTable($aliasPrefix), $iRelation->getThroughFromColumn($throughTableAlias), $iRelation->getFromColumn());
+        $this->{$joinOperation}($iRelation->getJoinTable($aliasPrefix), $iRelation->getToColumn($tableAlias), $iRelation->getThroughToColumn($throughTableAlias));
 
-        $aliasses = self::createAliases($relatedTableName, $relationName);
-        $extraAliases = self::createAliases($throughRelationName, $relationName, $iRelation->getThroughExtras(), $throughRelationName);
+        $aliasses = self::createAliases($iRelation->getRelatedModelClass()::getTableName(), $tableAlias);
+        $extraAliasses = self::createAliases($throughTableAlias, $tableAlias, $iRelation->getThroughExtras(), $throughTableAlias);
 
-        $this->select(array_merge($aliasses, $extraAliases));
+        $this->select(array_merge($aliasses, $extraAliasses));
 
         foreach($iRelation->getChildRelations() as $iChildRelation)
         {
-            $this->withRelationJoined($iChildRelation, $relationName);
+            $this->withRelationJoined($iChildRelation, $tableAlias);
         }
 
         return $this;
+
+        // $relatedModelClass = $iRelation->getRelatedModelClass();
+        // $relatedTableName = $relatedModelClass::getTableName();
+        // $relationName = implode(':', array_filter([$aliasPrefix, $iRelation->getName()]));
+        //
+        // $throughTableName = self::getTableName($iRelation->getThroughFromColumn());
+        // $throughRelationName = implode(':', array_filter([$aliasPrefix, $iRelation->getName()])).'_through';
+        //
+        // $this->leftJoin($throughTableName.' AS '.$throughRelationName, $iRelation->getThroughFromColumn($throughRelationName), $iRelation->getFromColumn());
+        // $this->leftJoin($relatedTableName.' AS '.$relationName, $iRelation->getToColumn($relationName), $iRelation->getThroughToColumn($throughRelationName));
+        //
+        // $aliasses = self::createAliases($relatedTableName, $relationName);
+        // $extraAliases = self::createAliases($throughRelationName, $relationName, $iRelation->getThroughExtras(), $throughRelationName);
+        //
+        // $this->select(array_merge($aliasses, $extraAliases));
+        //
+        // foreach($iRelation->getChildRelations() as $iChildRelation)
+        // {
+        //     $this->withRelationJoined($iChildRelation, $relationName);
+        // }
+        //
+        // return $this;
     }
 
     /**
@@ -1120,7 +1140,7 @@ class ModelQueryBuilder extends QueryBuilder
      * @param array $results
      * @return Model[]|Model
      */
-    private function createModelsFromResults(array $results)
+    private function createGraphFromResults(array $results)
     {
         $modelIDsMap = $this->modelClass::getTableIDsMap();
         $iRelations = $this->iRelations;
@@ -1153,12 +1173,39 @@ class ModelQueryBuilder extends QueryBuilder
      * Precompilation is needed because we can use modifyGraph to change how relations are joined.
      * @return Model[]|Model
      */
-    private function preCompile(): void
+    public function preCompile(): void
     {
-        foreach($this->iRelations as $iRelation)
+        // FIXME: Allow for custom selects
+        if(count($this->iRelations) !== 0)
         {
+            $this->column(self::createAliases($this->modelClass::getTableName()));
+        }
+        
+        // Walking backwards through array, so the order in which relations has been added, matches
+        $iRelation = end($this->iRelations);
+        do
+        {
+            if($iRelation === false) continue;
+
             $this->withRelationJoined($iRelation);
         }
+        while($iRelation = prev($this->iRelations));
+
+        // foreach($this->iRelations as $iRelation)
+        // {
+        //     $this->withRelationJoined($iRelation);
+        // }
+    }
+
+    private function createModelsFromResultsGraph(array $resultsGraph): array
+    {
+        $iModels = [];
+        foreach($resultsGraph as $result)
+        {
+            $iModels[] = $this->modelClass::create($result, $this->iRelations);
+        }
+
+        return $iModels;
     }
 
     /**
@@ -1177,13 +1224,9 @@ class ModelQueryBuilder extends QueryBuilder
 
         $results = $statement->fetchAll(\PDO::FETCH_ASSOC);
 
-        $resultsGraph = $this->createModelsFromResults($results);
+        $resultsGraph = $this->createGraphFromResults($results);
 
-        $iModels = [];
-        foreach($resultsGraph as $result)
-        {
-            $iModels[] = $this->modelClass::create($result, $this->iRelations);
-        }
+        $iModels = $this->createModelsFromResultsGraph($resultsGraph);
 
         return $iModels;
 

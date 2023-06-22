@@ -120,7 +120,7 @@ abstract class Model
     /**
      * 2023-06-12
      * @param Transaction|Client|null $iTransaction
-     * @return QueryBuilder
+     * @return ModelQueryBuilder
      */
     public static function query($iTransactionOrClient=null): ModelQueryBuilder
     {// 2023-06-12
