@@ -48,14 +48,45 @@ class ModelCreationTest extends \Codeception\Test\Unit
         // Providers are run before anything else, so we are initalizing the client here.
         Objection::setClient(self::getClient());
 
+        $iClassPerson = new \ReflectionClass(Person::class);
+        $iPropPersonID = $iClassPerson->getProperty('personID');
+        $iPropParentID = $iClassPerson->getProperty('parentID');
+        $iPropName = $iClassPerson->getProperty('name');
+        $iPropIChildren = $iClassPerson->getProperty('iChildren');
+        $iPropIParents = $iClassPerson->getProperty('iParents');
+
+        foreach([$iPropPersonID, $iPropParentID, $iPropName, $iPropIChildren] as $iProp)
+        {
+            $iProp->setAccessible(true);
+        }
+
         $cases = [];
 
-        $cases['Basic with graph joined, find by id, no relations available'] = function()
+        $cases['Basic with graph joined, find by id, no relations available'] = function() use($iPropPersonID, $iPropParentID, $iPropName, $iPropIChildren)
         {
+            $iPerson = new Person();
+            $iPropPersonID->setValue($iPerson, 3);
+            $iPropParentID->setValue($iPerson, null);
+            $iPropName->setValue($iPerson, 'Magnus');
+            // $iPropIChildren->setValue($iPerson, []);
+
+            $iChild1 = new Person();
+            $iPropPersonID->setValue($iChild1, 4);
+            $iPropParentID->setValue($iChild1, 3);
+            $iPropName->setValue($iChild1, 'Lisa');
+            $iPropIChildren->setValue($iChild1, []);
+
+            $iChild2 = new Person();
+            $iPropPersonID->setValue($iChild2, 5);
+            $iPropParentID->setValue($iChild2, 3);
+            $iPropName->setValue($iChild2, 'Sage');
+            $iPropIChildren->setValue($iChild2, []);
+
+            $iPropIChildren->setValue($iPerson, [$iChild1, $iChild2]);
+
             $case =
             [
-                // Person::query()->findByID(3)->withGraphJoined('iChildren'),
-                Person::query(),
+                Person::query()->findByID(3)->withGraphJoined('iChildren'),
                 [
                     [
 	                    "personID"=>3,
@@ -75,36 +106,41 @@ class ModelCreationTest extends \Codeception\Test\Unit
                     ]
                 ],
                 [
-                    [
-                        'personID'=>3,
-                        'name'=>'Magnus',
-                        'parentID'=>null,
-                        'iChildren'=>
-                        [
-                            [
-                                'personID'=>4,
-                                'name'=>'Lisa',
-                                'parentID'=>3,
-                            ],
-                            [
-                                'personID'=>5,
-                                'name'=>'Sage',
-                                'parentID'=>3,
-                            ],
-                        ]
-                    ]
+                    $iPerson
                 ]
             ];
 
             return $case;
         };
 
-        $cases['With graph joined one level deep, find by ID'] = function()
+        $cases['With graph joined one level deep, find by ID'] = function() use($iPropPersonID, $iPropParentID, $iPropName, $iPropIChildren, $iPropIParents)
         {
+            $iPerson = new Person();
+            $iPropPersonID->setValue($iPerson, 1);
+            $iPropParentID->setValue($iPerson, null);
+            $iPropName->setValue($iPerson, 'Test');
+            // $iPropIChildren->setValue($iPerson, []);
+
+            $iChild1 = new Person();
+            $iPropPersonID->setValue($iChild1, 2);
+            $iPropParentID->setValue($iChild1, 1);
+            $iPropName->setValue($iChild1, 'Child');
+            $iPropIChildren->setValue($iChild1, []);
+
+            $iChild2 = new Person();
+            $iPropPersonID->setValue($iChild2, 1);
+            $iPropParentID->setValue($iChild2, null);
+            $iPropName->setValue($iChild2, 'Test');
+            $iPropIChildren->setValue($iChild2, []);
+
+            $iPropIChildren->setValue($iPerson, [$iChild1]);
+            $iPropIParents->setValue($iChild1, [$iPerson]);
+            
             $case =
             [
                 // Person::query()->withGraphJoined('iParents.iChildren')->findByID(1),
-                Person::query(),
+                Person::query()->withGraphJoined('iParents.[iChildren]')->findByID(1),
+                // Person::query(),
                 [
                     [
 			            "personID"=>1,
@@ -118,6 +154,10 @@ class ModelCreationTest extends \Codeception\Test\Unit
 			            "iChildren:iParents:parentID"=>null
                     ]
                 ],
+                [
+                    $iPerson
+                ]
+                    /*
                 [
                     [
                         'personID'=>1,
@@ -141,12 +181,14 @@ class ModelCreationTest extends \Codeception\Test\Unit
                         ]
                     ]
                 ]
+*/
             ];
 
             return $case;
         };
 
-        $cases['With graph joined one level deep'] = function()
+        /*
+        $cases['With graph joined one level deep'] = function() use($iPropPersonID, $iPropParentID, $iPropName, $iPropIChildren)
         {
             $case =
             [
@@ -248,6 +290,64 @@ class ModelCreationTest extends \Codeception\Test\Unit
 
             return $case;
         };
+*/
+        /*
+        $cases['With graph joined one level deep, find by ID'] = function() use($iPropPersonID, $iPropParentID, $iPropName, $iPropIChildren, $iPropIParents)
+        {
+            $iPerson = new Person();
+            $iPropPersonID->setValue($iPerson, 1);
+            $iPropParentID->setValue($iPerson, null);
+            $iPropName->setValue($iPerson, 'Test');
+            // $iPropIChildren->setValue($iPerson, []);
+
+            $iChild1 = new Person();
+            $iPropPersonID->setValue($iChild1, 2);
+            $iPropParentID->setValue($iChild1, 1);
+            $iPropName->setValue($iChild1, 'Child');
+            $iPropIChildren->setValue($iChild1, []);
+
+            $iChild2 = new Person();
+            $iPropPersonID->setValue($iChild2, 1);
+            $iPropParentID->setValue($iChild2, null);
+            $iPropName->setValue($iChild2, 'Test');
+            $iPropIChildren->setValue($iChild2, []);
+
+            $iPropIChildren->setValue($iPerson, [$iChild1]);
+            $iPropIParents->setValue($iChild1, [$iPerson]);
+            
+            $case =
+            [
+                // Person::query()->withGraphJoined('iChildren.[iParents, iChildren]')->findByID(1),
+                Person::query()->withGraphJoined(['iChildren'=>['iParents', 'iChildren']])->findByID(1),
+                // Person::query(),
+                [
+                    [
+			            "personID"=>1,
+			            "name"=>"Test",
+			            "parentID"=>null,
+
+			            "iChildren:personID"=>2,
+			            "iChildren:name"=>"Child",
+			            "iChildren:parentID"=>1,
+
+			            "iChildren:iParents:personID"=>1,
+			            "iChildren:iParents:name"=>"Test",
+			            "iChildren:iParents:parentID"=>null,
+
+			            "iChildren:iChildren:personID"=>1,
+			            "iChildren:iChildren:name"=>"Test",
+			            "iChildren:iChildren:parentID"=>null
+                    ]
+                ],
+                [
+                    $iPerson
+                ]
+            ];
+
+            return $case;
+        };
+
+        */
 
         foreach($cases as $name=>$caseFn)
         {
@@ -258,15 +358,17 @@ class ModelCreationTest extends \Codeception\Test\Unit
     }
 
 	/**
-	 * @param array<string, array<string, string>> $iExpected
+	 * @param array<string, array<string, string|Model>> $iExpected
 	 * @dataProvider caseProvider
 	 */
     public function testQueryBuilder(ModelQueryBuilder $iQueryBuilder, array $queryResults, array $iExpected): void
     {
-        $results = $iQueryBuilder->normalizeResults($queryResults);
+        $iReflectionClass = new \ReflectionClass($iQueryBuilder);
+        $iMethodCreateModelsFromResults = $iReflectionClass->getMethod('createModelsFromResults');
+        $iMethodCreateModelsFromResults->setAccessible(true);
 
-        codecept_debug($results);
+        $iModels = $iMethodCreateModelsFromResults->invoke($iQueryBuilder, $queryResults);
 
-        $this->assertSame($iExpected, array_values($results));
+        $this->assertEquals($iExpected, $iModels);
     }
 }

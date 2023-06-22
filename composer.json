@@ -6,6 +6,9 @@
     "version": "0.0.1",
     "minimum-stability": "dev",
     "prefer-stable": true,
+    "scripts": {
+        "unit-tests": "./vendor/bin/codecept run unit --debug"
+    },
     "autoload": {
         "psr-4": {
             "Sharksmedia\\Objection\\": "src/"

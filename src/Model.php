@@ -62,10 +62,11 @@ abstract class Model
 
     /**
      * 2023-06-12
-     * @param array<string, mixed> $data
+     * @param array<string, mixed> $dataGraph
+     * @param array<string, Relation> $iRelations
      * @return Model
      */
-    public static function create(array $dataGraph, array $relations=[]): ?self
+    public static function create(array $dataGraph, array $iRelations=[]): ?self
     {// 2023-06-14
         $tableIDsMap = static::getTableIDsMap();
         $ids = array_intersect_key($dataGraph, $tableIDsMap);
@@ -75,30 +76,32 @@ abstract class Model
         $iModel = new static();
         foreach($dataGraph as $columnName=>$columnValue)
         {
-            $relation = $relations[$columnName] ?? null;
+            $iRelation = $iRelations[$columnName] ?? null;
 
-            if($relation === null)
+            if($iRelation === null)
             {
                 $iModel->{$columnName} = $columnValue;
                 continue;
             }
 
+            $relatedModelClass = $iRelation->getRelatedModelClass();
+
             if(is_array($columnValue))
             {
-                $iModel->{$relation->name} = [];
+                $iModel->{$iRelation->getName()} = [];
                 foreach($columnValue as $columnValueItem)
                 {
-                    $iRelatedModel = $relation->modelClass::create($columnValueItem, $relations);
+                    $iRelatedModel = $relatedModelClass::create($columnValueItem, $iRelation->getChildRelations());
 
-                    if($iRelatedModel !== null) $iModel->{$relation->name}[] = $iRelatedModel;
+                    if($iRelatedModel !== null) $iModel->{$iRelation->getName()}[] = $iRelatedModel;
                 }
 
                 continue;
             }
 
-            $iRelatedModel = $relation->modelClass::create($columnValue, $relations);
+            $iRelatedModel = $relatedModelClass::create($columnValue, $iRelation->getChildRelations());
 
-            if($iRelatedModel !== null) $iModel->{$relation->name}[] = $iRelatedModel;
+            if($iRelatedModel !== null) $iModel->{$iRelation->getName()}[] = $iRelatedModel;
         }
 
         return $iModel;

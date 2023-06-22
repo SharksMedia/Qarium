@@ -29,13 +29,13 @@ class Relation
 
     /**
      * 2023-06-16
-     * @var string
+     * @var class-string<Model>
      */
     private string $owningModelClass;
 
     /**
      * 2023-06-16
-     * @var string|null
+     * @var class-string<Model>
      */
     private ?string $relatedModelClass;
 
@@ -43,23 +43,53 @@ class Relation
      * 2023-06-16
      * @var array<string, mixed>
      */
-    private array $ownerOptions;
+    private array $options;
 
     /**
-     * 2023-06-16
-     * @var array<string, mixed>
+     * 2023-06-20
+     * @var array<string, Relation>
      */
-    private array $relatedOptions;
+    private array $iChildRelations = [];
+
+    /**
+     * 2023-06-21
+     * @var Relation|null
+     */
+    private ?Relation $iParentRelation = null;
+
+    /**
+     * 2023-06-22
+     * @var ModelQueryBuilder|null
+     */
+    private ?ModelQueryBuilder $fromTableQueryBuilder = null;
 
     /**
      * 2023-06-16
      * @param string $relationName
      * @param string $owningModelClass
      */
-    public function __construct(string $relationName, string $owningModelClass)
+    public function __construct(string $relationName, string $owningModelClass, string $relatedModelClass)
     {
         $this->name = $relationName;
         $this->owningModelClass = $owningModelClass;
+        $this->relatedModelClass = $relatedModelClass;
+
+        $relation = $this->getMappingRelation();
+
+        $this->type = $relation['relation'];
+    }
+
+    public function setOptions(array $options): void
+    {// 2023-06-20
+        $options['aliases'] = $options['aliases'] ?? [];
+        $options['aliases'][$this->getName()] = $options['aliases'][$this->getName()] ?? $this->getName();
+
+        $this->options = $options;
+    }
+
+    public function getOptions(): array
+    {// 2023-06-20
+        return $this->options;
     }
 
     /**
@@ -78,5 +108,162 @@ class Relation
     public function getType(): string
     {
         return $this->type;
+    }
+
+    /**
+     * 2023-06-20
+     * @return Model|string|null
+     */
+    public function addChildRelation(Relation $iRelation): void
+    {// 2023-06-20
+        $this->iChildRelations[$iRelation->getName()] = $iRelation;
+
+        $iRelation->setParentRelation($this);
+    }
+
+    /**
+     * 2023-06-20
+     * @return array<string, Relation>
+     */
+    public function getChildRelations(): array
+    {
+        return $this->iChildRelations;
+    }
+
+    public function getParentRelation(): ?Relation
+    {// 2023-06-21
+        return $this->iParentRelation;
+    }
+
+    private function setParentRelation(Relation $iRelation): void
+    {// 2023-06-21
+        $this->iParentRelation = $iRelation;
+    }
+
+    /**
+     * 2023-06-20
+     * @return class-string<Model>|null
+     */
+    public function getRelatedModelClass(): ?string
+    {
+        return $this->relatedModelClass;
+    }
+
+    /**
+     * 2023-06-20
+     * @return class-string<Model>|null
+     */
+    public function getOwningModelClass(): string
+    {
+        return $this->owningModelClass;
+    }
+
+    public function getMappingRelation(): array
+    {
+        $owningModelClass = $this->getOwningModelClass();
+        $relationsMap = $owningModelClass::getRelationMappings();
+
+        $relation = $relationsMap[$this->getName()];
+
+        return $relation;
+    }
+
+    /**
+     * 2023-06-20
+     * @return string|Raw
+     */
+    public function getFromColumn(?string $tableAlias=null)
+    {
+        if($tableAlias === null && $this->getParentRelation() !== null)
+        {
+            $parentRelation = $this->getParentRelation();
+
+            $tableAlias = $parentRelation->getAlias();
+        }
+
+        $relation = $this->getMappingRelation();
+
+        $column = $relation['join']['from'];
+
+        if($tableAlias !== null) return self::tablePrefixColumnName($column, $tableAlias);
+
+        return $column;
+    }
+
+    public function getThroughFromColumn(?string $tableAlias=null)
+    {
+        $relation = $this->getMappingRelation();
+
+        $column = $relation['join']['through']['from'];
+
+        if($tableAlias !== null) return self::tablePrefixColumnName($column, $tableAlias);
+
+        return $column;
+    }
+
+    /**
+     * 2023-06-20
+     * @return string|Raw
+     */
+    public function getToColumn(?string $tableAlias=null)
+    {
+        $relation = $this->getMappingRelation();
+
+        $column = $relation['join']['to'];
+
+        if($tableAlias !== null) return self::tablePrefixColumnName($column, $tableAlias);
+
+        return $column;
+    }
+
+    public function getThroughToColumn(?string $tableAlias=null)
+    {
+        $relation = $this->getMappingRelation();
+
+        $column = $relation['join']['through']['to'];
+
+        if($tableAlias !== null) return self::tablePrefixColumnName($column, $tableAlias);
+
+        return $column;
+    }
+
+    public function getThroughExtras(): array
+    {
+        $relation = $this->getMappingRelation();
+
+        return $relation['join']['through']['extras'] ?? [];
+    }
+
+    private static function tablePrefixColumnName(string $column, string $table)
+    {// 2023-06-15
+        $parts = explode('.', $column);
+
+        if(count($parts) === 1) return $table.'.'.$column;
+
+        return $table.'.'.$parts[1];
+    }
+
+    public function getAlias(): string
+    {// 2023-06-21
+        $options = $this->options;
+
+        $aliasParts = [];
+        if($this->getParentRelation() !== null)
+        {
+            $aliasParts[] = $this->getParentRelation()->getAlias();
+        }
+
+        $aliasParts[] = $options['aliases'][$this->getName()];
+
+        return implode(':', array_filter($aliasParts));
+    }
+
+    /**
+     * 2023-06-22
+     * @paran ModelQueryBuilder $iModelQueryBuidler
+     */
+    public function setTableFromQueryBuilder(ModelQueryBuilder $iModelQueryBuidler): void
+    {
+        $this->fromTableQueryBuilder = $iModelQueryBuidler;
     }
 }

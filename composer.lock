@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "759fae37bb69a2661a66dbe6afaecb3e",
+    "content-hash": "b67600535059f65586c7be5bcb704b8e",
     "packages": [
         {
             "name": "sharksmedia/query-builder",
@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "git@github.com:SharkMagnus/QueryBuilder.git",
-                "reference": "bb20a5e5ab09dfab384132fb3b2e32614029f9f1"
+                "reference": "5dd2c2edf48acb211744eb6bf2ab4898243ecd6b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SharkMagnus/QueryBuilder/zipball/bb20a5e5ab09dfab384132fb3b2e32614029f9f1",
-                "reference": "bb20a5e5ab09dfab384132fb3b2e32614029f9f1",
+                "url": "https://api.github.com/repos/SharkMagnus/QueryBuilder/zipball/5dd2c2edf48acb211744eb6bf2ab4898243ecd6b",
+                "reference": "5dd2c2edf48acb211744eb6bf2ab4898243ecd6b",
                 "shasum": ""
             },
             "require-dev": {
@@ -53,7 +53,7 @@
                 "source": "https://github.com/SharkMagnus/QueryBuilder/tree/master",
                 "issues": "https://github.com/SharkMagnus/QueryBuilder/issues"
             },
-            "time": "2023-06-15T10:59:11+00:00"
+            "time": "2023-06-20T10:45:26+00:00"
         }
     ],
     "packages-dev": [

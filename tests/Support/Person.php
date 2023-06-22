@@ -17,6 +17,7 @@ class Person extends Model
      * @var array<int, Person>
      */
     protected array     $iChildren = [];
+    protected array     $iParents = [];
 
     public static function getTableName(): string
     {// 2023-06-12
@@ -46,8 +47,8 @@ class Person extends Model
                 'modelClass'=>Person::class,
                 'join'=>
                 [
-                    'from'=>'Person.parentID',
-                    'to'=>'Person.personID'
+                    'from'=>'Persons.parentID',
+                    'to'=>'Persons.personID'
                 ]
             ],
             'iParents'=>
@@ -56,8 +57,8 @@ class Person extends Model
                 'modelClass'=>Person::class,
                 'join'=>
                 [
-                    'from'=>'Person.personID',
-                    'to'=>'Person.parentID'
+                    'from'=>'Persons.personID',
+                    'to'=>'Persons.parentID'
                 ]
             ]
         ];
