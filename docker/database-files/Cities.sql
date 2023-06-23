@@ -5,9 +5,9 @@
 # https://sequel-ace.com/
 # https://github.com/Sequel-Ace/Sequel-Ace
 #
-# Host: 127.0.0.1 (MySQL 8.0.23-14)
-# Database: ObjectionTest
-# Generation Time: 2023-06-22 12:16:20 +0000
+# Host: 127.0.0.1 (MySQL 8.0.33)
+# Database: db
+# Generation Time: 2023-06-23 07:00:37 +0000
 # ************************************************************
 
 
@@ -20,26 +20,27 @@ SET NAMES utf8mb4;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 
-# Dump of table Schools
+# Dump of table Cities
 # ------------------------------------------------------------
 
-DROP TABLE IF EXISTS `Schools`;
+DROP TABLE IF EXISTS `Cities`;
 
-CREATE TABLE `Schools` (
-  `schoolID` int unsigned NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) DEFAULT NULL,
-  `cityID` int unsigned NOT NULL,
-  PRIMARY KEY (`schoolID`)
+CREATE TABLE `Cities` (
+  `cityID` int unsigned NOT NULL AUTO_INCREMENT,
+  `countryID` int NOT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  PRIMARY KEY (`cityID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-LOCK TABLES `Schools` WRITE;
-/*!40000 ALTER TABLE `Schools` DISABLE KEYS */;
+LOCK TABLES `Cities` WRITE;
+/*!40000 ALTER TABLE `Cities` DISABLE KEYS */;
 
-INSERT INTO `Schools` (`schoolID`, `name`, `cityID`)
+INSERT INTO `Cities` (`cityID`, `countryID`, `name`)
 VALUES
-	(1,'SharkCamp',1);
+	(1,57,'Vejle'),
+	(2,57,'Randers');
 
-/*!40000 ALTER TABLE `Schools` ENABLE KEYS */;
+/*!40000 ALTER TABLE `Cities` ENABLE KEYS */;
 UNLOCK TABLES;
 
 
@@ -50,3 +51,4 @@ UNLOCK TABLES;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+

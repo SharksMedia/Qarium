@@ -20,6 +20,8 @@ class Person extends Model
     protected array     $iParents = [];
     protected array     $iSchools = [];
 
+    protected ?Country  $iCountry = null;
+
     public static function getTableName(): string
     {// 2023-06-12
         return 'Persons';
@@ -75,6 +77,21 @@ class Person extends Model
                         'to'=>'PersonsToSchools.schoolID'
                     ],
                     'to'=>'Schools.schoolID'
+                ]
+            ],
+            'iCountry'=>
+            [
+                'relation'=>Model::HAS_ONE_THROUGH_RELATION,
+                'modelClass'=>Country::class,
+                'join'=>
+                [
+                    'from'=>'Persons.personID',
+                    'through'=>
+                    [
+                        'from'=>'PersonsToCountries.personID',
+                        'to'=>'PersonsToCountries.countryID',
+                    ],
+                    'to'=>'Countries.countryID'
                 ]
             ],
         ];

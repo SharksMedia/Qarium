@@ -33,6 +33,12 @@ class ModelQueryBuilder extends QueryBuilder
 
     /**
      * 2023-06-12
+     * @var array<string, array>
+     */
+    private array $allowGraph = [];
+
+    /**
+     * 2023-06-12
      * @param class-string<Model> $modelClass
      * @param Client $iClient
      * @param string $schema
@@ -44,9 +50,6 @@ class ModelQueryBuilder extends QueryBuilder
         $this->modelClass = $modelClass;
 
         parent::__construct($iClient, $schema);
-
-        // FIXME: Only create aliases if needed. ie. When at relation is added
-        // $this->column();
     }
 
     /**
@@ -83,7 +86,7 @@ class ModelQueryBuilder extends QueryBuilder
      */
     public function first(...$columns): ModelQueryBuilder
     {// 2023-05-15
-        $this->iSingle->columnMethod = Columns::TYPE_FIRST;
+        $this->method = self::METHOD_FIRST;
 
         return $this;
     }
@@ -95,668 +98,56 @@ class ModelQueryBuilder extends QueryBuilder
      */
     public function limit($value, ...$options): ModelQueryBuilder
     {// 2023-05-26
-        // TODO: Implement me!
+        throw new \BadMethodCallException('Method "limit" is not supported when using graphs.');
     }
 
-    public static function debugGetTableDefition(string $tableName): array
+    public function clearAllowGraph(): ModelQueryBuilder
     {
-        $definitions =
-        [
-            'Persons'=>
-            [
-		        [
-			        "Field"=>"personID",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>"auto_increment"
-		        ],
-		        [
-			        "Field"=>"name",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"parentID",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ]
-            ],
-            'Schools'=>
-            [
-		        [
-			        "Field"=>"schoolID",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>"auto_increment"
-		        ],
-		        [
-			        "Field"=>"name",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ]
-            ],
-            'categories'=>
-            [
-		        [
-			        "Field"=>"categories_id",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>"auto_increment"
-		        ],
-		        [
-			        "Field"=>"categories_image",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"parent_id",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"top_id",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"sort_order",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"group_order",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"date_added",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"last_modified",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"distributors_id",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"emarsys_field_names",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"groupName",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"showCustomFilters",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"outOfStockLast",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ]
-            ],
-            'products'=>
-            [
-		        [
-			        "Field"=>"products_id",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>"auto_increment"
-		        ],
-		        [
-			        "Field"=>"products_quantity",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"products_limit",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"min_purchase_quantity",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"purchase_quantity_divisor",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"products_model",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"products_date_added",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"products_last_modified",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"products_weight",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"dimensions",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"products_membership_discount_percentage",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"products_status",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"products_tax_class_id",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"manufacturers_id",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"manufacturers_sec_id",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"supplier_id",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"supplier_product_id",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"ean_number",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"primary_category_id",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"translated_se",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"translation_approved_se",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"translated_no",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"translation_approved_no",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"colli_size",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"customs_tariff_number",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"origin_country",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"discontinued",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"orderedAlone",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"secret",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"deleted",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"excludeFromNewsList",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"warehouseRemarks",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"dangerousGoods",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"isDrug",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"pharmacyProductID",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"requiresUDI",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"revisionAdministratorID",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ]
-            ],
-            'products_description'=>
-            [
-		        [
-			        "Field"=>"products_id",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>"auto_increment"
-		        ],
-		        [
-			        "Field"=>"language_id",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"products_name",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"products_name_brand",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"products_name_type",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"products_name_variant",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"products_name_quantity",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"products_name_unit",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"products_description",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"products_description_source",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"primaryContentSourceID",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"secondaryContentSourceID",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"products_manchet",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"products_metatag_description",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"products_metatag_keywords",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"products_title",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"products_h1",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"products_url",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"products_viewed",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"products_extra_info_link",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"products_extra_info_content",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"products_extra_info_content_source",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"primary_category_id",
-			        "Type"=>"BLOB",
-			        "Null"=>"NO",
-			        "Key"=>"BLOB",
-			        "Default"=>"BLOB",
-			        "Extra"=>""
-		        ],
-		        [
-			        "Field"=>"adWordsCampaignID",
-			        "Type"=>"BLOB",
-			        "Null"=>"YES",
-			        "Key"=>"BLOB",
-			        "Default"=>null,
-			        "Extra"=>""
-		        ]
-            ]
-        ];
+        $this->allowGraph = [];
 
-        return $definitions[$tableName];
+        return $this;
     }
 
-    private static function createAliases(string $tableName, ?string $relationName=null, ?array $fields=null, ?string $tableAlias=null): array
+    public function clearWithGraph(): ModelQueryBuilder
+    {
+        $this->iRelations = [];
+
+        return $this;
+    }
+
+    public function debugGetTableDefition(string $tableName): array
+    {
+        // TODO: Create a function on the compiler to do this
+
+        static $cache = [];
+
+        if(isset($cache[$tableName])) return $cache[$tableName];
+
+        $method = '';
+        $options = [];
+        $timeout = 0;
+        $cancelOnTimeout = false;
+        $bindings = [];
+        $UUID = 'describe_' . $tableName;
+        $iQuery = new Query($method, $options, $timeout, $cancelOnTimeout, $bindings, $UUID);
+
+        // WARN: This is not safe, becuase we are not escaping the table name
+        $iQuery->setSQL('SHOW COLUMNS FROM ' . $tableName);
+
+        $iClient = $this->getClient();
+
+        if(!$iClient->isInitialized()) $iClient->initializeDriver();
+
+        $statement = $iClient->query($iQuery);
+
+        $cache[$tableName] = $statement->fetchAll(\PDO::FETCH_ASSOC);
+
+        return $cache[$tableName];
+    }
+
+    private function createAliases(string $tableName, ?string $relationName=null, ?array $fields=null, ?string $tableAlias=null): array
     {// 2023-06-15
-        $fields = $fields ?? array_column(self::debugGetTableDefition($tableName), 'Field');
+        $fields = $fields ?? array_column($this->debugGetTableDefition($tableName), 'Field');
 
         $aliasses = [];
         foreach($fields as $field)
@@ -782,15 +173,6 @@ class ModelQueryBuilder extends QueryBuilder
         if(count($parts) === 1) return $table.'.'.$column;
 
         return $table.'.'.$parts[1];
-    }
-
-    private static function getTableName(string $column): ?string
-    {
-        $parts = explode('.', $column);
-
-        if(count($parts) === 1) return null;
-
-        return $parts[0];
     }
 
     /**
@@ -870,15 +252,15 @@ class ModelQueryBuilder extends QueryBuilder
 
     /**
      * 2023-06-15
-     * @param string|Raw $relationName
-     * @param array<string, string|array<string>> $options
-     * @return ModelQueryBuilder
-     *
      * minimize         boolean     If true the aliases of the joined tables and columns created by withGraphJoined are minimized. This is sometimes needed because of identifier length limitations of some database engines. objection throws an exception when a query exceeds the length limit. You need to use this only in those cases.
      * separator        string      Separator between relations in nested withGraphJoined query. Defaults to :. Dot (.) cannot be used at the moment because of the way knex parses the identifiers.
      * aliases          Object      Aliases for relations in a withGraphJoined query. Defaults to an empty object.
      * joinOperation    string      Which join type to use ['leftJoin', 'innerJoin', 'rightJoin', ...] or any other knex join method name. Defaults to leftJoin.
      * maxBatchSize     integer     For how many parents should a relation be fetched using a single query at a time. If you set this to 1 then a separate query is used for each parent to fetch a relation. For example if you want to fetch pets for 5 persons, you get five queries (one for each person). Setting this to 1 will allow you to use stuff like limit and aggregate functions in modifyGraph and other graph modifiers. This can be used to replace the naiveEager objection 1.x had.
+     *
+     * @param string|Raw $relationName
+     * @param array<string, string|array<string>> $options
+     * @return ModelQueryBuilder
      */
     public function withGraphJoined($relationName, array $options=[]): self
     {// 2023-06-15
@@ -891,7 +273,14 @@ class ModelQueryBuilder extends QueryBuilder
         return $this;
     }
 
-    private function _modifyGraph(array $targetsGraph, callable $callback, array $iRelations)
+    /**
+     * 2023-06-22
+     * @param array<string, array> $targetsGraph
+     * @param callable $callback
+     * @param array<int, Relation> $iRelations
+     * @return void
+     */
+    private function _modifyGraph(array $targetsGraph, callable $callback, array $iRelations): void
     {
         foreach($targetsGraph as $relationName=>$graph)
         {
@@ -943,9 +332,9 @@ class ModelQueryBuilder extends QueryBuilder
         {
             return $this->withGraphJoinedHasMany($iRelation, $prefix);
         }
-        else if($relationType === Model::AS_ONE_RELATION)
+        else if($relationType === Model::HAS_ONE_RELATION)
         {
-            return $this->withGraphJoinedAsOne($iRelation, $prefix);
+            return $this->withGraphJoinedHasOne($iRelation, $prefix);
         }
         else if($relationType === Model::MANY_TO_MANY_RELATION)
         {
@@ -967,20 +356,19 @@ class ModelQueryBuilder extends QueryBuilder
      */
     private function withGraphJoinedBelongsToOne(Relation $iRelation, ?string $aliasPrefix=null): self
     {
-        $relatedModelClass = $iRelation->getRelatedModelClass();
-        $relatedTableName = $relatedModelClass::getTableName();
+        $tableAlias = $iRelation->getJoinTableAlias($aliasPrefix);
 
-        $relationName = implode(':', array_filter([$aliasPrefix, $iRelation->getName()]));
+        $joinOperation = $iRelation->getJoinOperation();
 
-        $this->leftJoin($relatedTableName.' AS '.$relationName, $iRelation->getToColumn($relationName), $iRelation->getFromColumn());
+        $this->{$joinOperation}($iRelation->getJoinTable($aliasPrefix), $iRelation->getToColumn($tableAlias), $iRelation->getFromColumn());
 
-        $aliasses = self::createAliases($relatedTableName, $relationName);
+        $aliasses = $this->createAliases($iRelation->getRelatedModelClass()::getTableName(), $tableAlias);
 
         $this->select($aliasses);
 
         foreach($iRelation->getChildRelations() as $iChildRelation)
         {
-            $this->withRelationJoined($iChildRelation, $relationName);
+            $this->withRelationJoined($iChildRelation, $tableAlias);
         }
 
         return $this;
@@ -992,22 +380,19 @@ class ModelQueryBuilder extends QueryBuilder
      */
     private function withGraphJoinedHasMany(Relation $iRelation, ?string $aliasPrefix=null): self
     {
-        $relatedModelClass = $iRelation->getRelatedModelClass();
-        $relatedTableName = $relatedModelClass::getTableName();
-
-        $relationName = implode(':', array_filter([$aliasPrefix, $iRelation->getName()]));
+        $tableAlias = $iRelation->getJoinTableAlias($aliasPrefix);
 
         $joinOperation = $iRelation->getJoinOperation();
 
-        $this->{$joinOperation}($relatedTableName.' AS '.$relationName, $iRelation->getToColumn($relationName), $iRelation->getFromColumn());
+        $this->{$joinOperation}($iRelation->getJoinTable($aliasPrefix), $iRelation->getToColumn($tableAlias), $iRelation->getFromColumn());
 
-        $aliasses = self::createAliases($relatedTableName, $relationName);
+        $aliasses = $this->createAliases($iRelation->getRelatedModelClass()::getTableName(), $tableAlias);
 
         $this->select($aliasses);
 
         foreach($iRelation->getChildRelations() as $iChildRelation)
         {
-            $this->withRelationJoined($iChildRelation, $relationName);
+            $this->withRelationJoined($iChildRelation, $tableAlias);
         }
 
         return $this;
@@ -1017,9 +402,24 @@ class ModelQueryBuilder extends QueryBuilder
      * 2023-06-15
      * @return ModelQueryBuilder
      */
-    private function withGraphJoinedAsOne(Relation $iRelation): self
+    private function withGraphJoinedHasOne(Relation $iRelation, ?string $aliasPrefix): self
     {
-        // TODO: Implement me!
+        $tableAlias = $iRelation->getJoinTableAlias($aliasPrefix);
+
+        $joinOperation = $iRelation->getJoinOperation();
+
+        $this->{$joinOperation}($iRelation->getJoinTable($aliasPrefix), $iRelation->getToColumn($tableAlias), $iRelation->getFromColumn());
+
+        $aliasses = $this->createAliases($iRelation->getRelatedModelClass()::getTableName(), $tableAlias);
+
+        $this->select($aliasses);
+
+        foreach($iRelation->getChildRelations() as $iChildRelation)
+        {
+            $this->withRelationJoined($iChildRelation, $tableAlias);
+        }
+
+        return $this;
     }
 
     /**
@@ -1036,8 +436,8 @@ class ModelQueryBuilder extends QueryBuilder
         $this->{$joinOperation}($iRelation->getJoinThroughTable($aliasPrefix), $iRelation->getThroughFromColumn($throughTableAlias), $iRelation->getFromColumn());
         $this->{$joinOperation}($iRelation->getJoinTable($aliasPrefix), $iRelation->getToColumn($tableAlias), $iRelation->getThroughToColumn($throughTableAlias));
 
-        $aliasses = self::createAliases($iRelation->getRelatedModelClass()::getTableName(), $tableAlias);
-        $extraAliasses = self::createAliases($throughTableAlias, $tableAlias, $iRelation->getThroughExtras(), $throughTableAlias);
+        $aliasses = $this->createAliases($iRelation->getRelatedModelClass()::getTableName(), $tableAlias);
+        $extraAliasses = $this->createAliases($throughTableAlias, $tableAlias, $iRelation->getThroughExtras(), $throughTableAlias);
 
         $this->select(array_merge($aliasses, $extraAliasses));
 
@@ -1047,37 +447,33 @@ class ModelQueryBuilder extends QueryBuilder
         }
 
         return $this;
-
-        // $relatedModelClass = $iRelation->getRelatedModelClass();
-        // $relatedTableName = $relatedModelClass::getTableName();
-        // $relationName = implode(':', array_filter([$aliasPrefix, $iRelation->getName()]));
-        //
-        // $throughTableName = self::getTableName($iRelation->getThroughFromColumn());
-        // $throughRelationName = implode(':', array_filter([$aliasPrefix, $iRelation->getName()])).'_through';
-        //
-        // $this->leftJoin($throughTableName.' AS '.$throughRelationName, $iRelation->getThroughFromColumn($throughRelationName), $iRelation->getFromColumn());
-        // $this->leftJoin($relatedTableName.' AS '.$relationName, $iRelation->getToColumn($relationName), $iRelation->getThroughToColumn($throughRelationName));
-        //
-        // $aliasses = self::createAliases($relatedTableName, $relationName);
-        // $extraAliases = self::createAliases($throughRelationName, $relationName, $iRelation->getThroughExtras(), $throughRelationName);
-        //
-        // $this->select(array_merge($aliasses, $extraAliases));
-        //
-        // foreach($iRelation->getChildRelations() as $iChildRelation)
-        // {
-        //     $this->withRelationJoined($iChildRelation, $relationName);
-        // }
-        //
-        // return $this;
     }
 
     /**
      * 2023-06-15
      * @return ModelQueryBuilder
      */
-    private function withGraphJoinedOneThroughRelation(Relation $iRelation): self
+    private function withGraphJoinedOneThroughRelation(Relation $iRelation, ?string $aliasPrefix=null): self
     {
+        $throughTableAlias = $iRelation->getJoinThroughTableAlias($aliasPrefix);
+        $tableAlias = $iRelation->getJoinTableAlias($aliasPrefix);
 
+        $joinOperation = $iRelation->getJoinOperation();
+
+        $this->{$joinOperation}($iRelation->getJoinThroughTable($aliasPrefix), $iRelation->getThroughFromColumn($throughTableAlias), $iRelation->getFromColumn());
+        $this->{$joinOperation}($iRelation->getJoinTable($aliasPrefix), $iRelation->getToColumn($tableAlias), $iRelation->getThroughToColumn($throughTableAlias));
+
+        $aliasses = $this->createAliases($iRelation->getRelatedModelClass()::getTableName(), $tableAlias);
+        $extraAliasses = $this->createAliases($throughTableAlias, $tableAlias, $iRelation->getThroughExtras(), $throughTableAlias);
+
+        $this->select(array_merge($aliasses, $extraAliasses));
+
+        foreach($iRelation->getChildRelations() as $iChildRelation)
+        {
+            $this->withRelationJoined($iChildRelation, $tableAlias);
+        }
+
+        return $this;
     }
 
     /**
@@ -1175,10 +571,11 @@ class ModelQueryBuilder extends QueryBuilder
      */
     public function preCompile(): void
     {
+        // NOTE: Consider moving this function to the QueryCompiler class.
         // FIXME: Allow for custom selects
         if(count($this->iRelations) !== 0)
         {
-            $this->column(self::createAliases($this->modelClass::getTableName()));
+            $this->column($this->createAliases($this->modelClass::getTableName()));
         }
         
         // Walking backwards through array, so the order in which relations has been added, matches
@@ -1190,11 +587,6 @@ class ModelQueryBuilder extends QueryBuilder
             $this->withRelationJoined($iRelation);
         }
         while($iRelation = prev($this->iRelations));
-
-        // foreach($this->iRelations as $iRelation)
-        // {
-        //     $this->withRelationJoined($iRelation);
-        // }
     }
 
     private function createModelsFromResultsGraph(array $resultsGraph): array
@@ -1228,50 +620,9 @@ class ModelQueryBuilder extends QueryBuilder
 
         $iModels = $this->createModelsFromResultsGraph($resultsGraph);
 
-        return $iModels;
-
-        // $result = ($this->getSelectMethod() === Columns::TYPE_FIRST)
-        //     ? $statement->fetchObject($this->modelClass)
-        //     : $statement->fetchAll(\PDO::FETCH_CLASS, $this->modelClass);
-
-        // $results = $statement->fetchAll(\PDO::FETCH_NUM);
-        /*
-
-        $iModels = [];
-        while($result = $statement->fetch(\PDO::FETCH_NUM))
-        {
-            // NOTE: There might be a bug if a join graph does not have any data
-
-            $tablesData = [];
-            foreach($result as $index=>$value)
-            {
-                $columnInfo = $statement->getColumnMeta($index);
-                $tablesData[$columnInfo['table']][$columnInfo['name']] = $value;
-            }
-
-            $modelClass = $this->modelClass;
-
-            $data = $tablesData[$modelClass::getTableName()];
-
-            foreach($this->graphModelClasses as $propName=>$modelClass)
-            {
-                $graphData = $modelClass::create($tablesData[$modelClass::getTableName()]);
-                $data[$propName] = $graphData;
-            }
-
-            $iMainModel = new $modelClass($tablesData[$this->modelClass::getTableName()]); //  $this->modelClass::create($tablesData[$this->modelClass::getTableName()]);
-
-            // psudeo code: if($this->fetchGenerated) yield $iMainModel;
-
-            $iModels[] = $iMainModel;
-        }
-
-        $statement->closeCursor();
-
-        if($this->getSelectMethod() === Columns::TYPE_FIRST) return array_shift($iModels);
+        if($this->getMethod() === Columns::TYPE_FIRST) return $iModels[0] ?? null;
 
         return $iModels;
-        */
     }
 
 }

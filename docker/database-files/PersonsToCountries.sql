@@ -5,9 +5,9 @@
 # https://sequel-ace.com/
 # https://github.com/Sequel-Ace/Sequel-Ace
 #
-# Host: 127.0.0.1 (MySQL 8.0.23-14)
-# Database: ObjectionTest
-# Generation Time: 2023-06-22 12:16:20 +0000
+# Host: 127.0.0.1 (MySQL 8.0.33)
+# Database: db
+# Generation Time: 2023-06-23 07:57:11 +0000
 # ************************************************************
 
 
@@ -20,26 +20,29 @@ SET NAMES utf8mb4;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 
-# Dump of table Schools
+# Dump of table PersonsToCountries
 # ------------------------------------------------------------
 
-DROP TABLE IF EXISTS `Schools`;
+DROP TABLE IF EXISTS `PersonsToCountries`;
 
-CREATE TABLE `Schools` (
-  `schoolID` int unsigned NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) DEFAULT NULL,
-  `cityID` int unsigned NOT NULL,
-  PRIMARY KEY (`schoolID`)
+CREATE TABLE `PersonsToCountries` (
+  `personID` int unsigned NOT NULL,
+  `countryID` int unsigned NOT NULL,
+  PRIMARY KEY (`personID`,`countryID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-LOCK TABLES `Schools` WRITE;
-/*!40000 ALTER TABLE `Schools` DISABLE KEYS */;
+LOCK TABLES `PersonsToCountries` WRITE;
+/*!40000 ALTER TABLE `PersonsToCountries` DISABLE KEYS */;
 
-INSERT INTO `Schools` (`schoolID`, `name`, `cityID`)
+INSERT INTO `PersonsToCountries` (`personID`, `countryID`)
 VALUES
-	(1,'SharkCamp',1);
+	(1,57),
+	(2,57),
+	(3,57),
+	(4,57),
+	(5,57);
 
-/*!40000 ALTER TABLE `Schools` ENABLE KEYS */;
+/*!40000 ALTER TABLE `PersonsToCountries` ENABLE KEYS */;
 UNLOCK TABLES;
 
 

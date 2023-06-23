@@ -10,8 +10,11 @@ class School extends Model
 {
     protected int       $schoolID;
     protected string    $name;
+    protected int       $cityID;
 
-    protected ?array    $iStudents;
+    protected ?array    $iPersons;
+
+    protected ?City     $iCity;
 
     public static function getTableName(): string
     {// 2023-06-12
@@ -27,7 +30,7 @@ class School extends Model
     {// 2023-06-12
         $relations =
         [
-            'iStudents'=>
+            'iPersons'=>
             [
                 'relation'=>Model::MANY_TO_MANY_RELATION,
                 'modelClass'=>Student::class,
@@ -41,6 +44,16 @@ class School extends Model
                         'extras'=>['role'],
                     ],
                     'to'=>'Persons.personID'
+                ]
+            ],
+            'iCity'=>
+            [
+                'relation'=>Model::BELONGS_TO_ONE_RELATION,
+                'modelClass'=>City::class,
+                'join'=>
+                [
+                    'from'=>'Schools.cityID',
+                    'to'=>'Cities.cityID'
                 ]
             ]
         ];

@@ -16,10 +16,39 @@ use Sharksmedia\QueryBuilder\Transaction;
 
 abstract class Model
 {
+    /**
+     * 2023-06-12
+     * Use this relation when the source model has the foreign key
+     * @var string
+     */
     public const BELONGS_TO_ONE_RELATION        = 'BELONGS_TO_ONE_RELATION';
+
+    /**
+     * 2023-06-12
+     * Use this relation when the related model has the foreign key
+     * @var string
+     */
     public const HAS_MANY_RELATION              = 'HAS_MANY_RELATION';
-    public const AS_ONE_RELATION                = 'AS_ONE_RELATION';
+
+    /**
+     * 2023-06-12
+     * Just like HAS_MANY_RELATION but for one related row
+     * @var string
+     */
+    public const HAS_ONE_RELATION                = 'HAS_ONE_RELATION';
+
+    /**
+     * 2023-06-12
+     * Use this relation when the model is related to a list of other models through a join table
+     * @var string
+     */
     public const MANY_TO_MANY_RELATION          = 'MANY_TO_MANY_RELATION';
+
+    /**
+     * 2023-06-12
+     * Use this relation when the model is related to a single model through a join table 
+     * @var string
+     */
     public const HAS_ONE_THROUGH_RELATION       = 'HAS_ONE_THROUGH_RELATION';
 
     /**
@@ -86,14 +115,27 @@ abstract class Model
 
             $relatedModelClass = $iRelation->getRelatedModelClass();
 
+            $typeIsArray = in_array($iRelation->getType(), [self::HAS_MANY_RELATION, self::MANY_TO_MANY_RELATION]);
+
             if(is_array($columnValue))
             {
-                $iModel->{$iRelation->getName()} = [];
+                $iRelatedModels = [];
                 foreach($columnValue as $columnValueItem)
                 {
                     $iRelatedModel = $relatedModelClass::create($columnValueItem, $iRelation->getChildRelations());
 
-                    if($iRelatedModel !== null) $iModel->{$iRelation->getName()}[] = $iRelatedModel;
+                    if($iRelatedModel !== null) $iRelatedModels[] = $iRelatedModel;
+                }
+
+                if(!$typeIsArray)
+                {
+                    if(count($iRelatedModels) > 1) throw new \Exception('Relation is not of type array');
+
+                    $iModel->{$iRelation->getName()} = $iRelatedModels[0] ?? null;
+                }
+                else
+                {
+                    $iModel->{$iRelation->getName()} = $iRelatedModels;
                 }
 
                 continue;
@@ -101,7 +143,7 @@ abstract class Model
 
             $iRelatedModel = $relatedModelClass::create($columnValue, $iRelation->getChildRelations());
 
-            if($iRelatedModel !== null) $iModel->{$iRelation->getName()}[] = $iRelatedModel;
+            if($iRelatedModel !== null) $iModel->{$iRelation->getName()} = $iRelatedModel;
         }
 
         return $iModel;

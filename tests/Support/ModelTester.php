@@ -41,5 +41,10 @@ class ModelTester
 
         $iProp->setValue($this->iObject, $value);
     }
+
+    public function getObject()
+    {
+        return clone $this->iObject;
+    }
 }
 

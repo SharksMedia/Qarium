@@ -9,7 +9,10 @@ use Sharksmedia\Objection\ModelQueryBuilder;
 use Sharksmedia\QueryBuilder\QueryCompiler;
 use Sharksmedia\QueryBuilder\Config;
 use Sharksmedia\QueryBuilder\Client;
+
 use Tests\Support\Person;
+use Tests\Support\School;
+use Tests\Support\City;
 
 class SelectsTest extends \Codeception\Test\Unit
 {
@@ -46,6 +49,120 @@ class SelectsTest extends \Codeception\Test\Unit
         Objection::setClient(self::getClient());
 
         $cases = [];
+
+        $cases['With graph joined belongs to one relation'] = function()
+        {
+            $case =
+            [
+                School::query()
+                    ->withGraphJoined('iCity')
+                    ->findByID(1),
+                [
+                    'mysql'=>
+                    [
+                        'sql'=>'SELECT `Schools`.`schoolID` AS `schoolID`, `Schools`.`name` AS `name`, `Schools`.`cityID` AS `cityID`, `iCity`.`cityID` AS `iCity:cityID`, `iCity`.`countryID` AS `iCity:countryID`, `iCity`.`name` AS `iCity:name` FROM `Schools` LEFT JOIN `Cities` AS `iCity` ON(`iCity`.`cityID` = `Schools`.`cityID`) WHERE `Schools`.`schoolID` = ?',
+                        'bindings'=>[1]
+                    ]
+                ]
+            ];
+            
+            return $case;
+        };
+
+        $cases['With graph joined has many relation'] = function()
+        {
+            $case =
+            [
+                Person::query()
+                    ->withGraphJoined('iChildren')
+                    ->findByID(3),
+                [
+                    'mysql'=>
+                    [
+                        'sql'=>'SELECT `Persons`.`personID` AS `personID`, `Persons`.`name` AS `name`, `Persons`.`parentID` AS `parentID`, `iChildren`.`personID` AS `iChildren:personID`, `iChildren`.`name` AS `iChildren:name`, `iChildren`.`parentID` AS `iChildren:parentID` FROM `Persons` LEFT JOIN `Persons` AS `iChildren` ON(`iChildren`.`personID` = `Persons`.`parentID`) WHERE `Persons`.`personID` = ?',
+                        'bindings'=>[3]
+                    ]
+                ]
+            ];
+            
+            return $case;
+        };
+
+        $cases['With graph joined has one relation'] = function()
+        {
+            $case =
+            [
+                City::query()
+                    ->withGraphJoined('iCountry')
+                    ->findByID(1),
+                [
+                    'mysql'=>
+                    [
+                        'sql'=>'SELECT `Cities`.`cityID` AS `cityID`, `Cities`.`countryID` AS `countryID`, `Cities`.`name` AS `name`, `iCountry`.`countryID` AS `iCountry:countryID`, `iCountry`.`name` AS `iCountry:name`, `iCountry`.`ISOCode2` AS `iCountry:ISOCode2`, `iCountry`.`ISOCode3` AS `iCountry:ISOCode3` FROM `Cities` LEFT JOIN `Countries` AS `iCountry` ON(`iCountry`.`countryID` = `Cities`.`countryID`) WHERE `Cities`.`cityID` = ?',
+                        'bindings'=>[1]
+                    ]
+                ]
+            ];
+            
+            return $case;
+        };
+
+        $cases['With graph joined many to many relation'] = function()
+        {
+            $case =
+            [
+                Person::query()
+                    ->withGraphJoined('iSchools')
+                    ->findByID(3),
+                [
+                    'mysql'=>
+                    [
+                        'sql'=>'SELECT `Persons`.`personID` AS `personID`, `Persons`.`name` AS `name`, `Persons`.`parentID` AS `parentID`, `iSchools`.`schoolID` AS `iSchools:schoolID`, `iSchools`.`name` AS `iSchools:name`, `iSchools`.`cityID` AS `iSchools:cityID` FROM `Persons` LEFT JOIN `PersonsToSchools` AS `iSchools_through` ON(`iSchools_through`.`personID` = `Persons`.`personID`) LEFT JOIN `Schools` AS `iSchools` ON(`iSchools`.`schoolID` = `iSchools_through`.`schoolID`) WHERE `Persons`.`personID` = ?',
+                        'bindings'=>[3]
+                    ]
+                ]
+            ];
+            
+            return $case;
+        };
+
+        $cases['With graph joined has one relation'] = function()
+        {
+            $case =
+            [
+                City::query()
+                    ->withGraphJoined('iCountry')
+                    ->findByID(1),
+                [
+                    'mysql'=>
+                    [
+                        'sql'=>'SELECT `Cities`.`cityID` AS `cityID`, `Cities`.`countryID` AS `countryID`, `Cities`.`name` AS `name`, `iCountry`.`countryID` AS `iCountry:countryID`, `iCountry`.`name` AS `iCountry:name`, `iCountry`.`ISOCode2` AS `iCountry:ISOCode2`, `iCountry`.`ISOCode3` AS `iCountry:ISOCode3` FROM `Cities` LEFT JOIN `Countries` AS `iCountry` ON(`iCountry`.`countryID` = `Cities`.`countryID`) WHERE `Cities`.`cityID` = ?',
+                        'bindings'=>[1]
+                    ]
+                ]
+            ];
+            
+            return $case;
+        };
+
+        $cases['With graph joined has one through relation'] = function()
+        {
+            $case =
+            [
+                Person::query()
+                    ->withGraphJoined('iCountry')
+                    ->findByID(3),
+                [
+                    'mysql'=>
+                    [
+                        'sql'=>'SELECT `Persons`.`personID` AS `personID`, `Persons`.`name` AS `name`, `Persons`.`parentID` AS `parentID`, `iCountry`.`countryID` AS `iCountry:countryID`, `iCountry`.`name` AS `iCountry:name`, `iCountry`.`ISOCode2` AS `iCountry:ISOCode2`, `iCountry`.`ISOCode3` AS `iCountry:ISOCode3` FROM `Persons` LEFT JOIN `PersonsToCountries` AS `iCountry_through` ON(`iCountry_through`.`personID` = `Persons`.`personID`) LEFT JOIN `Countries` AS `iCountry` ON(`iCountry`.`countryID` = `iCountry_through`.`countryID`) WHERE `Persons`.`personID` = ?',
+                        'bindings'=>[3]
+                    ]
+                ]
+            ];
+            
+            return $case;
+        };
 
         $cases['Basic find all'] = function()
         {
@@ -171,6 +288,7 @@ class SelectsTest extends \Codeception\Test\Unit
             return $case;
         };
 
+        // TODO: Implement this
         // $cases['Basic all with graph joined, aliases'] = function()
         // {
         //     $case =
@@ -246,7 +364,8 @@ class SelectsTest extends \Codeception\Test\Unit
 
             return $case;
         };
-/*
+
+
         $cases['With graph joined one level deep'] = function()
         {
             $case =
@@ -255,7 +374,7 @@ class SelectsTest extends \Codeception\Test\Unit
                 [
                     'mysql'=>
                     [
-                        'sql'=>'SELECT `Persons`.`personID` AS `personID`, `Persons`.`name` AS `name`, `Persons`.`parentID` AS `parentID`, `iChildren`.`personID` AS `iChildren:personID`, `iChildren`.`name` AS `iChildren:name`, `iChildren`.`parentID` AS `iChildren:parentID`, `iChildren:iParents`.`personID` AS `iChildren:iParents:personID`, `iChildren:iParents`.`name` AS `iChildren:iParents:name`, `iChildren:iParents`.`parentID` AS `iChildren:iParents:parentID` FROM `Persons` LEFT JOIN `Persons` AS `iChildren` ON(`iChildren`.`parentID` = `Persons`.`personID`) LEFT JOIN `Persons` AS `iChildren:iParents` ON(`iChildren:iParents`.`personID` = `iChildren`.`parentID`)',
+                        'sql'=>'SELECT `Persons`.`personID` AS `personID`, `Persons`.`name` AS `name`, `Persons`.`parentID` AS `parentID`, `iParents`.`personID` AS `iParents:personID`, `iParents`.`name` AS `iParents:name`, `iParents`.`parentID` AS `iParents:parentID`, `iParents:iChildren`.`personID` AS `iParents:iChildren:personID`, `iParents:iChildren`.`name` AS `iParents:iChildren:name`, `iParents:iChildren`.`parentID` AS `iParents:iChildren:parentID` FROM `Persons` LEFT JOIN `Persons` AS `iParents` ON(`iParents`.`parentID` = `Persons`.`personID`) LEFT JOIN `Persons` AS `iParents:iChildren` ON(`iParents:iChildren`.`personID` = `iParents`.`parentID`)',
                         'bindings'=>[]
                     ]
                 ]
@@ -272,7 +391,7 @@ class SelectsTest extends \Codeception\Test\Unit
                 [
                     'mysql'=>
                     [
-                        'sql'=>'SELECT `Persons`.`personID` AS `personID`, `Persons`.`name` AS `name`, `Persons`.`parentID` AS `parentID`, `iChildren`.`personID` AS `iChildren:personID`, `iChildren`.`name` AS `iChildren:name`, `iChildren`.`parentID` AS `iChildren:parentID`, `iChildren:iParents`.`personID` AS `iChildren:iParents:personID`, `iChildren:iParents`.`name` AS `iChildren:iParents:name`, `iChildren:iParents`.`parentID` AS `iChildren:iParents:parentID` FROM `Persons` LEFT JOIN `Persons` AS `iChildren` ON `iChildren`.`parentID` = `Persons`.`personID` LEFT JOIN `Persons` AS `iChildren:iParents` ON `iChildren:iParents`.`personID` = `iChildren`.`parentID` WHERE `Persons`.`personID` = 1',
+                        'sql'=>'SELECT `Persons`.`personID` AS `personID`, `Persons`.`name` AS `name`, `Persons`.`parentID` AS `parentID`, `iParents`.`personID` AS `iParents:personID`, `iParents`.`name` AS `iParents:name`, `iParents`.`parentID` AS `iParents:parentID`, `iParents:iChildren`.`personID` AS `iParents:iChildren:personID`, `iParents:iChildren`.`name` AS `iParents:iChildren:name`, `iParents:iChildren`.`parentID` AS `iParents:iChildren:parentID` FROM `Persons` LEFT JOIN `Persons` AS `iParents` ON(`iParents`.`parentID` = `Persons`.`personID`) LEFT JOIN `Persons` AS `iParents:iChildren` ON(`iParents:iChildren`.`personID` = `iParents`.`parentID`) WHERE `Persons`.`personID` = ?',
                         'bindings'=>[1]
                     ]
                 ]
@@ -280,7 +399,8 @@ class SelectsTest extends \Codeception\Test\Unit
 
             return $case;
         };
-*/
+    
+
         foreach($cases as $name=>$caseFn)
         {
             $cases[$name] = $caseFn();
@@ -299,6 +419,13 @@ class SelectsTest extends \Codeception\Test\Unit
         $iQueryCompiler = new QueryCompiler($iQueryBuilder->getClient(), $iQueryBuilder, []);
 
         $iQuery = $iQueryCompiler->toSQL();
+
+        // $test = array_diff_assoc(str_split($iExpected['mysql']['sql']), str_split($iQuery->getSQL()));
+        //
+        // if(count($test) > 0)
+        // {
+        //     codecept_debug($test);
+        // }
 
         $sqlAndBindings =
         [
