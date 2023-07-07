@@ -400,12 +400,97 @@ class SelectsTest extends \Codeception\Test\Unit
             return $case;
         };
     
+        $cases['With graph joined, with allowGraph, depth: 1'] = function()
+        {
+            $case =
+            [
+                Person::query()
+                    ->allowGraph('[iParents, iChildren]')
+                    ->withGraphJoined('iParents')
+                    ->findByID(1),
+                [
+                    'mysql'=>
+                    [
+                        'sql'=>'SELECT `Persons`.`personID` AS `personID`, `Persons`.`name` AS `name`, `Persons`.`parentID` AS `parentID`, `iParents`.`personID` AS `iParents:personID`, `iParents`.`name` AS `iParents:name`, `iParents`.`parentID` AS `iParents:parentID` FROM `Persons` LEFT JOIN `Persons` AS `iParents` ON(`iParents`.`parentID` = `Persons`.`personID`) WHERE `Persons`.`personID` = ?',
+                        'bindings'=>[1]
+                    ]
+                ]
+            ];
+
+            return $case;
+        };
+    
+        $cases['With graph joined, clear with graphs'] = function()
+        {
+            $case =
+            [
+                Person::query()
+                    ->withGraphJoined('iChildren')
+                    ->clearWithGraph()
+                    ->withGraphJoined('iParents')
+                    ->findByID(1),
+                [
+                    'mysql'=>
+                    [
+                        'sql'=>'SELECT `Persons`.`personID` AS `personID`, `Persons`.`name` AS `name`, `Persons`.`parentID` AS `parentID`, `iParents`.`personID` AS `iParents:personID`, `iParents`.`name` AS `iParents:name`, `iParents`.`parentID` AS `iParents:parentID` FROM `Persons` LEFT JOIN `Persons` AS `iParents` ON(`iParents`.`parentID` = `Persons`.`personID`) WHERE `Persons`.`personID` = ?',
+                        'bindings'=>[1]
+                    ]
+                ]
+            ];
+
+            return $case;
+        };
+
+        // $cases['Related query'] = function()
+        // {
+        //     $personMagnusID = 3;
+        //
+        //     $case =
+        //     [
+        //         Person::relatedQuery('iChildren')
+        //             ->for($personMagnusID),
+        //         [
+        //             'mysql'=>
+        //             [
+        //                 'sql'=>'',
+        //                 'bindings'=>[$personMagnusID]
+        //             ]
+        //         ]
+        //     ];
+        //
+        //     return $case;
+        // };
 
         foreach($cases as $name=>$caseFn)
         {
             $cases[$name] = $caseFn();
         }
 
+        return $cases;
+    }
+
+
+    public function errorCaseProvider(): array
+    {// 2023-05-16
+        // Providers are run before anything else, so we are initalizing the client here.
+        Objection::setClient(self::getClient());
+
+        $cases = [];
+
+        $cases['With graph joined, with allowGraph, depth: 1'] =
+        [
+            function()
+            {
+                Person::query()
+                    ->allowGraph('[iParents, iChildren]')
+                    ->withGraphJoined('iSchools')
+                    ->findByID(1);
+            },
+            [
+                'error'=>new \Exception('Relation "iSchools" is not allowed.'),
+            ]
+        ];
+        
         return $cases;
     }
 
@@ -434,5 +519,24 @@ class SelectsTest extends \Codeception\Test\Unit
         ];
 
         $this->assertSame($iExpected['mysql'], $sqlAndBindings);
+    }
+
+	/**
+     * @param callable $buildQueryCallback
+	 * @param array<string, mixed> $iExpected
+	 * @dataProvider errorCaseProvider
+	 */
+    public function testQueryBuilderBuildErrors(callable $buildQueryCallback, array $iExpected): void
+    {
+        try
+        {
+            $buildQueryCallback();
+
+            $this->fail('Expected exception');
+        }
+        catch(\Exception $exception)
+        {
+            $this->assertSame($iExpected['error']->getMessage(), $exception->getMessage());
+        }
     }
 }

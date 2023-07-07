@@ -74,7 +74,8 @@ class Person extends Model
                     'through'=>
                     [
                         'from'=>'PersonsToSchools.personID',
-                        'to'=>'PersonsToSchools.schoolID'
+                        'to'=>'PersonsToSchools.schoolID',
+                        'extras'=>['role'],
                     ],
                     'to'=>'Schools.schoolID'
                 ]

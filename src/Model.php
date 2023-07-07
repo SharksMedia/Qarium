@@ -192,14 +192,35 @@ abstract class Model
         return $iQueryBuilder;
     }
 
-    public function relatedQuery(): ModelQueryBuilder
+    public static function relatedQuery(string $relationName): ModelQueryBuilder
+    {
+        $relationMappings = static::getRelationMappings();
+
+        $relationMapping = $relationMappings[$relationName] ?? null;
+
+        if($relationMapping === null) throw new \Exception('Relation mapping "'.$relationName.'" not found');
+
+        /** @var class-string<Model> $relatedModelClass */
+        $relatedModelClass = $relationMapping['modelClass'];
+
+        return $relatedModelClass::query();
+    }
+
+    public function _relatedQuery(): void
     {
 
     }
 
-    public static function startTransaction(): Transaction
+    public static function startTransaction(?Client $iClient=null): Transaction
     {// 2023-06-12
+        
+        // NOTE: A transaction should probably just be a wrapper around a client. Or a querybuilder with a transaction object.
 
+        if($iClient === null) $iClient = Objection::getClient();
+
+        $iTransaction = new Transaction($iClient);
+
+        return $iTransaction;
     }
 
 

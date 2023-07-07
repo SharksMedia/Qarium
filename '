@@ -1,0 +1,29 @@
+<?php
+
+/**
+ * 2023-07-07
+ * @author Magnus Schmidt Rasmussen <magnus@sharksmedia.dk>
+ */
+
+declare(strict_types=1);
+
+namespace Sharksmedia\Objection;
+
+class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
+{
+
+    public function modify(...$args)
+    {
+        $func = $args[0] ?? null;
+
+        if($func === null) return $this;
+
+        $args[0] = $this;
+
+        $func(...$args);
+
+        reutrn $this;
+
+    }
+
+}
