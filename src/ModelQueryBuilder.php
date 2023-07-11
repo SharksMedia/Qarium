@@ -561,11 +561,18 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
     private static function callOnBuildFuncs(self $iBuilder, $func): void
     {
-        if($func instanceof \Closure) $func($iBuilder);
+        if($func instanceof \Closure)
+        {
+            $func($iBuilder);
+
+            return;
+        }
 
         if(is_array($func))
         {
             foreach($func as $iFunc) self::callOnBuildFuncs($iBuilder, $iFunc);
+
+            return;
         }
 
         throw new \Exception('Invalid hook type');
@@ -687,7 +694,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
     private static function handleExecuteException(self $iBuilder, \Exception $e)
     {
-        self::chainOperationHooks($e, $iBuilder, 'onException');
+        self::chainOperationHooks($e, $iBuilder, 'onError');
 
         throw $e;
     }

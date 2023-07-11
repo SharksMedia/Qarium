@@ -63,9 +63,9 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function update(...$args): self
+    public function update($modelOrObject): self
     {
-         return $this->addOperation(new QueryBuilderOperation('update'), $args);
+         return $this->addOperation(new QueryBuilderOperation('update'), [$modelOrObject]);
     }
 
     /**
@@ -190,9 +190,9 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function withSchema(...$args): self
+    public function withSchema($schema): self
     {
-         return $this->addOperation(new QueryBuilderOperation('withSchema'), $args);
+         return $this->addOperation(new QueryBuilderOperation('withSchema'), [$schema]);
     }
 
     /**

@@ -62,6 +62,13 @@ abstract class ModelQueryBuilderOperation
         $this->childOperations = [];
     }
 
+    protected static function funcHasBeenOverriden(string $function): bool
+    {
+        $rc = new \ReflectionClass(static::class);
+        $namepc = $rc->getParentClass()->name;
+        return method_exists($namepc, $function);
+    }
+
     /**
      * 2023-07-04
      * @return ModelQueryBuilderOperation|null
@@ -117,7 +124,7 @@ abstract class ModelQueryBuilderOperation
      */
     public function onAdd(ModelQueryBuilder $builder, array $arguments): bool { return true; }
 
-    protected function hasOnAdd(): bool { return false; }
+    public function hasOnAdd(): bool { return static::funcHasBeenOverriden('onAdd'); }
 
     /**
      * 2023-07-04
@@ -132,15 +139,15 @@ abstract class ModelQueryBuilderOperation
      */
     public function onBefore1(ModelQueryBuilder $builder, $arguments): bool { return true; }
 
-    protected function hasOnBefore1(): bool { return false; }
+    public function hasOnBefore1(): bool { return static::funcHasBeenOverriden('onBefore1'); }
 
     public function onBefore2(ModelQueryBuilder $builder, $arguments): bool { return true; }
 
-    protected function hasOnBefore2(): bool { return false; }
+    public function hasOnBefore2(): bool { return static::funcHasBeenOverriden('onBefore2'); }
 
     public function onBefore3(ModelQueryBuilder $builder, $arguments): bool { return true; }
 
-    protected function hasOnBefore3(): bool { return false; }
+    public function hasOnBefore3(): bool { return static::funcHasBeenOverriden('onBefore3'); }
     /**
      * 2023-07-04
      * This is called as the last thing when the query is executed but before
@@ -155,7 +162,7 @@ abstract class ModelQueryBuilderOperation
      */
     public function onBuild(ModelQueryBuilder $iBuilder): void { }
 
-    protected function hasOnBuild(): bool { return false; }
+    public function hasOnBuild(): bool { return static::funcHasBeenOverriden('onBuild'); }
 
     /**
      * 2023-07-04
@@ -172,7 +179,7 @@ abstract class ModelQueryBuilderOperation
      */
     public function onBuildQueryBuilder(QueryBuilder $iQueryBuilder, ModelQueryBuilder $builder): QueryBuilder { return $iQueryBuilder; }
 
-    protected function hasOnBuildQueryBuilder(): bool { return false; }
+    public function hasOnBuildQueryBuilder(): bool { return static::funcHasBeenOverriden('onBuildQueryBuilder'); }
 
     /**
      * 2023-07-04
@@ -187,7 +194,7 @@ abstract class ModelQueryBuilderOperation
      */
     public function onRawResult(ModelQueryBuilder $builder, array $rows) { return $rows; }
 
-    protected function hasOnRawResult(): bool { return false; }
+    public function hasOnRawResult(): bool { return static::funcHasBeenOverriden('onRawResult'); }
 
     /**
      * 2023-07-04
@@ -203,15 +210,15 @@ abstract class ModelQueryBuilderOperation
      */
     public function onAfter1(ModelQueryBuilder $builder, array $result): array { return $result; }
 
-    protected function hasOnAfter1(): bool { return false; }
+    public function hasOnAfter1(): bool { return static::funcHasBeenOverriden('onAfter1'); }
 
     public function onAfter2(ModelQueryBuilder $builder, array $result): array { return $result; }
 
-    protected function hasOnAfter2(): bool { return false; }
+    public function hasOnAfter2(): bool { return static::funcHasBeenOverriden('onAfter2'); }
 
     public function onAfter3(ModelQueryBuilder $builder, array $result): array { return $result; }
 
-    protected function hasOnAfter3(): bool { return false; }
+    public function hasOnAfter3(): bool { return static::funcHasBeenOverriden('onAfter3'); }
 
     /**
      * 2023-07-04
@@ -235,9 +242,9 @@ abstract class ModelQueryBuilderOperation
      * @param ModelQueryBuilder $builder
      * @param \Throwable $error
      */
-    public function onError(ModelQueryBuilder $builder, \Throwable $error): void { }
+    public function onError(ModelQueryBuilder $builder, array $arguments): void { }
 
-    protected function hasOnError(): bool { return false; }
+    public function hasOnError(): bool { return static::funcHasBeenOverriden('onError'); }
 
     /**
      * 2023-07-04
@@ -344,6 +351,8 @@ abstract class ModelQueryBuilderOperation
 
             if($childOperation->forEachDescendantOperation($callback) === false) return false;
         }
+
+        return true;
     }
 
 }

@@ -21,12 +21,12 @@ class OnErrorOperation extends ModelQueryBuilderOperation
         $this->function = $arguments[0] ?? null;
     }
 
-    public function onError(ModelQueryBuilder $builder, Throwable $error): void
+    public function onError(ModelQueryBuilder $builder, array $arguments): void
     {
         if($this->function !== null)
         {
             $func = $this->function;
-            $func($builder, $error);
+            $func($builder, $arguments);
         }
     }
 }

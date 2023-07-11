@@ -40,9 +40,9 @@ class ModelQueryBuilderContextBase
     {
         if($iBuilder === null) return;
 
-        $userContextClass = $iBuilder->getUserContextClass();
+        $userContextClass = $iBuilder->getModelQueryBuilderUserContextClass();
 
-        $this->userContext = new $userContextClass($iBuilder);
+        if($iBuilder !== null) $this->userContext = new $userContextClass($iBuilder);
 
         $this->options = $iBuilder->getInternalOptions();
     }

@@ -98,7 +98,27 @@ class RelationJoiner
 
     public function build(ModelQueryBuilder $iBuilder, bool $buildSelects=true): void
     {
+        $tableTree = $this->getTableTree($iBuilder);
+        $rootTableNode = $tableTree['rootNode'];
 
+        $userSelectQueries = [[$rootTableNode, $iBuilder]];
+
+        foreach($rootTableNode->iChildNodes as $child)
+        {
+            $this->buildJoinsForNode(['builder'=>$iBuilder, 'tableNode'=>$child, 'userSelectQueries'=>$userSelectQueries]);
+        }
+
+        if($buildSelects)
+        {
+            $this->buildSelects(['builder'=>$iBuilder, 'tableNode'=>$rootTableNode, 'userSelectQueries'=>$userSelectQueries]);
+        }
+    }
+
+    public function parseResult(ModelQueryBuilder $iBuilder, array $flatRows)
+    {
+        $parser = JoinResultParser::create(['tableTree'=>$this->getTableTree($iBuilder), 'omitColumnAliases'=>array_column($this->internalSelections, 'alias')]);
+
+        return $parser->parse($flatRows);
     }
 
 }

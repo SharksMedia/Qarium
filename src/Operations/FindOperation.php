@@ -11,12 +11,13 @@ namespace Sharksmedia\Objection\Operations;
 
 use Sharksmedia\Objection\Model;
 use Sharksmedia\Objection\ModelQueryBuilder;
+use Sharksmedia\Objection\StaticHookArguments;
 
 class FindOperation extends ModelQueryBuilderOperation
 {
     public function onBefore2(ModelQueryBuilder $builder, $arguments): bool
     {
-        $this->callStaticBeforeFind($builder);
+        return $this->callStaticBeforeFind($builder) ?? true;
     }
 
     public function onAfter3(ModelQueryBuilder $builder, array $result): array
@@ -30,9 +31,9 @@ class FindOperation extends ModelQueryBuilderOperation
 
     public function callStaticBeforeFind(ModelQueryBuilder $builder)
     {
-        $arguments = StaticHookArguments::create(['builder'=>$builder]);
+        $arguments = StaticHookArguments::create($builder);
 
-        return $builder->modelClass()::beforeFind($arguments);
+        return $builder->getModelClass()::beforeFind($arguments);
     }
 
     public function callAfterFind(ModelQueryBuilder $builder, array $result): array
@@ -45,9 +46,9 @@ class FindOperation extends ModelQueryBuilderOperation
 
     public function callStaticAfterFind(ModelQueryBuilder $builder, array $result): array
     {
-        $arguments = StaticHookArguments::create(['builder'=>$builder, 'result'=>$result]);
+        $arguments = StaticHookArguments::create($builder, $result);
 
-        return $builder->modelClass()::afterFind($arguments);
+        return $builder->getModelClass()::afterFind($arguments);
     }
 
     public function callInstanceAfterFind(string $context, array $results, $deep)

@@ -89,7 +89,7 @@ abstract class ModelQueryBuilderOperationSupport
      */
     public static function getModelQueryBuilderContextClass(): string
     {
-        return ModelQueryBuilderContextBase::class;
+        return ModelQueryBuilderContext::class;
     }
 
     /**
@@ -98,7 +98,7 @@ abstract class ModelQueryBuilderOperationSupport
      */
     public static function getModelQueryBuilderUserContextClass(): string
     {
-        return ModelQueryBuilderContextBase::class;
+        return ModelQueryBuilderContextUser::class;
     }
 
     /**
@@ -163,9 +163,9 @@ abstract class ModelQueryBuilderOperationSupport
         return $this;
     }
 
-    public function getInternalOptions(): array
+    public function getInternalOptions(): ?array
     {
-        return $this->context->options;
+        return $this->context->options ?? null;
     }
     /**
      * @param array<int,mixed> $options
@@ -297,7 +297,7 @@ abstract class ModelQueryBuilderOperationSupport
         return $this;
     }
 
-    public function getUnsafeQueryBuilder(): QueryBuilder
+    public function getUnsafeQueryBuilder(): ?QueryBuilder
     {
         return $this->context->iQueryBuilder ?? $this->modelClass::getQueryBuilder() ?? null;
     }
@@ -475,11 +475,11 @@ abstract class ModelQueryBuilderOperationSupport
      * @param mixed $hookName
      * @param mixed $args
      */
-    public function callOperationMethod($operation, $hookName, $args): ModelQueryBuilderOperationSupport
+    public function callOperationMethod($operation, $hookName, $args)
     {
         try
         {
-            $operation->removeChildOperationsByHookName($hookName);
+            $operation->removeChildOperationByHookName($hookName);
 
             $this->activeOperations[] =
             [
@@ -487,7 +487,7 @@ abstract class ModelQueryBuilderOperationSupport
                 'hookName' => $hookName,
             ];
 
-            return $operation->$hookName(...$args);
+            return $operation->$hookName($this, $args);
         }
         finally
         {
@@ -497,14 +497,14 @@ abstract class ModelQueryBuilderOperationSupport
     /**
      * @param mixed $args
      */
-    public function addOperation(ModelQueryBuilderOperation $operation, ...$args): static
+    public function addOperation(ModelQueryBuilderOperation $operation, $args): static
     {
         return $this->addOperationUsingMethod('push', $operation, $args);
     }
     /**
      * @param mixed $args
      */
-    public function addOperationToFront(ModelQueryBuilderOperation $operation, ...$args): ModelQueryBuilderOperationSupport
+    public function addOperationToFront(ModelQueryBuilderOperation $operation, $args): ModelQueryBuilderOperationSupport
     {
         return $this->addOperationUsingMethod('unshift', $operation, $args);
     }

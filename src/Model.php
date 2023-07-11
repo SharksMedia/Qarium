@@ -12,6 +12,7 @@ namespace Sharksmedia\Objection;
 use Sharksmedia\Objection\ModelQueryBuilder;
 
 use Sharksmedia\QueryBuilder\Client;
+use Sharksmedia\QueryBuilder\QueryBuilder;
 use Sharksmedia\QueryBuilder\Transaction;
 
 abstract class Model
@@ -62,6 +63,12 @@ abstract class Model
      * @return array<int, string>
      */
     abstract static function getTableIDs(): array;
+
+    /**
+     * 2023-06-12
+     * @var QueryBuilder
+     */
+    private static ?QueryBuilder $iQueryBuilder = null;
 
     /**
      * 2023-06-12
@@ -175,6 +182,18 @@ abstract class Model
 
     /**
      * 2023-06-12
+     * @return void
+     */
+    public static function beforeFind(): void { /* Do nothing by default. */ }
+
+    /**
+     * 2023-06-12
+     * @return void
+     */
+    public static function afterFind(): void { /* Do nothing by default. */ }
+
+    /**
+     * 2023-06-12
      * Runs before the insert query is executed.
      * @return void
      */
@@ -214,4 +233,16 @@ abstract class Model
      * @return void
      */
     public static function afterDelete(): void { /* Do nothing by default. */ }
+
+    public static function getQueryBuilder(?QueryBuilder $iQueryBuilder=null): ?QueryBuilder
+    {
+        if($iQueryBuilder !== null) static::$iQueryBuilder = $iQueryBuilder;
+
+        return static::$iQueryBuilder;
+    }
+
+    public static function getQueryBuilderQuery(): ?QueryBuilder
+    {
+        return static::getQueryBuilder()->table(static::getTableName());
+    }
 }
