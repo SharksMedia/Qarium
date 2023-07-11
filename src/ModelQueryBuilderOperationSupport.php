@@ -101,11 +101,20 @@ abstract class ModelQueryBuilderOperationSupport
         return ModelQueryBuilderContextBase::class;
     }
 
-    public static function forClass(string $modelClass): ModelQueryBuilderOperationSupport
+    /**
+     * 2023-07-07
+     * @param class-string<Model> $modelClass
+     * @return ModelQueryBuilderOperationSupport|ModelQueryBuilderBase|ModelQueryBuilder
+     */
+    public static function forClass(string $modelClass)
     {
         return new static($modelClass);
     }
 
+    /**
+     * 2023-07-07
+     * @return class-string<Model>
+     */
     public function getModelClass(): string
     {
         return $this->modelClass;
@@ -140,7 +149,7 @@ abstract class ModelQueryBuilderOperationSupport
         return $this;
     }
 
-    public function getInternalContext(): ModelQueryBuilderContextBase
+    public function getInternalContext(): ModelQueryBuilderContext
     {
         return $this->context;
     }
@@ -391,13 +400,13 @@ abstract class ModelQueryBuilderOperationSupport
     /**
      * @param Closure(): void $operatorSelector
      */
-    public function has(\Closure $operatorSelector): bool
+    public function has($operatorSelector): bool
     {
         return $this->findOperation($operatorSelector) !== null;
     }
     /**
      * @param mixed $operationSelector
-     * @param Closure(): void $callback
+     * @param Closure(): void|string $callback
      */
     public function forEachOperations($operationSelector, \Closure $callback, bool $match=true): ModelQueryBuilderOperationSupport
     {
@@ -418,9 +427,9 @@ abstract class ModelQueryBuilderOperationSupport
         return $this;
     }
     /**
-     * @param Closure(): void $operationSelector
+     * @param Closure(): void|string $operationSelector
      */
-    public function findOperation(\Closure $operationSelector): ?ModelQueryBuilderOperationSupport
+    public function findOperation($operationSelector): ?ModelQueryBuilderOperation
     {
         $operation = null;
 
@@ -435,7 +444,7 @@ abstract class ModelQueryBuilderOperationSupport
     /**
      * @param Closure(): void $operationSelector
      */
-    public function findLastOperation(\Closure $operationSelector): ?ModelQueryBuilderOperationSupport
+    public function findLastOperation($operationSelector): ?ModelQueryBuilderOperationSupport
     {
         $operation = null;
 
@@ -488,7 +497,7 @@ abstract class ModelQueryBuilderOperationSupport
     /**
      * @param mixed $args
      */
-    public function addOperation(ModelQueryBuilderOperation $operation, ...$args): ModelQueryBuilderOperationSupport
+    public function addOperation(ModelQueryBuilderOperation $operation, ...$args): static
     {
         return $this->addOperationUsingMethod('push', $operation, $args);
     }

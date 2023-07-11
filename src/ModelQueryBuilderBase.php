@@ -55,7 +55,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function insert(...$args): self
+    public function insert($modelsOrObjects): self
     {
          return $this->addOperation(new QueryBuilderOperation('insert'), $args);
     }
@@ -894,9 +894,9 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function debug(...$args): self
+    public function debug(bool $doIt=true): self
     {
-        return $this->addOperation(new QueryBuilderOperation('debug'), $args);
+        return $this->addOperation(new QueryBuilderOperation('debug'), [$doIt]);
     }
 
     /**

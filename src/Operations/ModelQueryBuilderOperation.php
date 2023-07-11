@@ -153,7 +153,7 @@ abstract class ModelQueryBuilderOperation
      * @param ModelQueryBuilder $builder
      * @return bool
      */
-    public function onBuild(ModelQueryBuilder $builder): void { }
+    public function onBuild(ModelQueryBuilder $iBuilder): void { }
 
     protected function hasOnBuild(): bool { return false; }
 
@@ -225,7 +225,7 @@ abstract class ModelQueryBuilderOperation
      */
     public function queryExecutor(ModelQueryBuilder $builder): ModelQueryBuilder { return $builder; }
 
-    protected function hasQueryExecutor(): bool { return false; }
+    public function hasQueryExecutor(): bool { return false; }
 
     /**
      * 2023-07-04

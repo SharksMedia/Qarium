@@ -38,14 +38,30 @@ class ModelQueryBuilderContextBase
 
     public function __construct(?ModelQueryBuilder $iBuilder=null)
     {
-        if($builder !== null)
-        {
-            $userContextClass = $iBuilder->getUserContextClass();
+        if($iBuilder === null) return;
 
-            $this->userContext = new $userContextClass($iBuilder);
+        $userContextClass = $iBuilder->getUserContextClass();
 
-            $this->options = $iBuilder->getInternalOptions();
-        }
+        $this->userContext = new $userContextClass($iBuilder);
+
+        $this->options = $iBuilder->getInternalOptions();
     }
+
+    public function getRunBeforeCallback(): callable
+    {
+        return function(){};
+    }
+
+    public function getRunAfterCallback(): callable
+    {
+        return function(){};
+    }
+
+    public function getOnBuildCallback(): callable
+    {
+        return function(){};
+    }
+
+
 
 }

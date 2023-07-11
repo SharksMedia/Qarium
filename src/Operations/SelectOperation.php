@@ -44,4 +44,28 @@ class SelectOperation extends ModelQueryBuilderOperation
         return $return;
     }
 
+    public function hasSelections(): bool
+    {
+        return count($this->selections) > 0;
+    }
+
+    public function getSelections(): array
+    {
+        return $this->selections;
+    }
+
+    public function findSelection(ModelQueryBuilder $iBuilder, string $selectionToFind): ?Selection
+    {
+        $selectionInstanceToFind = Selection::create($selectionToFind);
+
+        if($selectionInstanceToFind === null) return null;
+
+        foreach($this->selections as $selection)
+        {
+            if(Selection::doesSelect($iBuilder, $selection, $selectionInstanceToFind)) return $selection;
+        }
+
+        return null;
+    }
+
 }
