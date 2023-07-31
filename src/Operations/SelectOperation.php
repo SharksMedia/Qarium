@@ -21,19 +21,19 @@ class SelectOperation extends ModelQueryBuilderOperation
      */
     private $selections;
 
-    public function __construct(string $name, array $options)
+    public function __construct(string $name, array $options=[])
     {
         parent::__construct($name, $options);
         $this->selections = [];
     }
 
-    public function onAdd(ModelQueryBuilder $builder, array $arguments): bool
+    public function onAdd(ModelQueryBuilder $iBuilder, ...$arguments): bool
     {
         $selections = Utilities::array_flatten($arguments);
 
         if(count($selections) === 0 && preg_match(self::COUNT_REGEX, $this->name) !== 1) return false;
         
-        $return = parent::onAdd($builder, $selections);
+        $return = parent::onAdd($iBuilder, $selections);
 
         foreach($selections as $selection) {
             $iSelection = Selection::create($selection);

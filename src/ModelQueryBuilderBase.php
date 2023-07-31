@@ -21,7 +21,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $arg
      */
-    public function modify(...$args): self
+    public function modify(...$args): static
     {
         $func = $args[0] ?? null;
 
@@ -37,7 +37,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $arg
      */
-    public function transacting($trx): self
+    public function transacting($trx): static
     {
         $this->context->iQueryBuilder = $trx;
 
@@ -47,7 +47,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function select(...$args): self
+    public function select(...$args): static
     {
          return $this->addOperation(new SelectOperation('select'), $args);
     }
@@ -55,7 +55,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function insert($modelsOrObjects): self
+    public function insert($modelsOrObjects): static
     {
          return $this->addOperation(new QueryBuilderOperation('insert'), $args);
     }
@@ -63,7 +63,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function update($modelOrObject): self
+    public function update($modelOrObject): static
     {
          return $this->addOperation(new QueryBuilderOperation('update'), [$modelOrObject]);
     }
@@ -71,14 +71,14 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function delete(...$args): self
+    public function delete(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('delete'), $args);
     }
     /**
      * @param array $args
      */
-    public function del(...$args): self
+    public function del(...$args): static
     {
          return $this->delete(...$args);
     }
@@ -86,7 +86,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function forUpdate(...$args): self
+    public function forUpdate(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('forUpdate'), $args);
     }
@@ -94,7 +94,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function forShare(...$args): self
+    public function forShare(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('forShare'), $args);
     }
@@ -102,7 +102,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function forNoKeyUpdate(...$args): self
+    public function forNoKeyUpdate(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('forNoKeyUpdate'), $args);
     }
@@ -110,7 +110,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function forKeyShare(...$args): self
+    public function forKeyShare(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('forKeyShare'), $args);
     }
@@ -118,7 +118,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function skipLocked(...$args): self
+    public function skipLocked(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('skipLocked'), $args);
     }
@@ -126,7 +126,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function noWait(...$args): self
+    public function noWait(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('noWait'), $args);
     }
@@ -134,7 +134,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function as(...$args): self
+    public function as(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('as'), $args);
     }
@@ -142,7 +142,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function columns(...$args): self
+    public function columns(...$args): static
     {
          return $this->addOperation(new SelectOperation('columns'), $args);
     }
@@ -150,7 +150,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function column(...$args): self
+    public function column(...$args): static
     {
          return $this->addOperation(new SelectOperation('column'), $args);
     }
@@ -158,7 +158,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function from(...$args): self
+    public function from(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('from'), $args);
     }
@@ -166,7 +166,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function fromJS(...$args): self
+    public function fromJS(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('fromJS'), $args);
     }
@@ -174,7 +174,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function fromRaw(...$args): self
+    public function fromRaw(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('fromRaw'), $args);
     }
@@ -182,7 +182,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function into(...$args): self
+    public function into(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('into'), $args);
     }
@@ -190,7 +190,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function withSchema($schema): self
+    public function withSchema($schema): static
     {
          return $this->addOperation(new QueryBuilderOperation('withSchema'), [$schema]);
     }
@@ -198,7 +198,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function table(...$args): self
+    public function table(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('table'), $args);
     }
@@ -206,7 +206,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function distinct(...$args): self
+    public function distinct(...$args): static
     {
          return $this->addOperation(new SelectOperation('distinct'), $args);
     }
@@ -214,7 +214,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function distinctOn(...$args): self
+    public function distinctOn(...$args): static
     {
          return $this->addOperation(new SelectOperation('distinctOn'), $args);
     }
@@ -222,7 +222,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function join(...$args): self
+    public function join(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('join'), $args);
     }
@@ -230,7 +230,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function joinRaw(...$args): self
+    public function joinRaw(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('joinRaw'), $args);
     }
@@ -238,7 +238,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function innerJoin(...$args): self
+    public function innerJoin(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('innerJoin'), $args);
     }
@@ -246,7 +246,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function leftJoin(...$args): self
+    public function leftJoin(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('leftJoin'), $args);
     }
@@ -254,7 +254,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function leftOuterJoin(...$args): self
+    public function leftOuterJoin(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('leftOuterJoin'), $args);
     }
@@ -262,7 +262,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function rightJoin(...$args): self
+    public function rightJoin(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('rightJoin'), $args);
     }
@@ -270,7 +270,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function rightOuterJoin(...$args): self
+    public function rightOuterJoin(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('rightOuterJoin'), $args);
     }
@@ -278,7 +278,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function outerJoin(...$args): self
+    public function outerJoin(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('outerJoin'), $args);
     }
@@ -286,7 +286,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function fullOuterJoin(...$args): self
+    public function fullOuterJoin(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('fullOuterJoin'), $args);
     }
@@ -294,7 +294,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function crossJoin(...$args): self
+    public function crossJoin(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('crossJoin'), $args);
     }
@@ -302,7 +302,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function where(...$args): self
+    public function where(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('where'), $args);
     }
@@ -310,7 +310,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function andWhere(...$args): self
+    public function andWhere(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('andWhere'), $args);
     }
@@ -318,7 +318,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orWhere(...$args): self
+    public function orWhere(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('orWhere'), $args);
     }
@@ -326,7 +326,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function whereNot(...$args): self
+    public function whereNot(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('whereNot'), $args);
     }
@@ -334,7 +334,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function andWhereNot(...$args): self
+    public function andWhereNot(...$args): static
     {
          return $this->addOperation(new QueryBuilderOperation('andWhereNot'), $args);
     }
@@ -342,7 +342,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orWhereNot(...$args): self
+    public function orWhereNot(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('orWhereNot'), $args);
     }
@@ -350,7 +350,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function whereRaw(...$args): self
+    public function whereRaw(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('whereRaw'), $args);
     }
@@ -358,7 +358,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function andWhereRaw(...$args): self
+    public function andWhereRaw(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('andWhereRaw'), $args);
     }
@@ -366,7 +366,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orWhereRaw(...$args): self
+    public function orWhereRaw(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('orWhereRaw'), $args);
     }
@@ -374,7 +374,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function whereWrapped(...$args): self
+    public function whereWrapped(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('whereWrapped'), $args);
     }
@@ -382,7 +382,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function havingWrapped(...$args): self
+    public function havingWrapped(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('havingWrapped'), $args);
     }
@@ -390,7 +390,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function whereExists(...$args): self
+    public function whereExists(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('whereExists'), $args);
     }
@@ -398,7 +398,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orWhereExists(...$args): self
+    public function orWhereExists(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('orWhereExists'), $args);
     }
@@ -406,7 +406,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function whereNotExists(...$args): self
+    public function whereNotExists(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('whereNotExists'), $args);
     }
@@ -414,7 +414,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orWhereNotExists(...$args): self
+    public function orWhereNotExists(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('orWhereNotExists'), $args);
     }
@@ -422,7 +422,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function whereIn(...$args): self
+    public function whereIn(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('whereIn'), $args);
     }
@@ -430,7 +430,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orWhereIn(...$args): self
+    public function orWhereIn(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('orWhereIn'), $args);
     }
@@ -438,7 +438,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function whereNotIn(...$args): self
+    public function whereNotIn(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('whereNotIn'), $args);
     }
@@ -446,7 +446,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orWhereNotIn(...$args): self
+    public function orWhereNotIn(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('orWhereNotIn'), $args);
     }
@@ -454,7 +454,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function whereNull(...$args): self
+    public function whereNull(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('whereNull'), $args);
     }
@@ -462,7 +462,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orWhereNull(...$args): self
+    public function orWhereNull(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('orWhereNull'), $args);
     }
@@ -470,7 +470,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function whereNotNull(...$args): self
+    public function whereNotNull(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('whereNotNull'), $args);
     }
@@ -478,7 +478,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orWhereNotNull(...$args): self
+    public function orWhereNotNull(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('orWhereNotNull'), $args);
     }
@@ -486,7 +486,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function whereBetween(...$args): self
+    public function whereBetween(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('whereBetween'), $args);
     }
@@ -494,7 +494,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function andWhereBetween(...$args): self
+    public function andWhereBetween(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('andWhereBetween'), $args);
     }
@@ -502,7 +502,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function whereNotBetween(...$args): self
+    public function whereNotBetween(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('whereNotBetween'), $args);
     }
@@ -510,7 +510,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function andWhereNotBetween(...$args): self
+    public function andWhereNotBetween(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('andWhereNotBetween'), $args);
     }
@@ -518,7 +518,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orWhereBetween(...$args): self
+    public function orWhereBetween(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('orWhereBetween'), $args);
     }
@@ -526,7 +526,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orWhereNotBetween(...$args): self
+    public function orWhereNotBetween(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('orWhereNotBetween'), $args);
     }
@@ -534,7 +534,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function whereLike(...$args): self
+    public function whereLike(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('whereLike'), $args);
     }
@@ -542,7 +542,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function andWhereLike(...$args): self
+    public function andWhereLike(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('andWhereLike'), $args);
     }
@@ -550,7 +550,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orWhereLike(...$args): self
+    public function orWhereLike(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('orWhereLike'), $args);
     }
@@ -558,7 +558,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function whereILike(...$args): self
+    public function whereILike(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('whereILike'), $args);
     }
@@ -566,7 +566,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function andWhereILike(...$args): self
+    public function andWhereILike(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('andWhereILike'), $args);
     }
@@ -574,7 +574,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orWhereILike(...$args): self
+    public function orWhereILike(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('orWhereILike'), $args);
     }
@@ -582,7 +582,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function groupBy(...$args): self
+    public function groupBy(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('groupBy'), $args);
     }
@@ -590,7 +590,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function groupByRaw(...$args): self
+    public function groupByRaw(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('groupByRaw'), $args);
     }
@@ -598,7 +598,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orderBy(...$args): self
+    public function orderBy(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('orderBy'), $args);
     }
@@ -606,7 +606,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orderByRaw(...$args): self
+    public function orderByRaw(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('orderByRaw'), $args);
     }
@@ -614,7 +614,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function union(...$args): self
+    public function union(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('union'), $args);
     }
@@ -622,7 +622,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function unionAll(...$args): self
+    public function unionAll(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('unionAll'), $args);
     }
@@ -630,7 +630,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function intersect(...$args): self
+    public function intersect(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('intersect'), $args);
     }
@@ -638,7 +638,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function having(...$args): self
+    public function having(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('having'), $args);
     }
@@ -646,7 +646,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function clearHaving(...$args): self
+    public function clearHaving(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('clearHaving'), $args);
     }
@@ -654,7 +654,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function clearGroup(...$args): self
+    public function clearGroup(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('clearGroup'), $args);
     }
@@ -662,7 +662,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orHaving(...$args): self
+    public function orHaving(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('orHaving'), $args);
     }
@@ -670,7 +670,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function havingIn(...$args): self
+    public function havingIn(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('havingIn'), $args);
     }
@@ -678,7 +678,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orHavingIn(...$args): self
+    public function orHavingIn(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('havingIn'), $args);
     }
@@ -686,7 +686,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function havingNotIn(...$args): self
+    public function havingNotIn(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('havingNotIn'), $args);
     }
@@ -694,7 +694,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orHavingNotIn(...$args): self
+    public function orHavingNotIn(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('orHavingNotIn'), $args);
     }
@@ -702,7 +702,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function havingNull(...$args): self
+    public function havingNull(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('havingNull'), $args);
     }
@@ -710,7 +710,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orHavingNull(...$args): self
+    public function orHavingNull(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('orHavingNull'), $args);
     }
@@ -718,7 +718,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function havingNotNull(...$args): self
+    public function havingNotNull(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('havingNotNull'), $args);
     }
@@ -726,7 +726,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orHavingNotNull(...$args): self
+    public function orHavingNotNull(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('orHavingNotNull'), $args);
     }
@@ -734,7 +734,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function havingExists(...$args): self
+    public function havingExists(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('havingExists'), $args);
     }
@@ -742,7 +742,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orHavingExists(...$args): self
+    public function orHavingExists(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('orHavingExists'), $args);
     }
@@ -750,7 +750,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function havingNotExists(...$args): self
+    public function havingNotExists(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('havingNotExists'), $args);
     }
@@ -758,7 +758,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orHavingNotExists(...$args): self
+    public function orHavingNotExists(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('orHavingNotExists'), $args);
     }
@@ -766,7 +766,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function havingBetween(...$args): self
+    public function havingBetween(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('havingBetween'), $args);
     }
@@ -774,7 +774,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orHavingBetween(...$args): self
+    public function orHavingBetween(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('havingBetween'), $args);
     }
@@ -782,7 +782,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function havingNotBetween(...$args): self
+    public function havingNotBetween(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('havingNotBetween'), $args);
     }
@@ -790,7 +790,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orHavingNotBetween(...$args): self
+    public function orHavingNotBetween(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('havingNotBetween'), $args);
     }
@@ -798,7 +798,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function havingRaw(...$args): self
+    public function havingRaw(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('havingRaw'), $args);
     }
@@ -806,7 +806,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orHavingRaw(...$args): self
+    public function orHavingRaw(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('orHavingRaw'), $args);
     }
@@ -814,7 +814,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function offset(...$args): self
+    public function offset(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('offset'), $args);
     }
@@ -822,7 +822,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function limit(...$args): self
+    public function limit(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('limit'), $args);
     }
@@ -830,7 +830,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function count(...$args): self
+    public function count(...$args): static
     {
         return $this->addOperation(new SelectOperation('count'), $args);
     }
@@ -838,7 +838,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function countDistinct(...$args): self
+    public function countDistinct(...$args): static
     {
         return $this->addOperation(new SelectOperation('countDistinct'), $args);
     }
@@ -846,7 +846,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function min(...$args): self
+    public function min(...$args): static
     {
         return $this->addOperation(new SelectOperation('min'), $args);
     }
@@ -854,7 +854,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function max(...$args): self
+    public function max(...$args): static
     {
         return $this->addOperation(new SelectOperation('max'), $args);
     }
@@ -862,7 +862,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function sum(...$args): self
+    public function sum(...$args): static
     {
         return $this->addOperation(new SelectOperation('sum'), $args);
     }
@@ -870,7 +870,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function sumDistinct(...$args): self
+    public function sumDistinct(...$args): static
     {
         return $this->addOperation(new SelectOperation('sumDistinct'), $args);
     }
@@ -878,7 +878,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function avg(...$args): self
+    public function avg(...$args): static
     {
         return $this->addOperation(new SelectOperation('avg'), $args);
     }
@@ -886,7 +886,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function avgDistinct(...$args): self
+    public function avgDistinct(...$args): static
     {
         return $this->addOperation(new SelectOperation('avgDistinct'), $args);
     }
@@ -894,7 +894,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function debug(bool $doIt=true): self
+    public function debug(bool $doIt=true): static
     {
         return $this->addOperation(new QueryBuilderOperation('debug'), [$doIt]);
     }
@@ -902,7 +902,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function     returning(...$args): self
+    public function     returning(...$args): static
     {
         return $this->addOperation(new ReturningOperation('returning'), $args);
     }
@@ -910,7 +910,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function truncate(...$args): self
+    public function truncate(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('truncate'), $args);
     }
@@ -918,7 +918,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function connection(...$args): self
+    public function connection(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('connection'), $args);
     }
@@ -926,7 +926,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function options(...$args): self
+    public function options(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('options'), $args);
     }
@@ -934,7 +934,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function columnInfo(...$args): self
+    public function columnInfo(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('columnInfo'), $args);
     }
@@ -942,7 +942,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function off(...$args): self
+    public function off(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('off'), $args);
     }
@@ -950,7 +950,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function timeout(...$args): self
+    public function timeout(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('timeout'), $args);
     }
@@ -958,7 +958,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function with(...$args): self
+    public function with(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('with'), $args);
     }
@@ -966,7 +966,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function withWrapped(...$args): self
+    public function withWrapped(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('withWrapped'), $args);
     }
@@ -974,7 +974,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function withRecursive(...$args): self
+    public function withRecursive(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('withRecursive'), $args);
     }
@@ -982,7 +982,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function withMaterialized(...$args): self
+    public function withMaterialized(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('withMaterialized'), $args);
     }
@@ -990,7 +990,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function withNotMaterialized(...$args): self
+    public function withNotMaterialized(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('withNotMaterialized'), $args);
     }
@@ -998,7 +998,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function whereComposite(...$args): self
+    public function whereComposite(...$args): static
     {
         return $this->addOperation(new WhereCompositeOperation('whereComposite'), $args);
     }
@@ -1006,7 +1006,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function whereInComposite(...$args): self
+    public function whereInComposite(...$args): static
     {
         return $this->addOperation(new WhereInCompositeOperation('whereInComposite'), $args);
     }
@@ -1014,7 +1014,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function whereNotInComposite(...$args): self
+    public function whereNotInComposite(...$args): static
     {
         return $this->addOperation(new WhereInCompositeOperation('whereNotInComposite'), $args);
     }
@@ -1022,7 +1022,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function whereColumn(...$args): self
+    public function whereColumn(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('whereColumn'), $args);
     }
@@ -1030,7 +1030,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function andWhereColumn(...$args): self
+    public function andWhereColumn(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('andWhereColumn'), $args);
     }
@@ -1038,7 +1038,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orWhereColumn(...$args): self
+    public function orWhereColumn(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('orWhereColumn'), $args);
     }
@@ -1046,7 +1046,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function whereNotColumn(...$args): self
+    public function whereNotColumn(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('whereNotColumn'), $args);
     }
@@ -1054,7 +1054,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function andWhereNotColumn(...$args): self
+    public function andWhereNotColumn(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('andWhereNotColumn'), $args);
     }
@@ -1062,7 +1062,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function orWhereNotColumn(...$args): self
+    public function orWhereNotColumn(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('orWhereNotColumn'), $args);
     }
@@ -1070,7 +1070,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function onConflict(...$args): self
+    public function onConflict(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('onConflict'), $args);
     }
@@ -1078,7 +1078,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function ignore(...$args): self
+    public function ignore(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('ignore'), $args);
     }
@@ -1086,7 +1086,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function merge(...$args): self
+    public function merge(...$args): static
     {
         return $this->addOperation(new MergeOperation('merge'), $args);
     }

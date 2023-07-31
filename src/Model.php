@@ -12,11 +12,14 @@ namespace Sharksmedia\Objection;
 use Sharksmedia\Objection\ModelQueryBuilder;
 
 use Sharksmedia\QueryBuilder\Client;
+use Sharksmedia\QueryBuilder\Query;
 use Sharksmedia\QueryBuilder\QueryBuilder;
 use Sharksmedia\QueryBuilder\Transaction;
 
 abstract class Model
 {
+    public const USE_LIMIT_IN_FIRST = true;
+
     /**
      * 2023-06-12
      * Use this relation when the source model has the foreign key
@@ -77,6 +80,83 @@ abstract class Model
     public static function getTableIDsMap(): array
     {
         return array_combine(static::getTableIDs(), static::getTableIDs());
+    }
+
+    public static function getIdColumnArray()
+    {
+        return static::getTableIDs();
+    }
+
+    private function fetchTableMetadata(Client $iClient): array
+    {
+        // TODO: Create a function on the compiler to do this
+
+        static $cache = [];
+
+        $tableName = static::getTableName();
+
+        if(isset($cache[$tableName])) return $cache[$tableName];
+
+        $method = '';
+        $options = [];
+        $timeout = 0;
+        $cancelOnTimeout = false;
+        $bindings = [];
+        $UUID = 'describe_' . $tableName;
+        $iQuery = new Query($method, $options, $timeout, $cancelOnTimeout, $bindings, $UUID);
+
+        // WARN: This is not safe, becuase we are not escaping the table name
+        $iQuery->setSQL('SHOW COLUMNS FROM ' . $tableName);
+
+        if(!$iClient->isInitialized()) $iClient->initializeDriver();
+
+        $statement = $iClient->query($iQuery);
+
+        $cache[$tableName] = $statement->fetchAll(\PDO::FETCH_ASSOC);
+
+        return $cache[$tableName];
+    }
+
+    public static function getTableMetadata(array $options=[]): ?array
+    {// 2023-07-31
+        $tableName = static::getTableName();
+
+        return $cache[$tableName] ?? null;
+    }
+
+    private static function getIdRelationProperty(string $modelClass)
+    {
+        $idColumn = $modelClass::getIdColumn();
+        if(!is_array($idColumn)) $idColumn = [$idColumn];
+
+        $idColumns = array_map(function($column)
+        {
+            return $modelClass::getTableName() . '.' . $column;
+        }, $idColumn);
+
+        return new RelationProperty($idColumns, function(){ return $modelClass; });
+    }
+
+    public static function columnNameToPropertyName(string $columnName)
+    {
+        static $cache = [];
+
+        $propertyName = $cache[$columnName] ?? null;
+
+        if($propertyName !== null) return $propertyName;
+
+        $model = new static();
+        $addedProps = array_keys($model->createFromDatabaseArray([]));
+
+        $row = [];
+        $row[$columnName] = null;
+
+        $props = array_keys($model->createFromDatabaseArray($row));
+        $propertyName = array_diff($props, $addedProps)[0] ?? null;
+
+        $cache[$columnName] = $propertyName ?? $columnName;
+
+        return $cache[$columnName];
     }
 
     /**
@@ -190,7 +270,7 @@ abstract class Model
      * 2023-06-12
      * @return void
      */
-    public static function afterFind(): void { /* Do nothing by default. */ }
+    public static function afterFind(StaticHookArguments $arguments): void { /* Do nothing by default. */ }
 
     /**
      * 2023-06-12
@@ -234,15 +314,42 @@ abstract class Model
      */
     public static function afterDelete(): void { /* Do nothing by default. */ }
 
-    public static function getQueryBuilder(?QueryBuilder $iQueryBuilder=null): ?QueryBuilder
+    public static function getJoinTableAlias(string $relationPath): string
     {
-        if($iQueryBuilder !== null) static::$iQueryBuilder = $iQueryBuilder;
+        return $relationPath.'_join';
+    }
 
+    public static function setQueryBuilder(QueryBuilder $iQueryBuilder): void
+    {
+        static::$iQueryBuilder = $iQueryBuilder;
+    }
+
+    public static function getQueryBuilder(): ?QueryBuilder
+    {
         return static::$iQueryBuilder;
     }
 
     public static function getQueryBuilderQuery(): ?QueryBuilder
     {
         return static::getQueryBuilder()->table(static::getTableName());
+    }
+
+    /**
+     * 2023-06-12
+     * @param array<string, mixed> $result
+     * @return Model
+     */
+    public static function createFromDatabaseArray(array $result): static
+    {
+        $iModel = new static();
+
+        foreach($result as $columnName=>$columnValue)
+        {
+            if(!property_exists($iModel, $columnName)) throw new \Exception("Column $columnName does not exist on model " . static::class);
+
+            $iModel->{$columnName} = $columnValue;
+        }
+
+        return $iModel;
     }
 }

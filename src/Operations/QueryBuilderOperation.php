@@ -12,11 +12,12 @@ namespace Sharksmedia\Objection\Operations;
 use Sharksmedia\Objection\ModelQueryBuilder;
 use Sharksmedia\QueryBuilder\QueryBuilder;
 
-class QueryBuilderOperation extends ModelQueryBuilderOperation
+class QueryBuilderOperation extends ObjectionToQueryBuilderConvertingOperation
 {
-    public function onBuildQueryBuilder(QueryBuilder $iQueryBuilder, ModelQueryBuilder $builder): QueryBuilder
+    public function onBuildQueryBuilder(ModelQueryBuilder $iBuilder, QueryBuilder $iQueryBuilder): QueryBuilder
     {
         $functionName = $this->getName();
         
+        return $iQueryBuilder->$functionName(...$this->getArguments($iBuilder));
     }
 }

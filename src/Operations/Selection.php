@@ -9,6 +9,9 @@ declare(strict_types=1);
 
 namespace Sharksmedia\Objection\Operations;
 
+use Sharksmedia\Objection\ReferenceBuilder;
+use Sharksmedia\QueryBuilder\Statement\Raw;
+
 class Selection
 {
     public const ALIAS_REGEX = '/\s+as\s+/i';
@@ -54,9 +57,9 @@ class Selection
     {
         if(is_object($selection))
         {
-            if($selection->isObjectionSelect) return $selection;
-            else if($selection->isObjectionReferenceBuilder) return self::createSelectionFromReference($selection);
-            else if($selection->isObjectionRawBuilder) return self::createSelectionFromRaw($selection);
+            if($selection instanceof Selection) return $selection;
+            else if($selection instanceof ReferenceBuilder) return self::createSelectionFromReference($selection);
+            else if($selection instanceof Raw) return self::createSelectionFromRaw($selection);
 
             return null;
         }

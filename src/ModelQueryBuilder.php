@@ -104,6 +104,16 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         $this->findOperationOptions = $modelClass::getDefaultFindOptions();
     }
 
+    public function getFindOptions(): array
+    {
+        return $this->findOperationOptions;
+    }
+
+    public function setFindOption(string $key, $value): void
+    {
+        $this->findOperationOptions[$key] = $value;
+    }
+
     /**
      * @return ModelQueryBuilderContextBase|ModelQueryBuilderContextUser
      */
@@ -177,12 +187,12 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return $this->getFullIdColumnFor($modelClass);
     }
 
-    public function withGraphFetched(string $relationExpression, array $options=[]): self
+    public function withGraphFetched(string $relationExpression, array $options=[]): static
     {
         throw new \Exception('Not Supported');
     }
 
-    public function withGraphJoined(string $relationExpression, array $options=[]): self
+    public function withGraphJoined(string $relationExpression, array $options=[]): static
     {
         return $this->_withGraph($relationExpression, $options, static::JOIN_EAGER_ALGORITHM);
     }
@@ -211,12 +221,12 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
             if($eagerOperation instanceof $eagerOperationClass) return $eagerOperation;
 
-            $newEagerOperation = new EagerOperation('eager', ['defaultGraphOptions' => $defaultGraphOptions]);
+            $newEagerOperation = new $eagerOperationClass('eager', ['defaultGraphOptions' => $defaultGraphOptions]);
 
             if($eagerOperation !== null) $newEagerOperation = clone $eagerOperation; //$newEagerOperation->cloneFrom($eagerOperation);
 
             $iBuilder->clear(EagerOperation::class);
-            $iBuilder->addOperation($newEagerOperation);
+            $iBuilder->addOperation($newEagerOperation, []);
 
             return $newEagerOperation;
         }
@@ -225,12 +235,12 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
         $eagerOperationClass = self::getOperationClassForEagerAlgorithm($iBuilder, static::WHERE_IN_EAGER_ALGORITHM);
 
-        $newEagerOperation = new EagerOperation('eager', ['defaultGraphOptions' => $defaultGraphOptions]);
+        $newEagerOperation = new $eagerOperationClass('eager', ['defaultGraphOptions' => $defaultGraphOptions]);
 
-        $iBuilder->addOperation($newEagerOperation);
+        $iBuilder->addOperation($newEagerOperation, []);
     }
 
-    private function _withGraph(string $relationExpression, array $options, string $eagerAlgorithm): self
+    private function _withGraph(string $relationExpression, array $options, string $eagerAlgorithm): static
     {
         $eagerOperation = self::ensureEagerOperation($this, $eagerAlgorithm);
         $parsedExpression = self::parseRelationExpression($this->getModelClass(), $relationExpression);
@@ -252,7 +262,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
      * @param string|RelationExpression $expression
      * @return ModelQueryBuilder
      */
-    public function allowGraph($expression): self
+    public function allowGraph($expression): static
     {
         $currentExpression = $this->allowedGraphExpression ?? RelationExpression::create();
 
@@ -287,7 +297,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
      * @param \Closure(QueryBuilder|string|string[]) $modifier
      * @return ModelQueryBuilder
      */
-    public function modifyGraph(string $path, \Closure $modifier): self
+    public function modifyGraph(string $path, \Closure $modifier): static
     {
         $eagerOperation = self::ensureEagerOperation($this);
 
@@ -303,7 +313,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return $this->resultModelClass ?? $this->getModelClass();
     }
 
-    private function isFind(): bool
+    public function isFind(): bool
     {
         $isNotFind =
         (
@@ -396,39 +406,44 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         });
     }
 
-    public function clearWithGraph(): self
+    public function clearWithGraph(): static
     {
         $this->clear(EagerOperation::class);
 
         return $this;
     }
 
-    public function clearWithGraphFetched(): self
+    public function clearWithGraphFetched(): static
     {
         $this->clear(WhereInEagerOperation::class);
 
         return $this;
     }
 
-    public function clearAllowedGraph(): self
+    public function clearAllowedGraph(): static
     {
         $this->allowedGraphExpression = null;
 
         return $this;
     }
 
-    public function clearModifiers(): self
+    public function clearModifiers(): static
     {
         $this->modifiers = [];
 
         return $this;
     }
 
+    public function getModifiers(): array
+    {
+        return $this->modifiers;
+    }
+
     /**
      * @param class-string<Model> $modelClass
      * @return ModelQueryBuilder
      */
-    public function castTo(?string $modelClass): self
+    public function castTo(?string $modelClass): static
     {
         $this->resultModelClass = $modelClass;
 
@@ -474,7 +489,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return self::prebuildQuery($queryExecutorOperation->queryExecutor($iBuilder));
     }
 
-    private static function addImplicitOperations(self $iBuilder): self
+    private static function addImplicitOperations(self $iBuilder): static
     {
         if($iBuilder->isFind())
         {
@@ -512,8 +527,10 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         {
             if(!$iOperation->hasHook($hookName)) return;
 
-            $iBuilder->callOperationMethod($iOperation, $hookName, [$iBuilder, $results]);
+            $results = $iBuilder->callOperationMethod($iOperation, $hookName, [$results]);
         });
+
+        return $results;
     }
 
     private static function chainHooks(ModelQueryBuilder $iBuilder, $func)
@@ -546,17 +563,24 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         self::chainOperationHooks(null, $iBuilder, 'onBefore3');
     }
 
-    private static function afterExecute(self $iBuilder): void
+    /**
+     * @param self $iBuilder
+     * @param array|null $results
+     * @return array|Model|null
+     */
+    private static function afterExecute(self $iBuilder, ?array $results)
     {
         self::addImplicitOperations($iBuilder);
 
-        self::chainOperationHooks(null, $iBuilder, 'onAfter1');
-        self::chainOperationHooks(null, $iBuilder, 'onAfter2');
+        $results = self::chainOperationHooks($results, $iBuilder, 'onAfter1');
+        $results = self::chainOperationHooks($results, $iBuilder, 'onAfter2');
 
         self::chainHooks($iBuilder, $iBuilder->getContext()->getRunAfterCallback());
         self::chainHooks($iBuilder, $iBuilder->getInternalContext()->getRunAfterCallback());
 
-        self::chainOperationHooks(null, $iBuilder, 'onAfter3');
+        $results = self::chainOperationHooks($results, $iBuilder, 'onAfter3');
+
+        return $results;
     }
 
     private static function callOnBuildFuncs(self $iBuilder, $func): void
@@ -578,7 +602,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         throw new \Exception('Invalid hook type');
     }
 
-    private static function callOnBuildHooks(self $iBuilder): self
+    private static function callOnBuildHooks(self $iBuilder): static
     {
         self::callOnBuildFuncs($iBuilder, $iBuilder->getContext()->getOnBuildCallback());
         self::callOnBuildFuncs($iBuilder, $iBuilder->getInternalContext()->getOnBuildCallback());
@@ -654,7 +678,10 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
         $results = $iQueryBuilder->run();
 
+        $results = Utilities::arrayRemoveFalsey($results);
+
         self::chainOperationHooks($results, $iBuilder, 'onRawResult');
+
         $iModels = self::createModels($results, $iBuilder);
 
         return $iModels;
@@ -689,7 +716,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
     private static function shouldBeConvertedToModel(?array $result, string $modelClass): bool
     {
-        return is_array($result) && count($result) > 0 && !($result[0] instanceof $modelClass);
+        return is_array($result) && count($result) > 0 && !(reset($result) instanceof $modelClass);
     }
 
     private static function handleExecuteException(self $iBuilder, \Exception $e)
@@ -721,7 +748,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
      * @param mixed $data
      * @return ModelQueryBuilder
      */
-    private function throwIfNotFound($data): self
+    private function throwIfNotFound($data): static
     {
         return $this->runAfter(function($result)
         {
@@ -773,7 +800,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return null;
     }
 
-    private function findAllSelections(): array
+    public function findAllSelections(): array
     { 
         $allSelections = [];
 
@@ -787,12 +814,12 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return $allSelections;
     }
 
-    private function hasSelection($selection, $explicit): bool
+    public function hasSelection($selection, $explicit): bool
     { 
         return $this->findSelection($selection, $explicit) !== null;
     }
 
-    private function hasSelectionAs($selection, $alias, bool $explicit=false): bool
+    public function hasSelectionAs($selection, $alias, bool $explicit=false): bool
     { 
         $selection = Selection::create($selection);
         $foundSelection = $this->findSelection($selection, $explicit);
@@ -822,7 +849,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         });
     }
 
-    public function page(int $page, int $pageSize): self
+    public function page(int $page, int $pageSize): static
     {
         if($page < 0) throw new \Exception('Page must be >= 0');
         if($pageSize < 0) throw new \Exception('Page size must be >= 0');
@@ -833,7 +860,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     /**
      * @param array $args
      */
-    public function columnInfo(...$args): self
+    public function columnInfo(...$args): static
     {
         $table = $args[0]['table'] ?? $this->getTableName();
 
@@ -855,7 +882,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return $columnInfoQuery;
     }
 
-    public function withSchema($schema): self
+    public function withSchema($schema): static
     {
         $internalOptions = $this->getInternalOptions();
         $internalOptions['schema'] = $schema;
@@ -874,7 +901,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return $this;
     }
 
-    public function debug /* istanbul ignore next */(bool $doIt=true): self
+    public function debug /* istanbul ignore next */(bool $doIt=true): static
     {
         $internalOptions = $this->getInternalOptions();
         $internalOptions['debug'] = $doIt;
@@ -890,7 +917,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return $this;
     }
 
-    private static function writeOperation(ModelQueryBuilder $iBuilder, \Closure $callback): self
+    private static function writeOperation(ModelQueryBuilder $iBuilder, \Closure $callback): static
     {
         if(!$iBuilder->isFind())
         {
@@ -906,7 +933,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
      * @param array<int, Model>|array<int, array> $modelsOrObjects
      * @return ModelQueryBuilder
      */
-    public function insert($modelsOrObjects): self
+    public function insert($modelsOrObjects): static
     {
         return self::writeOperation($this, function() use($modelsOrObjects)
         {
@@ -920,7 +947,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
      * @param array<int, Model>|array<int, array> $modelsOrObjects
      * @return ModelQueryBuilder
      */
-    public function insertAndFetch($modelsOrObjects): self
+    public function insertAndFetch($modelsOrObjects): static
     {
         return self::writeOperation($this, function() use($modelsOrObjects)
         {
@@ -937,7 +964,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
      * @param array $opt
      * @return ModelQueryBuilder
      */
-    public function insertGraph($modelsOrObjects, $opt): self
+    public function insertGraph($modelsOrObjects, $opt): static
     {
         return self::writeOperation($this, function() use($modelsOrObjects, $opt)
         {
@@ -954,7 +981,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
      * @param array $opt
      * @return ModelQueryBuilder
      */
-    public function insertGraphAndFetch($modelsOrObjects, $opt): self
+    public function insertGraphAndFetch($modelsOrObjects, $opt): static
     {
         return self::writeOperation($this, function() use($modelsOrObjects, $opt)
         {
@@ -968,7 +995,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         });
     }
 
-    public function update($modelOrObject): self
+    public function update($modelOrObject): static
     {
         return self::writeOperation($this, function() use($modelOrObject)
         {
@@ -978,7 +1005,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         });
     }
 
-    public function updateAndFetch($modelOrObject): self
+    public function updateAndFetch($modelOrObject): static
     {
         return self::writeOperation($this, function() use($modelOrObject)
         {
@@ -993,7 +1020,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         });
     }
 
-    public function updateAndFetchById($id, $modelOrObject): self
+    public function updateAndFetchById($id, $modelOrObject): static
     {
         return self::writeOperation($this, function() use($id, $modelOrObject)
         {
@@ -1005,7 +1032,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         });
     }
 
-    public function upsertGraph($modelsOrObjects, $upsertOptions): self
+    public function upsertGraph($modelsOrObjects, $upsertOptions): static
     {
         return self::writeOperation($this, function() use($modelsOrObjects, $upsertOptions)
         {
@@ -1015,7 +1042,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         });
     }
 
-    public function upsertGraphAndFetch($modelsOrObjects, $upsertOptions): self
+    public function upsertGraphAndFetch($modelsOrObjects, $upsertOptions): static
     {
         return self::writeOperation($this, function() use($modelsOrObjects, $upsertOptions)
         {
@@ -1027,7 +1054,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         });
     }
 
-    public function patch($modelOrObject): self
+    public function patch($modelOrObject): static
     {
         return self::writeOperation($this, function() use($modelOrObject)
         {
@@ -1037,7 +1064,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         });
     }
 
-    public function patchAndFetch($modelOrObject): self
+    public function patchAndFetch($modelOrObject): static
     {
         return self::writeOperation($this, function() use($modelOrObject)
         {
@@ -1056,7 +1083,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         });
     }
 
-    public function patchAndFetchById($id, $modelOrObject): self
+    public function patchAndFetchById($id, $modelOrObject): static
     {
         return self::writeOperation($this, function() use($id, $modelOrObject)
         {
@@ -1068,7 +1095,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         });
     }
 
-    public function delete(...$args): self
+    public function delete(...$args): static
     {
         return self::writeOperation($this, function() use($args)
         {
@@ -1080,12 +1107,12 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         });
     }
 
-    public function del(...$args): self
+    public function del(...$args): static
     {
         return $this->delete(...$args);
     }
 
-    public function relate(...$args): self
+    public function relate(...$args): static
     {
         return self::writeOperation($this, function() use($args)
         {
@@ -1095,7 +1122,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         });
     }
 
-    public function unrelate(...$args): self
+    public function unrelate(...$args): static
     {
         return self::writeOperation($this, function() use($args)
         {
@@ -1107,7 +1134,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         });
     }
 
-    public function increment($propertyName, $howMuch): self
+    public function increment($propertyName, $howMuch): static
     {
         $modelClass = $this->getModelClass();
         $columnName = $modelClass::propertyNameToColumnName($propertyName);
@@ -1115,7 +1142,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return $this->patch([$columnName=>new Raw('?? + ?', $columnName, $howMuch)]);
     }
 
-    public function decrement($propertyName, $howMuch): self
+    public function decrement($propertyName, $howMuch): static
     {
         $modelClass = $this->getModelClass();
         $columnName = $modelClass::propertyNameToColumnName($propertyName);
@@ -1123,19 +1150,19 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return $this->patch([$columnName=>new Raw('?? - ?', $columnName, $howMuch)]);
     }
 
-    public function findOne(...$args): self
+    public function findOne(...$args): static
     {
         return $this->where(...$args)->first();
     }
 
-    public function range(...$args): self
+    public function range(...$args): static
     {
         $this->clear(RangeOperation::class);
 
         return $this->addOperation(new RangeOperation('range'), $args);
     }
 
-    public function first(...$args): self
+    public function first(...$args): static
     {
         return $this->addOperation(new FirstOperation('first'), $args);
     }
@@ -1155,114 +1182,114 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return $operation;
     }
 
-    public function joinRelated($expression, $options): self
+    public function joinRelated($expression, $options): static
     {
         self::ensureJoinRelatedOperation($this, 'innerJoin')->addCall(['expression'=>$expression, 'options'=>$options]);
 
         return $this;
     }
 
-    public function innerJoinRelated($expression, $options): self
+    public function innerJoinRelated($expression, $options): static
     {
         self::ensureJoinRelatedOperation($this, 'innerJoin')->addCall(['expression'=>$expression, 'options'=>$options]);
 
         return $this;
     }
 
-    public function outerJoinRelated($expression, $options): self
+    public function outerJoinRelated($expression, $options): static
     {
         self::ensureJoinRelatedOperation($this, 'outerJoin')->addCall(['expression'=>$expression, 'options'=>$options]);
 
         return $this;
     }
 
-    public function fullOuterJoinRelated($expression, $options): self
+    public function fullOuterJoinRelated($expression, $options): static
     {
         self::ensureJoinRelatedOperation($this, 'fullOuterJoin')->addCall(['expression'=>$expression, 'options'=>$options]);
 
         return $this;
     }
 
-    public function leftJoinRelated($expression, $options): self
+    public function leftJoinRelated($expression, $options): static
     {
         self::ensureJoinRelatedOperation($this, 'leftJoin')->addCall(['expression'=>$expression, 'options'=>$options]);
 
         return $this;
     }
 
-    public function leftOuterJoinRelated($expression, $options): self
+    public function leftOuterJoinRelated($expression, $options): static
     {
         self::ensureJoinRelatedOperation($this, 'leftOuterJoin')->addCall(['expression'=>$expression, 'options'=>$options]);
 
         return $this;
     }
 
-    public function rightJoinRelated($expression, $options): self
+    public function rightJoinRelated($expression, $options): static
     {
         self::ensureJoinRelatedOperation($this, 'rightJoin')->addCall(['expression'=>$expression, 'options'=>$options]);
 
         return $this;
     }
 
-    public function rightOuterJoinRelated($expression, $options): self
+    public function rightOuterJoinRelated($expression, $options): static
     {
         self::ensureJoinRelatedOperation($this, 'rightOuterJoin')->addCall(['expression'=>$expression, 'options'=>$options]);
 
         return $this;
     }
 
-    public function deleteById($id): self
+    public function deleteById($id): static
     {
         return $this->findById($id)
             ->delete();
     }
 
-    public function findById(...$args): self
+    public function findById(...$args): static
     {
         return $this->addOperation(new FindByIdOperation('findById'), $args)->first();
     }
 
-    public function findByIds(...$args): self
+    public function findByIds(...$args): static
     {
         return $this->addOperation(new FindByIdsOperation('findByIds'), $args);
     }
 
-    public function runBefore(...$args): self
+    public function runBefore(...$args): static
     {
         return $this->addOperation(new RunBeforeOperation('runBefore'), $args);
     }
 
-    public function onBuild(...$args): self
+    public function onBuild(...$args): static
     {
         return $this->addOperation(new OnBuildOperation('onBuild'), $args);
     }
 
-    public function onBuildQueryBuilder(...$args): self
+    public function onBuildQueryBuilder(...$args): static
     {
         return $this->addOperation(new OnBuildQueryBuilderOperation('onBuildQueryBuilder'), $args);
     }
 
-    public function runAfter(...$args): self
+    public function runAfter(...$args): static
     {
         return $this->addOperation(new RunAfterOperation('runAfter'), $args);
     }
 
-    public function onError(...$args): self
+    public function onError(...$args): static
     {
         return $this->addOperation(new OnErrorOperation('onError'), $args);
     }
 
-    public function from(...$args): self
+    public function from(...$args): static
     {
         return $this->addOperation(new FromOperation('from'), $args);
     }
 
-    public function table(...$args): self
+    public function table(...$args): static
     {
         return $this->addOperation(new FromOperation('table'), $args);
     }
 
-    public function for($relatedQueryFor=null): self
+    public function for($relatedQueryFor=null): static
     {
         if($relatedQueryFor === null) return $this->relatedQueryFor;
         

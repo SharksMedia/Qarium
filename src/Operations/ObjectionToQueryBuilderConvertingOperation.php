@@ -20,7 +20,7 @@ class ObjectionToQueryBuilderConvertingOperation extends ModelQueryBuilderOperat
      */
     protected $arguments;
 
-    public function __construct(string $name, ?array $options=null)
+    public function __construct(string $name, array $options=[])
     {
         parent::__construct($name, $options);
         $this->arguments = null;
@@ -31,11 +31,11 @@ class ObjectionToQueryBuilderConvertingOperation extends ModelQueryBuilderOperat
         return self::convertArgs($this->name, $iBuilder, $this->arguments);
     }
 
-    public function onAdd(ModelQueryBuilder $builder, array $arguments): bool
+    public function onAdd(ModelQueryBuilder $iBuilder, ...$arguments): bool
     {
         $this->arguments = $arguments;
 
-        return self::shouldBeAdded($this->name, $builder, $arguments);
+        return self::shouldBeAdded($this->name, $iBuilder, $arguments);
     }
 
     private static function shouldBeAdded(string $opName, ModelQueryBuilder $iBuilder, array $arguments)

@@ -140,7 +140,7 @@ abstract class ModelQueryBuilderOperationSupport
         return $this;
     }
 
-    public function clearContext(): self
+    public function clearContext(): static
     {
         $context = $this->context;
         $userContextClass = static::QUERY_BUILDER_USER_CONTEXT;
@@ -182,7 +182,7 @@ abstract class ModelQueryBuilderOperationSupport
         return $this->isPartialQuery;
     }
 
-    public function setIsPartial(bool $isPartial): self
+    public function setIsPartial(bool $isPartial): static
     {
         $this->isPartialQuery = $isPartial;
 
@@ -196,7 +196,7 @@ abstract class ModelQueryBuilderOperationSupport
         return $internalOptions['isInternalQuery'];
     }
 
-    public function setTableNameFor(string $tableName, string $newTableName): self
+    public function setTableNameFor(string $tableName, string $newTableName): static
     {
         $context = $this->getInternalContext();
 
@@ -212,7 +212,7 @@ abstract class ModelQueryBuilderOperationSupport
         return $context->tableMap[$tableName] ?? $tableName;
     }
 
-    public function setAliasFor(string $tableName, string $alias): self
+    public function setAliasFor(string $tableName, string $alias): static
     {
         $context = $this->getInternalContext();
 
@@ -233,7 +233,7 @@ abstract class ModelQueryBuilderOperationSupport
         return $this->getAliasFor($tableName) ?? $this->getTableNameFor($tableName);
     }
 
-    public function childQueryOf(ModelQueryBuilderOperationSupport $query, bool $isFork=false, bool $isInternalQuery=false): self
+    public function childQueryOf(ModelQueryBuilderOperationSupport $query, bool $isFork=false, bool $isInternalQuery=false): static
     {
         $currentContext = $this->getContext();
         $queryContext = $query->getContext();
@@ -255,7 +255,7 @@ abstract class ModelQueryBuilderOperationSupport
         return $this;
     }
 
-    public function subQueryOf(ModelQueryBuilderOperationSupport $query): self
+    public function subQueryOf(ModelQueryBuilderOperationSupport $query): static
     {
         if($this->isInternal())
         {
@@ -290,7 +290,7 @@ abstract class ModelQueryBuilderOperationSupport
         return $iQueryBuilder;
     }
 
-    public function setQueryBuilder(QueryBuilder $iQueryBuilder): self
+    public function setQueryBuilder(QueryBuilder $iQueryBuilder): static
     {
         $this->context->iQueryBuilder = $iQueryBuilder;
 
@@ -305,7 +305,7 @@ abstract class ModelQueryBuilderOperationSupport
      * @param mixed $operationSelector
      * @return ModelQueryBuilderOperationSupport
      */
-    public function clear($operationSelector): self
+    public function clear($operationSelector): static
     {
         $operationsToRemove = [];
 
@@ -324,7 +324,7 @@ abstract class ModelQueryBuilderOperationSupport
     /**
      * @return ModelQueryBuilderOperationSupport
      */
-    public function toFindQuery(): self
+    public function toFindQuery(): static
     {
         $findQuery = clone $this;
         $operationsToReplace = [];
@@ -352,17 +352,17 @@ abstract class ModelQueryBuilderOperationSupport
         return $findQuery;
     }
 
-    public function clearSelect(): self
+    public function clearSelect(): static
     {
         return $this->clear(self::SELECT_SELECTOR);
     }
 
-    public function clearWhere(): self
+    public function clearWhere(): static
     {
         return $this->clear(self::WHERE_SELECTOR);
     }
 
-    public function clearOrder(): self
+    public function clearOrder(): static
     {
         return $this->clear(self::ORDER_BY_SELECTOR);
     }
@@ -370,7 +370,7 @@ abstract class ModelQueryBuilderOperationSupport
      * @param Closure(): void $operationSelector
      * @return ModelQueryBuilderOperationSupport
      */
-    public function copyFrom(ModelQueryBuilderOperationSupport $iBuilder, \Closure $operationSelector): self
+    public function copyFrom(ModelQueryBuilderOperationSupport $iBuilder, \Closure $operationSelector): static
     {
         $operationsToAdd = [];
 
@@ -487,7 +487,7 @@ abstract class ModelQueryBuilderOperationSupport
                 'hookName' => $hookName,
             ];
 
-            return $operation->$hookName($this, $args);
+            return $operation->$hookName($this, ...$args);
         }
         finally
         {
@@ -535,7 +535,7 @@ abstract class ModelQueryBuilderOperationSupport
         return $this;
     }
 
-    public function removeOperation(ModelQueryBuilderOperation $operation): self
+    public function removeOperation(ModelQueryBuilderOperation $operation): static
     {
         if($operation->getParentOperation() !== null)
         {
@@ -552,7 +552,7 @@ abstract class ModelQueryBuilderOperationSupport
         return $this;
     }
 
-    public function replaceOperation(ModelQueryBuilderOperation $operation, ModelQueryBuilderOperation $newOperation): self
+    public function replaceOperation(ModelQueryBuilderOperation $operation, ModelQueryBuilderOperation $newOperation): static
     {
         if($operation->getParentOperation() !== null)
         {

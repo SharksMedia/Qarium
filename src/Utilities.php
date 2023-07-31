@@ -45,4 +45,81 @@ class Utilities
 
         return array_unique($all);
     }
+
+    public static function parseFieldExpression($expr)
+    {
+        static $cache = [];
+
+        $parsedExpression = $cache[$expr] ?? null;
+
+        if($parsedExpression !== null) return $parsedExpression;
+
+        // 2023-07-12 We don't support field expressions yet
+        $parsedExpression = (object)
+        [
+            'column'=>$expr,
+            'table'=>null
+        ];
+
+        $parsedExpression = self::preprocessParsedExpression($parsedExpression);
+
+        $cache[$expr] = $parsedExpression;
+
+        return $parsedExpression;
+    }
+
+    private static function preprocessParsedExpression($parsedExpr)
+    {
+        $columnParts = array_map(function($column){ return trim($column); }, explode('.', $parsedExpr->column));
+        $parsedExpr->column = $columnParts[count($columnParts) - 1];
+
+        if(count($columnParts) > 2)
+        {
+            $parsedExpr->table = implode(',', array_slice($columnParts, 0, count($columnParts) - 1));
+        }
+        else
+        {
+            $parsedExpr->table = null;
+        }
+
+        return $parsedExpr;
+    }
+
+    public static function uuid(string $data=null): string
+    {
+        $data = $data ?? random_bytes(16);
+        assert(strlen($data) == 16);
+
+        $data[6] = chr(ord($data[6]) & 0x0f | 0x40); // set version to 0100
+        $data[8] = chr(ord($data[8]) & 0x3f | 0x80); // set bits 6-7 to 10
+        
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+    }
+
+    public static function groupBy($items, $keyGetter = null)
+    {
+        $groups = [];
+
+        foreach($items as $item)
+        {
+            $key = ($keyGetter !== null) ? $keyGetter($item) : $item;
+
+            if(!isset($groups[$key])) $groups[$key] = [];
+
+            $groups[$key][] = $item;
+        }
+
+        return $groups;
+    }
+
+    /**
+     * @param array<int,mixed> $array
+     */
+    public static function arrayRemoveFalsey(array $array): array
+    {// 2023-05-10
+        return array_filter($array, function($value)
+        {// 2023-05-10
+            return (bool)$value;
+        });
+    }
 }

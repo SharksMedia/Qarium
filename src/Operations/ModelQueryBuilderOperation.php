@@ -62,6 +62,11 @@ abstract class ModelQueryBuilderOperation
         $this->childOperations = [];
     }
 
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
     protected static function funcHasBeenOverriden(string $function): bool
     {
         $rc = new \ReflectionClass(static::class);
@@ -118,11 +123,11 @@ abstract class ModelQueryBuilderOperation
      * This is called immediately when a query builder method is called.
      *
      * This method should never call any methods that add operations to the builder.
-     * @param ModelQueryBuilder $builder
+     * @param ModelQueryBuilder $iBuilder
      * @param array $arguments
      * @return bool
      */
-    public function onAdd(ModelQueryBuilder $builder, array $arguments): bool { return true; }
+    public function onAdd(ModelQueryBuilder $iBuilder, ...$arguments): bool { return true; }
 
     public function hasOnAdd(): bool { return static::funcHasBeenOverriden('onAdd'); }
 
@@ -133,19 +138,19 @@ abstract class ModelQueryBuilderOperation
      *
      * This method can be asynchronous.
      * You may call methods that add operations to to the builder.
-     * @param ModelQueryBuilder $builder
+     * @param ModelQueryBuilder $iBuilder
      * @param array $arguments
      * @return bool
      */
-    public function onBefore1(ModelQueryBuilder $builder, $arguments): bool { return true; }
+    public function onBefore1(ModelQueryBuilder $iBuilder, ...$arguments): bool { return true; }
 
     public function hasOnBefore1(): bool { return static::funcHasBeenOverriden('onBefore1'); }
 
-    public function onBefore2(ModelQueryBuilder $builder, $arguments): bool { return true; }
+    public function onBefore2(ModelQueryBuilder $iBuilder, ...$arguments): bool { return true; }
 
     public function hasOnBefore2(): bool { return static::funcHasBeenOverriden('onBefore2'); }
 
-    public function onBefore3(ModelQueryBuilder $builder, $arguments): bool { return true; }
+    public function onBefore3(ModelQueryBuilder $iBuilder, ...$arguments): bool { return true; }
 
     public function hasOnBefore3(): bool { return static::funcHasBeenOverriden('onBefore3'); }
     /**
@@ -157,7 +162,7 @@ abstract class ModelQueryBuilderOperation
      *
      * This method must be synchronous.
      * You may call methods that add operations to to the builder.
-     * @param ModelQueryBuilder $builder
+     * @param ModelQueryBuilder $iBuilder
      * @return bool
      */
     public function onBuild(ModelQueryBuilder $iBuilder): void { }
@@ -173,11 +178,11 @@ abstract class ModelQueryBuilderOperation
      * This method must be synchronous.
      * This method should never call any methods that add operations to the builder.
      * This method should always return the shark query builder.
-     * @param ModelQueryBuilder $builder
+     * @param ModelQueryBuilder $iBuilder
      * @param QueryBuilder $iSharkQueryBuilder
      * @return QueryBuilder
      */
-    public function onBuildQueryBuilder(QueryBuilder $iQueryBuilder, ModelQueryBuilder $builder): QueryBuilder { return $iQueryBuilder; }
+    public function onBuildQueryBuilder(ModelQueryBuilder $iBuilder, QueryBuilder $iQueryBuilder): QueryBuilder { return $iQueryBuilder; }
 
     public function hasOnBuildQueryBuilder(): bool { return static::funcHasBeenOverriden('onBuildQueryBuilder'); }
 
@@ -192,7 +197,7 @@ abstract class ModelQueryBuilderOperation
      * @param QueryBuilder $iSharkQueryBuilder
      * @return array
      */
-    public function onRawResult(ModelQueryBuilder $builder, array $rows) { return $rows; }
+    public function onRawResult(ModelQueryBuilder $iBuilder, array $rows) { return $rows; }
 
     public function hasOnRawResult(): bool { return static::funcHasBeenOverriden('onRawResult'); }
 
@@ -204,19 +209,27 @@ abstract class ModelQueryBuilderOperation
      * is called.
      *
      * This method can be asynchronous.
-     * @param ModelQueryBuilder $builder
-     * @param array $result
-     * @return mixed
+     * @param ModelQueryBuilder $iBuilder
+     * @param array|Model|null $result
+     * @return array|Model|null
      */
-    public function onAfter1(ModelQueryBuilder $builder, array $result): array { return $result; }
+    public function onAfter1(ModelQueryBuilder $iBuilder, &$result) { return $result; }
 
     public function hasOnAfter1(): bool { return static::funcHasBeenOverriden('onAfter1'); }
 
-    public function onAfter2(ModelQueryBuilder $builder, array $result): array { return $result; }
+    /**
+     * @param array|Model|null $result
+     * @return array|Model|null
+     */
+    public function onAfter2(ModelQueryBuilder $iBuilder, &$result) { return $result; }
 
     public function hasOnAfter2(): bool { return static::funcHasBeenOverriden('onAfter2'); }
 
-    public function onAfter3(ModelQueryBuilder $builder, array $result): array { return $result; }
+    /**
+     * @param array|Model|null $result
+     * @return array|Model|null
+     */
+    public function onAfter3(ModelQueryBuilder $iBuilder, &$result) { return $result; }
 
     public function hasOnAfter3(): bool { return static::funcHasBeenOverriden('onAfter3'); }
 
@@ -227,10 +240,10 @@ abstract class ModelQueryBuilderOperation
      * but before the database query is executed.
      *
      * This method must return a ModelQueryBuilder instance.
-     * @param ModelQueryBuilder $builder
+     * @param ModelQueryBuilder $iBuilder
      * @return ModelQueryBuilder
      */
-    public function queryExecutor(ModelQueryBuilder $builder): ModelQueryBuilder { return $builder; }
+    public function queryExecutor(ModelQueryBuilder $iBuilder): ModelQueryBuilder { return $iBuilder; }
 
     public function hasQueryExecutor(): bool { return false; }
 
@@ -239,10 +252,10 @@ abstract class ModelQueryBuilderOperation
      * This is called if an error occurs in the query execution.
      *
      * This method must return a QueryBuilder instance.
-     * @param ModelQueryBuilder $builder
+     * @param ModelQueryBuilder $iBuilder
      * @param \Throwable $error
      */
-    public function onError(ModelQueryBuilder $builder, array $arguments): void { }
+    public function onError(ModelQueryBuilder $iBuilder, ...$arguments): void { }
 
     public function hasOnError(): bool { return static::funcHasBeenOverriden('onError'); }
 
@@ -257,7 +270,7 @@ abstract class ModelQueryBuilderOperation
      * @param QueryBuilder $iSharkQueryBuilder
      * @return ModelQueryBuilderOperation
      */
-    public function toFindOperation(ModelQueryBuilder $builder): ModelQueryBuilderOperation { return $this; }
+    public function toFindOperation(ModelQueryBuilder $iBuilder): ModelQueryBuilderOperation { return $this; }
 
     protected function hasToFindOperation(): bool { return false; }
 

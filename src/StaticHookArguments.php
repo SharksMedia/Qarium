@@ -18,15 +18,15 @@ class StaticHookArguments
     /**
      * @var array
      */
-    private array $result;
+    private ?array $result;
 
-    public function __construct(ModelQueryBuilder $iBuilder, array $result=[])
+    public function __construct(ModelQueryBuilder $iBuilder, ?array $result=null)
     {
         $this->iBuilder = $iBuilder;
-        $this->result = $result ?? [];
+        $this->result = $result;
     }
 
-    public static function create(ModelQueryBuilder $iBuilder, array $result=[]): StaticHookArguments
+    public static function create(ModelQueryBuilder $iBuilder, ?array $result=null): StaticHookArguments
     {
         return new StaticHookArguments($iBuilder, $result);
     }
