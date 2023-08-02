@@ -12,6 +12,10 @@ namespace Sharksmedia\Objection\Operations;
 use Sharksmedia\Objection\Model;
 use Sharksmedia\Objection\ModelQueryBuilder;
 use Sharksmedia\Objection\ModelJoinBuilder;
+use Sharksmedia\Objection\ModelQueryBuilderBase;
+use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
+use Sharksmedia\QueryBuilder\QueryBuilder;
+use Sharksmedia\QueryBuilder\Statement\Join;
 
 class ObjectionToQueryBuilderConvertingOperation extends ModelQueryBuilderOperation
 {
@@ -19,6 +23,7 @@ class ObjectionToQueryBuilderConvertingOperation extends ModelQueryBuilderOperat
      * @var array|null
      */
     protected $arguments;
+    // protected $isObjectionQueryBuilderBase = true;
 
     public function __construct(string $name, array $options=[])
     {
@@ -26,29 +31,29 @@ class ObjectionToQueryBuilderConvertingOperation extends ModelQueryBuilderOperat
         $this->arguments = null;
     }
 
-    public function getArguments(ModelQueryBuilder $iBuilder): ?array
+    public function getArguments(ModelQueryBuilderOperationSupport $iBuilder): ?array
     {
         return self::convertArgs($this->name, $iBuilder, $this->arguments);
     }
 
-    public function onAdd(ModelQueryBuilder $iBuilder, ...$arguments): bool
+    public function onAdd(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
     {
         $this->arguments = $arguments;
 
         return self::shouldBeAdded($this->name, $iBuilder, $arguments);
     }
 
-    private static function shouldBeAdded(string $opName, ModelQueryBuilder $iBuilder, array $arguments)
+    private static function shouldBeAdded(string $opName, ModelQueryBuilderOperationSupport $iBuilder, array $arguments)
     {
         // PHP does not have undefined, so this function always returns true...
         return true;
     }
 
-    private static function convertArgs(string $opName, ModelQueryBuilder $iBuilder, array $arguments): ?array
+    private function convertArgs(string $opName, ModelQueryBuilderOperationSupport $iBuilder, array $arguments): ?array
     {
         return array_map(function($argument) use($opName, $iBuilder)
         {
-            if(self::hasToKneRawMethod($argument))
+            if(self::hasToQueryBuilderRawMethod($argument))
             {
                 return self::convertToQueryBuilderRaw($argument, $iBuilder);
             }
@@ -58,17 +63,17 @@ class ObjectionToQueryBuilderConvertingOperation extends ModelQueryBuilderOperat
             }
             else if(is_array($argument))
             {
-                return self::convertArray($argument, $iBuilder);
+                return $this->convertArray($argument, $iBuilder);
             }
             else if($argument instanceof \Closure)
             {
-                return self::convertFunction($argument, $iBuilder);
+                return $this->convertFunction($argument, $iBuilder);
             }
             // else if(self::isModel($argument))
             // {
             //     return self::convertModel($argument);
             // }
-            else if(is_object($argument))
+            else if(self::isObject($argument))
             {
                 return self::convertPlainObject($argument, $iBuilder);
             }
@@ -79,31 +84,43 @@ class ObjectionToQueryBuilderConvertingOperation extends ModelQueryBuilderOperat
         }, $arguments);
     }
 
-    private static function hasToKneRawMethod($item): bool
+    private static function hasToQueryBuilderRawMethod($item): bool
     {
-        return is_object($item) && self::isFunction($item->toQueryBuilderRaw); // NOTE: To knex raw might always be a function, becuase it inherits from the base class.
+        return self::isObject($item) && method_exists($item, 'toQueryBuilderRaw');
     }
 
-    private static function convertToQueryBuilderRaw($item, ModelQueryBuilder $iBuilder)
+    private static function convertToQueryBuilderRaw($item, ModelQueryBuilderOperationSupport $iBuilder)
     {
         return $item->toQueryBuilderRaw($iBuilder);
     }
 
-    private static function isObjectionQueryBuilderBase($item)
+    private static function isObjectionQueryBuilderBase($item): bool
     {
-        return is_object($item) && self::isObjectionQueryBuilderBase($item) === true;
+        return $item instanceof ModelQueryBuilderBase;
+        // return self::isObject($item) && $item->isObjectionQueryBuilderBase === true;
     }
 
-    private static function convertQueryBuilderBase($item, ModelQueryBuilder $iBuilder)
+    private static function isQueryBuilder($item): bool
+    {
+        return $item instanceof QueryBuilder;
+    }
+
+    private static function isQueryBuilderJoinBuilder($item): bool
+    {
+        return $item instanceof \Sharksmedia\QueryBuilder\Statement\Join;
+    }
+
+    private static function convertQueryBuilderBase($item, ModelQueryBuilderOperationSupport $iBuilder)
     {
         // FIXME:: Implement me !!!
+        throw new \Exception('Not implemented yet');
     }
 
-    private static function convertArray(array $arr, ModelQueryBuilder $iBuilder): array
+    private function convertArray(array $arr, ModelQueryBuilderOperationSupport $iBuilder): array
     {
         return array_map(function($item) use($iBuilder)
         {
-            if(self::hasToKneRawMethod($item))
+            if(self::hasToQueryBuilderRawMethod($item))
             {
                 return self::convertToQueryBuilderRaw($item, $iBuilder);
             }
@@ -118,13 +135,19 @@ class ObjectionToQueryBuilderConvertingOperation extends ModelQueryBuilderOperat
         }, $arr);
     }
 
-    private static function convertFunction($func, ModelQueryBuilder $iBuilder)
+    private function convertFunction($func, ModelQueryBuilderOperationSupport $iBuilder)
     {
         return function(...$args) use($func, $iBuilder)
         {
-            if(self::isObjectionQueryBuilderBase($this))
+            $item = $args[0] ?? null;
+
+            if(self::isQueryBuilder($item))
             {
-                return self::convertQueryBuilderBase($this, $iBuilder);
+                return self::convertQueryBuilderFunction($item, $func, $iBuilder);
+            }
+            else if(self::isQueryBuilderJoinBuilder($item))
+            {
+                return self::convertJoinBuilderFunction($item, $func, $iBuilder);
             }
             else
             {
@@ -133,24 +156,24 @@ class ObjectionToQueryBuilderConvertingOperation extends ModelQueryBuilderOperat
         };
     }
 
-    private static function convertQueryBuilderFunction($knexQueryBuilder, $func, ModelQueryBuilder $iBuilder)
+    private static function convertQueryBuilderFunction(QueryBuilder $iQueryBuilder, $func, ModelQueryBuilderOperationSupport $iBuilder)
     {
-        $convertedQueryBuilder = ModelQueryBuilder::forClass($iBuilder->getModelClass());
+        $convertedQueryBuilder = ModelQueryBuilderOperationSupport::forClass($iBuilder->getModelClass());
 
         $convertedQueryBuilder->setIsPartial(true)->subQueryOf($iBuilder);
         $func($convertedQueryBuilder);
 
-        $convertedQueryBuilder->toQueryBuilderQuery($knexQueryBuilder);
+        $convertedQueryBuilder->toQueryBuilder($iQueryBuilder);
     }
 
-    private static function convertJoinBuilderFunction($knexJoinBuilder, $func, ModelQueryBuilder $iBuilder)
+    private static function convertJoinBuilderFunction(Join $iQueryBuilderJoin, \Closure $func, ModelQueryBuilderOperationSupport $iBuilder)
     {
-        $iJoinClauseBuilder = ModelJoinBuilder::forClass($iBuilder->getModelClass());
+        $iJoinClauseBuilder = \Sharksmedia\Objection\JoinBuilder::forClass($iBuilder->getModelClass());
         
         $iJoinClauseBuilder->setIsPartial(true)->subQueryOf($iBuilder);
         $func($iJoinClauseBuilder);
 
-        $iJoinClauseBuilder->toQueryBuilderQuery($knexJoinBuilder);
+        $iJoinClauseBuilder->toQueryBuilder($iQueryBuilderJoin);
     }
 
     private static function isModel($item): bool
@@ -168,11 +191,11 @@ class ObjectionToQueryBuilderConvertingOperation extends ModelQueryBuilderOperat
             {
                 return $out;
             }
-            else if(self::hasToKneRawMethod($item))
+            else if(self::hasToQueryBuilderRawMethod($item))
             {
                 $out[$key] = self::convertToQueryBuilderRaw($item, $iBuilder);
             }
-            else if(self::isObjectionQueryBuilderBase($item))
+            else if($this->_isObjectionQueryBuilderBase($item))
             {
                 $out[$key] = self::convertQueryBuilderBase($item, $iBuilder);
             }
@@ -183,5 +206,15 @@ class ObjectionToQueryBuilderConvertingOperation extends ModelQueryBuilderOperat
 
             return $out;
         }, []);
+    }
+
+    private static function isFunction(&$item): bool
+    {// 2023-08-01
+        return $item instanceof \Closure;
+    }
+
+    private static function isObject(&$item): bool
+    {
+        return is_object($item) && !self::isFunction($item);
     }
 }

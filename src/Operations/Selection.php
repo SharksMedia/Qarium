@@ -53,6 +53,12 @@ class Selection
         return $this->alias ?? $this->column;
     }
 
+    public function getAlias()
+    {
+        // NOTE: maybe only getName should be used?
+        return $this->alias;
+    }
+
     public static function create($selection): ?self
     {
         if(is_object($selection))
@@ -119,7 +125,7 @@ class Selection
 
         if(preg_match(self::ALIAS_REGEX, $selection) === 1)
         {
-            $parts = explode(' as ', $selection);
+            $parts = explode(' AS ', $selection);
             $selection = trim($parts[0]);
             $alias = trim($parts[1]);
         }

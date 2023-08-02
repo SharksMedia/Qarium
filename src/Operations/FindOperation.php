@@ -11,11 +11,12 @@ namespace Sharksmedia\Objection\Operations;
 
 use Sharksmedia\Objection\Model;
 use Sharksmedia\Objection\ModelQueryBuilder;
+use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
 use Sharksmedia\Objection\StaticHookArguments;
 
 class FindOperation extends ModelQueryBuilderOperation
 {
-    public function onBefore2(ModelQueryBuilder $builder, ...$arguments): bool
+    public function onBefore2(ModelQueryBuilderOperationSupport $builder, ...$arguments): bool
     {
         return $this->callStaticBeforeFind($builder) ?? true;
     }
@@ -24,8 +25,9 @@ class FindOperation extends ModelQueryBuilderOperation
      * @param array|Model|null $result
      * @return array|Model|null
      */
-    public function onAfter3(ModelQueryBuilder $builder, &$result)
+    public function onAfter3(ModelQueryBuilderOperationSupport $builder, &$result)
     {
+
         $options = $builder->getFindOptions();
 
         if($options['dontCallFindHooks'] ?? false) return $result;
@@ -33,8 +35,9 @@ class FindOperation extends ModelQueryBuilderOperation
         return $this->callAfterFind($builder, $result);
     }
 
-    public function callStaticBeforeFind(ModelQueryBuilder $builder)
+    public function callStaticBeforeFind(ModelQueryBuilderOperationSupport $builder)
     {
+
         $arguments = StaticHookArguments::create($builder);
 
         return $builder->getModelClass()::beforeFind($arguments);
@@ -44,7 +47,7 @@ class FindOperation extends ModelQueryBuilderOperation
      * @param array|Model|null $result
      * @return array|Model|null
      */
-    public function callAfterFind(ModelQueryBuilder $builder, $result)
+    public function callAfterFind(ModelQueryBuilderOperationSupport $builder, $result)
     {
         $options = $builder->getFindOptions();
         $this->callInstanceAfterFind($builder->getContext(), $result, $options['callAfterFindDeeply'] ?? null);
@@ -56,7 +59,7 @@ class FindOperation extends ModelQueryBuilderOperation
      * @param array|Model|null $result
      * @return array|Model|null
      */
-    public function callStaticAfterFind(ModelQueryBuilder $builder, $result)
+    public function callStaticAfterFind(ModelQueryBuilderOperationSupport $builder, $result)
     {
         $arguments = StaticHookArguments::create($builder, $result);
 

@@ -58,7 +58,8 @@ class Utilities
         $parsedExpression = (object)
         [
             'column'=>$expr,
-            'table'=>null
+            'table'=>null,
+            'access'=>[], // NOTE: Not sure what this is
         ];
 
         $parsedExpression = self::preprocessParsedExpression($parsedExpression);
@@ -68,12 +69,13 @@ class Utilities
         return $parsedExpression;
     }
 
-    private static function preprocessParsedExpression($parsedExpr)
+    private static function preprocessParsedExpression(object $parsedExpr)
     {
+        
         $columnParts = array_map(function($column){ return trim($column); }, explode('.', $parsedExpr->column));
         $parsedExpr->column = $columnParts[count($columnParts) - 1];
 
-        if(count($columnParts) > 2)
+        if(count($columnParts) >= 2)
         {
             $parsedExpr->table = implode(',', array_slice($columnParts, 0, count($columnParts) - 1));
         }

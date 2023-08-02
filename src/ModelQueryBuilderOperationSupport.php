@@ -13,6 +13,7 @@ use Closure;
 use Sharksmedia\Objection\Operations\ModelQueryBuilderOperation;
 use Sharksmedia\QueryBuilder\Query;
 use Sharksmedia\QueryBuilder\QueryBuilder;
+use Sharksmedia\QueryBuilder\Statement\Join;
 
 abstract class ModelQueryBuilderOperationSupport
 {
@@ -22,9 +23,9 @@ abstract class ModelQueryBuilderOperationSupport
     public const SELECT_SELECTOR = '/^(select|columns|column|distinct|count|countDistinct|min|max|sum|sumDistinct|avg|avgDistinct)$/';
     public const WHERE_SELECTOR = '/^(where|orWhere|andWhere|find\w+)/';
     public const ON_SELECTOR = '/^(on|orOn|andOn)/';
-    public const JOIN_SELECTOR = '/orderBy/';
-    public const FROM_SELECTOR = '/(join|joinRaw|joinRelated)$/i';
-    public const ORDER_BY_SELECTOR = '/^(from|into|table)$/';
+    public const ORDER_BY_SELECTOR = '/orderBy/';
+    public const JOIN_SELECTOR = '/(join|joinRaw|joinRelated)$/i';
+    public const FROM_SELECTOR = '/^(from|into|table)$/';
 
     /**
      * @var class-string<Model>
@@ -34,7 +35,7 @@ abstract class ModelQueryBuilderOperationSupport
     /**
      * @var ModelQueryBuilderOperation[]
      */
-    protected $operations;
+    public $operations;
 
     /**
      * @var ModelQueryBuilderContextBase|ModelQueryBuilderContextUser
@@ -193,7 +194,7 @@ abstract class ModelQueryBuilderOperationSupport
     {
         $internalOptions = $this->getInternalOptions();
 
-        return $internalOptions['isInternalQuery'];
+        return $internalOptions['isInternalQuery'] ?? false;
     }
 
     public function setTableNameFor(string $tableName, string $newTableName): static
@@ -309,9 +310,11 @@ abstract class ModelQueryBuilderOperationSupport
     {
         $operationsToRemove = [];
 
-        $callback = function($operation) use(&$operationsToRemove)
+        $callback = function(ModelQueryBuilderOperation $operation) use(&$operationsToRemove)
         {
-            if($operation->isAncestorInSet($operationsToRemove)) $operationsToRemove[] = $operation;
+            if(!$operation->isAncestorInSet($operationsToRemove)) $operationsToRemove[] = $operation;
+
+            return null;
         };
 
         $this->forEachOperations($operationSelector, $callback);
@@ -338,10 +341,12 @@ abstract class ModelQueryBuilderOperationSupport
             if(!$findOperation)
             {
                 $operationsToRemove[] = $operation;
-                return;
+                return null;
             }
 
             $operationsToReplace[] = ['operation'=>$operation, 'findOperation'=>$findOperation];
+
+            return null;
         };
 
         $findQuery->forEachOperations($operationSelectorCallback, $callback);
@@ -379,6 +384,8 @@ abstract class ModelQueryBuilderOperationSupport
             // If an ancestor operation has already been added, there is no need to add
             // FIXME: Set the key in operationsToAdd array
             if(!$operation->isAncestorInSet($operationsToAdd)) $operationsToAdd[] = $operation;
+
+            return null;
         };
 
         $iBuilder->forEachOperations($operationSelector, $callback);
@@ -419,6 +426,8 @@ abstract class ModelQueryBuilderOperationSupport
             $childRes = $operation->forEachDescendantOperation(function($operation) use(&$selector, &$callback, &$match)
             {
                 if($selector($operation) === $match && $callback($operation) === false) return false;
+
+                return true;
             });
 
             if($childRes === false) break;
@@ -444,13 +453,15 @@ abstract class ModelQueryBuilderOperationSupport
     /**
      * @param Closure(): void $operationSelector
      */
-    public function findLastOperation($operationSelector): ?ModelQueryBuilderOperationSupport
+    public function findLastOperation($operationSelector): ?ModelQueryBuilderOperation
     {
         $operation = null;
 
         $this->forEachOperations($operationSelector, function($op) use(&$operation)
         {
             $operation = $op;
+
+            return null;
         });
 
         return $operation;
@@ -519,11 +530,16 @@ abstract class ModelQueryBuilderOperationSupport
 
         if(count($this->activeOperations) !== 0)
         {
+            /** @var ModelQueryBuilderOperation $lastActiveOperation */
             $lastActiveOperation = end($this->activeOperations);
+
+            /** @var ModelQueryBuilderOperation $parentOperation */
             $parentOperation = $lastActiveOperation['operation'];
+
+            /** @var string $hookName */
             $hookName = $lastActiveOperation['hookName'];
 
-            $parentOperation->addChildOperation($operation, $hookName);
+            $parentOperation->addChildOperation($hookName, $operation);
 
             return $this;
         }
@@ -569,7 +585,11 @@ abstract class ModelQueryBuilderOperationSupport
         return $this;
     }
 
-    public function toQueryBuilder(?QueryBuilder $iQueryBuilder=null): QueryBuilder
+    /**
+     * @param QueryBuilder|Join|null $iQueryBuilder
+     * @return QueryBuilder|Join|null
+     */
+    public function toQueryBuilder($iQueryBuilder=null)
     {
         $iQueryBuilder = $iQueryBuilder ?? $this->getQueryBuilder();
 
@@ -580,15 +600,21 @@ abstract class ModelQueryBuilderOperationSupport
 
     public function executeOnBuild(): void
     {
-        $this->forEachOperations(function(){ return true; }, function($operation)
+        $this->forEachOperations(true, function($operation)
         {
             if($operation->hasOnBuild()) $this->callOperationMethod($operation, 'onBuild', [$this]);
+
+            return null;
         });
     }
 
-    public function executeOnBuildQueryBuilder(QueryBuilder $iQueryBuilder): QueryBuilder
+    /**
+     * @param QueryBuilder|Join|null $iQueryBuilder
+     * @return QueryBuilder|Join|null
+     */
+    public function executeOnBuildQueryBuilder($iQueryBuilder)
     {
-        $this->forEachOperations(function(){ return true; }, function($operation) use(&$iQueryBuilder)
+        $this->forEachOperations(true, function($operation) use(&$iQueryBuilder)
         {
             if($operation->hasOnBuildQueryBuilder())
             {
@@ -596,6 +622,8 @@ abstract class ModelQueryBuilderOperationSupport
 
                 $iQueryBuilder = $iNewQueryBuilder ?? $iQueryBuilder;
             }
+
+            return null;
         });
 
         return $iQueryBuilder;
@@ -608,7 +636,9 @@ abstract class ModelQueryBuilderOperationSupport
 
     public function toQuery(): Query
     {
-        return $this->toQueryBuilder()->toSQL();
+        $iBuilder = clone $this;
+
+        return $iBuilder->toQueryBuilder()->toSQL();
     }
     /**
      * @param mixed $operationSelector
@@ -644,7 +674,7 @@ abstract class ModelQueryBuilderOperationSupport
                 return false;
             };
         }
-        else if(is_callable($operationSelector)) return $operationSelector;
+        else if($operationSelector instanceof \Closure) return $operationSelector;
         else throw new \Exception("Invalid operation selector");
     }
 }

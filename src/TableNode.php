@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Sharksmedia\Objection;
 
 use Sharksmedia\Objection\ModelQueryBuilder;
-use Sharksmedia\Objection\Relation;
+use Sharksmedia\Objection\Relations\Relation;
 use Sharksmedia\Objection\RelationExpression;
+use Sharksmedia\Objection\Relations\ManyToMany;
 use Sharksmedia\Objection\Utilities;
 
 // 2023-07-12
@@ -81,7 +82,11 @@ class TableNode
 
     public static function create(TableTree $iTableTree, string $modelClass, RelationExpression $iRelationExpression, ?TableNode $iParentTableNode=null, ?Relation $iRelation=null): self
     {
-        return new self($iTableTree, $modelClass, $iRelationExpression, $iParentTableNode, $iRelation);
+        $iTableNode = new self($iTableTree, $modelClass, $iRelationExpression, $iParentTableNode, $iRelation);
+
+        if($iTableNode->hasParent()) $iTableNode->iParentTableNode->iChildNodes[] = $iTableNode;
+
+        return $iTableNode;
     }
 
     public function getOptions(): array
@@ -114,9 +119,18 @@ class TableNode
         return $this->iRelation;
     }
 
+    /**
+     * 2023-07-31
+     * @return class-string<Model>
+     */
     public function getModelClass(): string
     {// 2023-07-31
         return $this->modelClass;
+    }
+
+    public function getRelationExpression(): RelationExpression
+    {// 2023-07-31
+        return $this->iRelationExpression;
     }
 
     public function getRelationProperty(): ?string
@@ -131,7 +145,7 @@ class TableNode
 
     public function getColumnAliasForColumn(string $column): string
     {
-        if($this->iParentTableNode !== null) return $this->alias.($this->getOptions()['seperator'] ?? '').$column;
+        if($this->iParentTableNode !== null) return $this->alias.($this->getOptions()['seperator'] ?? ':').$column;
 
         return $column;
     }
@@ -162,7 +176,7 @@ class TableNode
 
     public function getJoinTableAlias(ModelQueryBuilder $iBuilder): ?string
     {
-        if($this->iRelation->getType() === Relation::TYPE_MANY_TO_MANY)
+        if($this->iRelation instanceof ManyToMany)
         {
             return $iBuilder->getAliasFor($this->iRelation->getRelatedModelClass()) ?? $this->modelClass::getJoinTableAlias($this->alias);
         }
@@ -177,11 +191,11 @@ class TableNode
         $options = $this->getOptions();
 
         $relationName = $this->iRelationExpression->getNode()->name;
-        $alias = $options()['aliases'][$relationName] ?? $relationName;
+        $alias = $options['aliases'][$relationName] ?? $relationName;
 
         if($options['minimize']) return '_t'.$this->iTableTree->createNextUid();
 
-        if($this->iParentTableNode->iParentTableNode !== null) return $this->iParentTableNode->alias.($options['seperator'] ?? '').$alias;
+        if($this->iParentTableNode->iParentTableNode !== null) return $this->iParentTableNode->alias.($options['seperator'] ?? ':').$alias;
 
         return $alias;
     }

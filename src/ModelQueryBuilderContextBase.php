@@ -36,7 +36,7 @@ class ModelQueryBuilderContextBase
      */
     public $tableMap = null;
 
-    public function __construct(?ModelQueryBuilder $iBuilder=null)
+    public function __construct(?ModelQueryBuilderOperationSupport $iBuilder=null)
     {
         if($iBuilder === null) return;
 

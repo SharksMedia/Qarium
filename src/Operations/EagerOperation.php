@@ -18,13 +18,13 @@ class EagerOperation extends ModelQueryBuilderOperation
      * 2023-07-10
      * @var RelationExpression
      */
-    private $iRelationExpression;
+    private $iRelationExpression = null;
 
     /**
      * 2023-07-10
      * @var array
      */
-    private array $modifiersAsPath = [];
+    private array $modifiersAtPath = [];
 
     /**
      * 2023-07-10
@@ -66,12 +66,12 @@ class EagerOperation extends ModelQueryBuilderOperation
 
     public function hasExpression(): bool
     {
-        return false;
+        return $this->iRelationExpression !== null;
     }
 
     public function addModifierAtPath(string $path, \Closure $modifier): self
     {
-        $this->modifiersAsPath[] = ['path'=>$path, 'modifier'=>$modifier];
+        $this->modifiersAtPath[] = ['path'=>$path, 'modifier'=>$modifier];
 
         return $this;
     }
@@ -80,7 +80,7 @@ class EagerOperation extends ModelQueryBuilderOperation
     {
         $expression = clone $this->iRelationExpression;
 
-        foreach($this->modifiersAsPath as $name=>$modifier)
+        foreach($this->modifiersAtPath as $name=>$modifier)
         {
             foreach($expression->expressionsAtPath($modifier->path) as $expr)
             {
@@ -95,7 +95,7 @@ class EagerOperation extends ModelQueryBuilderOperation
     {
         $modifiers = $iBuilder->getModifiers();
 
-        foreach($this->modifiersAsPath as $name=>$modifier)
+        foreach($this->modifiersAtPath as $name=>$modifier)
         {
             $modifiers[$name] = $modifier->modifier;
         }

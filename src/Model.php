@@ -16,6 +16,8 @@ use Sharksmedia\QueryBuilder\Query;
 use Sharksmedia\QueryBuilder\QueryBuilder;
 use Sharksmedia\QueryBuilder\Transaction;
 
+use Sharksmedia\Objection\Exceptions\ModifierNotFoundError;
+
 abstract class Model
 {
     public const USE_LIMIT_IN_FIRST = true;
@@ -57,6 +59,13 @@ abstract class Model
 
     /**
      * 2023-06-12
+     * Use this relation when the model is related to a list of models through a join table
+     * @var array<string, array>
+     */
+    private static array $metadataCache = [];
+
+    /**
+     * 2023-06-12
      * @return string
      */
     abstract static function getTableName(): string;
@@ -87,15 +96,14 @@ abstract class Model
         return static::getTableIDs();
     }
 
-    private function fetchTableMetadata(Client $iClient): array
+    public static function fetchTableMetadata(?Client $iClient=null): array
     {
+        $iClient = $iClient ?? Objection::getClient();
         // TODO: Create a function on the compiler to do this
-
-        static $cache = [];
 
         $tableName = static::getTableName();
 
-        if(isset($cache[$tableName])) return $cache[$tableName];
+        if(isset(self::$metadataCache[$tableName])) return self::$metadataCache[$tableName];
 
         $method = '';
         $options = [];
@@ -112,16 +120,16 @@ abstract class Model
 
         $statement = $iClient->query($iQuery);
 
-        $cache[$tableName] = $statement->fetchAll(\PDO::FETCH_ASSOC);
+        self::$metadataCache[$tableName] = $statement->fetchAll(\PDO::FETCH_ASSOC);
 
-        return $cache[$tableName];
+        return self::$metadataCache[$tableName];
     }
 
     public static function getTableMetadata(array $options=[]): ?array
     {// 2023-07-31
         $tableName = static::getTableName();
 
-        return $cache[$tableName] ?? null;
+        return self::$metadataCache[$tableName] ?? null;
     }
 
     private static function getIdRelationProperty(string $modelClass)
@@ -146,12 +154,12 @@ abstract class Model
         if($propertyName !== null) return $propertyName;
 
         $model = new static();
-        $addedProps = array_keys($model->createFromDatabaseArray([]));
+        $addedProps = array_keys((array)$model->createFromDatabaseArray([]));
 
         $row = [];
         $row[$columnName] = null;
 
-        $props = array_keys($model->createFromDatabaseArray($row));
+        $props = array_keys((array)$model->createFromDatabaseArray($row));
         $propertyName = array_diff($props, $addedProps)[0] ?? null;
 
         $cache[$columnName] = $propertyName ?? $columnName;
@@ -175,12 +183,16 @@ abstract class Model
 
         if($rawRelation === null) throw new \Exception("Relation $relationName does not exist on model " . static::class);
 
+        /** @var array<string, Relations\Relation> */
         static $relationsCache = [];
 
         if(!isset($relationsCache[$relationName]))
         {
-            $relationsCache[$relationName] = Relations\Relation::create($rawRelation, static::class);
+            $relationsCache[$relationName] = Relations\Relation::create($relationName, $rawRelation, static::class);
+            $relationsCache[$relationName]->setMapping($rawRelation);
         }
+
+        return $relationsCache[$relationName];
     }
 
     /**
@@ -351,5 +363,15 @@ abstract class Model
         }
 
         return $iModel;
+    }
+
+    public static function getModifiers(): array
+    {// 2023-08-02
+        return [];
+    }
+
+    public static function modifierNotFound(ModelQueryBuilder $iBuilder, \Cloure $modifier): void
+    {// 2023-08-02
+        throw new ModifierNotFoundError($modifier);
     }
 }

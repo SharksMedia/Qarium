@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace Sharksmedia\Objection;
 
 use Sharksmedia\QueryBuilder\Client;
+use Sharksmedia\QueryBuilder\QueryBuilder;
 
 class Objection
 {
@@ -37,6 +38,20 @@ class Objection
     public static function getDefaultClientID(): string
     {// 2023-06-12
         return self::DEFAULT_CLIENT_ID;
+    }
+
+    /**
+     * 2023-06-12
+     * @param QueryBuilder $iQueryBuilder
+     * @param class-string<Model> $modelClass
+     * @return ModelQueryBuilder
+     */
+    public static function initalize(Client $iClient, array $modelClasses): void
+    {// 2023-06-12
+        foreach($modelClasses as $modelClass)
+        {
+            $modelClass::fetchTableMetadata($iClient);
+        }
     }
 
 }

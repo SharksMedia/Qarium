@@ -105,8 +105,14 @@ class TableTree
 
     private function createChildNodes(RelationExpression $iRelationExpression, string $modelClass, TableNode $iParentTableNode)
     {
-        // RelationExpression::forEach()
+        RelationExpression::forEachChildExpression($iRelationExpression, $modelClass, function(RelationExpression $iChildRelationExpression, Relations\Relation $iRelation) use($iParentTableNode)
+        {
+            $iTableNode = TableNode::create($this, $iRelation->getRelatedModelClass(), $iChildRelationExpression, $iParentTableNode, $iRelation);
 
+            $this->iTableNodes[] = $iTableNode;
+
+            $this->createChildNodes($iChildRelationExpression, $iRelation->getRelatedModelClass(), $iTableNode);
+        });
     }
 
     private function createRootNode(RelationExpression $iRelationExpression, string $modelClass): TableNode

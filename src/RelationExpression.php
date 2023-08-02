@@ -14,9 +14,9 @@ class RelationExpression
      */
     private RelationNode $node;
 
-    public function __construct()
+    public function __construct(?RelationNode $node=null)
     {
-        $this->node = self::newNode();
+        $this->node = $node ?? self::newNode();
     }
 
     /**
@@ -173,7 +173,7 @@ class RelationExpression
 
         if(isset($expressionCache[$expression])) return clone $expressionCache[$expression];
 
-        $parentNode = new RelationNode();
+        $parentNode = self::newNode();
 
         $iChildNodes = self::parseRelationQuery($expression, $parentNode);
 
@@ -284,7 +284,7 @@ class RelationExpression
         }
     }
 
-    public static function forEachChildExpression(RelationExpresion $iRelationExpression, string $modelClass, \Closure $callback)
+    public static function forEachChildExpression(RelationExpression $iRelationExpression, string $modelClass, \Closure $callback)
     {
         $ID_LENGTH_LIMIT = 63;
         $RELATION_RECURSION_LIMIT = 64;
@@ -294,7 +294,47 @@ class RelationExpression
             throw new \Exception('recursion depth of eager expression ${expr.toString()} too big for JoinEagerAlgorithm');
         }
 
-        $iRelationExpression->_forEachChildExpression($modelClass, $callback);
+        $iNode = $iRelationExpression->getNode();
+
+        foreach($iNode->iChildNodes ?? [] as $iChildNode)
+        {
+            if($iChildNode->allRecursive)
+            {
+                foreach($modelClass::getRelationNames() as $relationName)
+                {
+                    $node = self::newNode($relationName, true);
+                    $relation = $modelClass::getRelationUnsafe($relationName);
+                    $iChildExpression = new RelationExpression($node);
+
+                    $callback($iChildExpression, $relation);
+                }
+            }
+            else if($iChildNode->recursiveDepth < $RELATION_RECURSION_LIMIT - 1)
+            {
+                // $relation = $modelClass::getRelationUnsafe($iChildNode->relationName);
+                $relation = $modelClass::getRelationUnsafe($iChildNode->name);
+                $iChildExpression = new RelationExpression($iChildNode, $iChildNode->recursiveDepth + 1);
+
+                $callback($iChildExpression, $relation);
+            }
+            else if($RELATION_RECURSION_LIMIT === 0)
+            {
+                $childNames = array_keys($iChildNode->iChildNodes);
+
+                foreach($childNames as $childName)
+                {
+                    $node = $iChildNode->iChildNodes[$childName];
+                    $relation = $modelClass::getRelationUnsafe($childName);
+
+                    if($relation === null) throw new RelationDoesNotExistError($modelClass, $childName);
+
+                    $iChildExpression = new RelationExpression($node->relationName);
+
+                    $callback($iChildExpression, $relation);
+                }
+            }
+        }
+
     }
 }
 

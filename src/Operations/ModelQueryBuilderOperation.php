@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace Sharksmedia\Objection\Operations;
 
 use Sharksmedia\Objection\ModelQueryBuilder;
+use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
 use Sharksmedia\QueryBuilder\QueryBuilder;
 
 abstract class ModelQueryBuilderOperation
@@ -127,7 +128,7 @@ abstract class ModelQueryBuilderOperation
      * @param array $arguments
      * @return bool
      */
-    public function onAdd(ModelQueryBuilder $iBuilder, ...$arguments): bool { return true; }
+    public function onAdd(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool { return true; }
 
     public function hasOnAdd(): bool { return static::funcHasBeenOverriden('onAdd'); }
 
@@ -138,19 +139,19 @@ abstract class ModelQueryBuilderOperation
      *
      * This method can be asynchronous.
      * You may call methods that add operations to to the builder.
-     * @param ModelQueryBuilder $iBuilder
+     * @param ModelQueryBuilderOperationSupport $iBuilder
      * @param array $arguments
      * @return bool
      */
-    public function onBefore1(ModelQueryBuilder $iBuilder, ...$arguments): bool { return true; }
+    public function onBefore1(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool { return true; }
 
     public function hasOnBefore1(): bool { return static::funcHasBeenOverriden('onBefore1'); }
 
-    public function onBefore2(ModelQueryBuilder $iBuilder, ...$arguments): bool { return true; }
+    public function onBefore2(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool { return true; }
 
     public function hasOnBefore2(): bool { return static::funcHasBeenOverriden('onBefore2'); }
 
-    public function onBefore3(ModelQueryBuilder $iBuilder, ...$arguments): bool { return true; }
+    public function onBefore3(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool { return true; }
 
     public function hasOnBefore3(): bool { return static::funcHasBeenOverriden('onBefore3'); }
     /**
@@ -162,10 +163,10 @@ abstract class ModelQueryBuilderOperation
      *
      * This method must be synchronous.
      * You may call methods that add operations to to the builder.
-     * @param ModelQueryBuilder $iBuilder
+     * @param ModelQueryBuilderOperationSupport $iBuilder
      * @return bool
      */
-    public function onBuild(ModelQueryBuilder $iBuilder): void { }
+    public function onBuild(ModelQueryBuilderOperationSupport $iBuilder): void { }
 
     public function hasOnBuild(): bool { return static::funcHasBeenOverriden('onBuild'); }
 
@@ -178,11 +179,12 @@ abstract class ModelQueryBuilderOperation
      * This method must be synchronous.
      * This method should never call any methods that add operations to the builder.
      * This method should always return the shark query builder.
-     * @param ModelQueryBuilder $iBuilder
-     * @param QueryBuilder $iSharkQueryBuilder
-     * @return QueryBuilder
+     *
+     * @param ModelQueryBuilderOperationSupport $iBuilder
+     * @param QueryBuilder|Join|null $iQueryBuilder
+     * @return QueryBuilder|Join|null
      */
-    public function onBuildQueryBuilder(ModelQueryBuilder $iBuilder, QueryBuilder $iQueryBuilder): QueryBuilder { return $iQueryBuilder; }
+    public function onBuildQueryBuilder(ModelQueryBuilderOperationSupport $iBuilder, $iQueryBuilder) { return $iQueryBuilder; }
 
     public function hasOnBuildQueryBuilder(): bool { return static::funcHasBeenOverriden('onBuildQueryBuilder'); }
 
@@ -197,7 +199,7 @@ abstract class ModelQueryBuilderOperation
      * @param QueryBuilder $iSharkQueryBuilder
      * @return array
      */
-    public function onRawResult(ModelQueryBuilder $iBuilder, array $rows) { return $rows; }
+    public function onRawResult(ModelQueryBuilderOperationSupport $iBuilder, array $rows) { return $rows; }
 
     public function hasOnRawResult(): bool { return static::funcHasBeenOverriden('onRawResult'); }
 
@@ -209,11 +211,11 @@ abstract class ModelQueryBuilderOperation
      * is called.
      *
      * This method can be asynchronous.
-     * @param ModelQueryBuilder $iBuilder
+     * @param ModelQueryBuilderOperationSupport $iBuilder
      * @param array|Model|null $result
      * @return array|Model|null
      */
-    public function onAfter1(ModelQueryBuilder $iBuilder, &$result) { return $result; }
+    public function onAfter1(ModelQueryBuilderOperationSupport $iBuilder, &$result) { return $result; }
 
     public function hasOnAfter1(): bool { return static::funcHasBeenOverriden('onAfter1'); }
 
@@ -221,7 +223,7 @@ abstract class ModelQueryBuilderOperation
      * @param array|Model|null $result
      * @return array|Model|null
      */
-    public function onAfter2(ModelQueryBuilder $iBuilder, &$result) { return $result; }
+    public function onAfter2(ModelQueryBuilderOperationSupport $iBuilder, &$result) { return $result; }
 
     public function hasOnAfter2(): bool { return static::funcHasBeenOverriden('onAfter2'); }
 
@@ -229,7 +231,7 @@ abstract class ModelQueryBuilderOperation
      * @param array|Model|null $result
      * @return array|Model|null
      */
-    public function onAfter3(ModelQueryBuilder $iBuilder, &$result) { return $result; }
+    public function onAfter3(ModelQueryBuilderOperationSupport $iBuilder, &$result) { return $result; }
 
     public function hasOnAfter3(): bool { return static::funcHasBeenOverriden('onAfter3'); }
 
@@ -239,11 +241,11 @@ abstract class ModelQueryBuilderOperation
      * this one. This method is called after all `onBefore` and `onBuild` hooks
      * but before the database query is executed.
      *
-     * This method must return a ModelQueryBuilder instance.
-     * @param ModelQueryBuilder $iBuilder
-     * @return ModelQueryBuilder
+     * This method must return a ModelQueryBuilderOperationSupport instance.
+     * @param ModelQueryBuilderOperationSupport $iBuilder
+     * @return ModelQueryBuilderOperationSupport
      */
-    public function queryExecutor(ModelQueryBuilder $iBuilder): ModelQueryBuilder { return $iBuilder; }
+    public function queryExecutor(ModelQueryBuilderOperationSupport $iBuilder): ModelQueryBuilderOperationSupport { return $iBuilder; }
 
     public function hasQueryExecutor(): bool { return false; }
 
@@ -252,10 +254,10 @@ abstract class ModelQueryBuilderOperation
      * This is called if an error occurs in the query execution.
      *
      * This method must return a QueryBuilder instance.
-     * @param ModelQueryBuilder $iBuilder
+     * @param ModelQueryBuilderOperationSupport $iBuilder
      * @param \Throwable $error
      */
-    public function onError(ModelQueryBuilder $iBuilder, ...$arguments): void { }
+    public function onError(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): void { }
 
     public function hasOnError(): bool { return static::funcHasBeenOverriden('onError'); }
 
@@ -270,7 +272,7 @@ abstract class ModelQueryBuilderOperation
      * @param QueryBuilder $iSharkQueryBuilder
      * @return ModelQueryBuilderOperation
      */
-    public function toFindOperation(ModelQueryBuilder $iBuilder): ModelQueryBuilderOperation { return $this; }
+    public function toFindOperation(ModelQueryBuilderOperationSupport $iBuilder): ModelQueryBuilderOperation { return $this; }
 
     protected function hasToFindOperation(): bool { return false; }
 
@@ -286,7 +288,7 @@ abstract class ModelQueryBuilderOperation
 
         while($ancestor !== null)
         {
-            if(in_array($ancestor, $ancestorsSet, true)) return true;
+            if(in_array($ancestor, $ancestorsSet)) return true;
 
             $ancestor = $ancestor->parentOperation;
         }
@@ -360,9 +362,13 @@ abstract class ModelQueryBuilderOperation
     {
         foreach($this->childOperations as $childOperation)
         {
-            if($callback($childOperation) === false) return false;
+            $result = $callback($childOperation);
 
-            if($childOperation->forEachDescendantOperation($callback) === false) return false;
+            if($result === false) return false;
+
+            $descendantResult = $childOperation->forEachDescendantOperation($callback);
+
+            if($descendantResult === false) return false;
         }
 
         return true;

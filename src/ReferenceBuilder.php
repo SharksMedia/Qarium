@@ -37,19 +37,19 @@ class ReferenceBuilder
      * 2023-07-12
      * @var string
      */
-    private ?string $cast;
+    private ?string $cast = null;
 
     /**
      * 2023-07-12
      * @var bool
      */
-    private bool $toJson;
+    private bool $toJson = false;
 
     /**
      * 2023-07-12
      * @var string
      */
-    private ?string $alias;
+    private ?string $alias = null;
 
     /**
      * 2023-07-12
@@ -69,7 +69,12 @@ class ReferenceBuilder
         return $this->expr;
     }
 
-    public function getParsedExpr(): ?string
+    public function getParsedExpression(): object
+    {
+        return $this->parsedExpr;
+    }
+
+    public function getParsedExpr(): ?object
     {
         return $this->parsedExpr;
     }
@@ -109,7 +114,7 @@ class ReferenceBuilder
         return ($this->parsedExpr !== null || count($this->parsedExpr->access) === 0) && $this->cast !== null && !$this->toJson;
     }
 
-    public function fullColumn(ModelQueryBuilder $iBuilder)
+    public function fullColumn(ModelQueryBuilderOperationSupport $iBuilder)
     {
         $table = null;
         if($this->getTableName() !== null) $table = $this->getTableName();
@@ -191,7 +196,7 @@ class ReferenceBuilder
         return $this;
     }
 
-    public function toQueryBuilderRaw(ModelQueryBuilder $iBuilder): \Sharksmedia\QueryBuilder\Statement\Raw
+    public function toQueryBuilderRaw(ModelQueryBuilderOperationSupport $iBuilder): \Sharksmedia\QueryBuilder\Statement\Raw
     {
         return new \Sharksmedia\QueryBuilder\Statement\Raw(...$this->createRawArgs($iBuilder));
     }
@@ -203,7 +208,7 @@ class ReferenceBuilder
         $this->table = $this->parsedExpr->table;
     }
 
-    public function createRawArgs(ModelQueryBuilder $iBuilder)
+    public function createRawArgs(ModelQueryBuilderOperationSupport $iBuilder)
     {
         $bindings = [];
         $sql = $this->createReferenceSql($iBuilder, $bindings);
@@ -215,7 +220,7 @@ class ReferenceBuilder
         return [$sql, ...$bindings];
     }
 
-    private function createReferenceSql(ModelQueryBuilder $iBuilder, array $bindings)
+    private function createReferenceSql(ModelQueryBuilderOperationSupport $iBuilder, array &$bindings)
     {
         $bindings[] = $this->fullColumn($iBuilder);
 

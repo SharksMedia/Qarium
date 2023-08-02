@@ -10,9 +10,11 @@ declare(strict_types=1);
 namespace Sharksmedia\Objection\Operations;
 
 use Sharksmedia\Objection\ModelQueryBuilder;
+use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
 use Sharksmedia\Objection\Utilities;
+use Sharksmedia\QueryBuilder\QueryBuilder;
 
-class SelectOperation extends ModelQueryBuilderOperation
+class SelectOperation extends ObjectionToQueryBuilderConvertingOperation
 {
     public const COUNT_REGEX = '/count/i';
 
@@ -27,7 +29,7 @@ class SelectOperation extends ModelQueryBuilderOperation
         $this->selections = [];
     }
 
-    public function onAdd(ModelQueryBuilder $iBuilder, ...$arguments): bool
+    public function onAdd(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
     {
         $selections = Utilities::array_flatten($arguments);
 
@@ -44,17 +46,28 @@ class SelectOperation extends ModelQueryBuilderOperation
         return $return;
     }
 
-    public function hasSelections(): bool
+    /**
+     * @param ModelQueryBuilderOperationSupport $iBuilder
+     * @param QueryBuilder|Join|null $iQueryBuilder
+     * @return QueryBuilder|Join|null
+     */
+    public function onBuildQueryBuilder(ModelQueryBuilderOperationSupport $iBuilder, $iQueryBuilder)
     {
-        return count($this->selections) > 0;
+        return $iQueryBuilder->{$this->name}(...$this->getArguments($iBuilder));
     }
+
+
+    // public function hasSelections(): bool
+    // {
+    //     return count($this->selections) > 0;
+    // }
 
     public function getSelections(): array
     {
         return $this->selections;
     }
 
-    public function findSelection(ModelQueryBuilder $iBuilder, string $selectionToFind): ?Selection
+    public function findSelection(ModelQueryBuilderOperationSupport $iBuilder, string $selectionToFind): ?Selection
     {
         $selectionInstanceToFind = Selection::create($selectionToFind);
 

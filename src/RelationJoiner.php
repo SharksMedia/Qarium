@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Sharksmedia\Objection;
 
 use Sharksmedia\Objection\Operations\Selection;
+use Sharksmedia\Objection\Relations\ManyToMany;
 
 // 2023-07-11
 
@@ -100,12 +101,13 @@ class RelationJoiner
     public function fetchColumnInfo(ModelQueryBuilder $iBuilder): array
     {
         $iTableTree = $this->getTableTree($iBuilder);
-        $allModelClasses = array_unique(array_column($iTableTree->getNodes(), 'modelClass'));
+        $allModelClasses = array_map(function($iNode) { return $iNode->getModelClass(); }, $iTableTree->getNodes());
+        $allModelClasses = array_unique($allModelClasses);
 
         $columnInfos = [];
         foreach($allModelClasses as $modelClass)
         {
-            $columnInfo = $modelClass::fetchTableMetadata(['parentBuilder'=>$iBuilder]);
+            $columnInfo = $modelClass::fetchTableMetadata();
 
             $columnInfos[$modelClass] = $columnInfo;
         }
@@ -123,21 +125,21 @@ class RelationJoiner
         return $this->iTableTree;
     }
 
-    public function build(ModelQueryBuilder $iBuilder, bool $buildSelects=true): void
+    public function build(ModelQueryBuilder &$iBuilder, bool $buildSelects=true): void
     {
         $iTableTree = $this->getTableTree($iBuilder);
         $rootTableNode = $iTableTree->getRootNode();
 
-        $userSelectQueries = [$rootTableNode->getUUID()=>$iBuilder];
+        $userSelectQueries = [$rootTableNode->getUUID()=>&$iBuilder];
 
-        foreach($rootTableNode->iChildNodes as $child)
+        foreach($rootTableNode->getChildNodes() as $iChildTableNode)
         {
-            $this->buildJoinsForNode(['builder'=>$iBuilder, 'tableNode'=>$child, 'userSelectQueries'=>$userSelectQueries]);
+            $this->buildJoinsForNode($iBuilder, $iChildTableNode, $userSelectQueries);
         }
 
         if($buildSelects)
         {
-            $this->buildSelects(['builder'=>$iBuilder, 'tableNode'=>$rootTableNode, 'userSelectQueries'=>$userSelectQueries]);
+            $this->buildSelects($iBuilder, $rootTableNode, $userSelectQueries);
         }
     }
 
@@ -150,14 +152,9 @@ class RelationJoiner
         return $parsed;
     }
 
-    private function buildSelects($data)
+    private function buildSelects(ModelQueryBuilder &$iBuilder, TableNode $iTableNode, array &$userSelectQueries): ModelQueryBuilder
     {
-        $builder = $data['builder'];
-        /** @var TableNode $iTableNode */
-        $iTableNode = $data['tableNode'];
-        $userSelectQueries = $data['userSelectQueries'];
-
-        $selectionsForNode = $this->getSelectionsForNode($data);
+        $selectionsForNode = $this->getSelectionsForNode($iBuilder, $iTableNode, $userSelectQueries);
 
         $selections = $selectionsForNode['selections'];
         $internalSelections = $selectionsForNode['internalSelections'];
@@ -172,18 +169,14 @@ class RelationJoiner
         // parsing the result.
         $this->internalSelections = $internalSelections;
 
-        return $builder->select($this->selectionsToStrings($selections));
+        $r = $iBuilder->select($this->selectionsToStrings($selections));
+
+        return $r;
     }
 
 
-    private function getSelectionsForNode($data)
+    private function getSelectionsForNode(ModelQueryBuilder $iBuilder, TableNode $iTableNode, array &$userSelectQueries)
     {
-        $builder = $data['builder'];
-        /** @var TableNode $iTableNode */
-        $iTableNode = $data['tableNode'];
-        /** @var ModelQueryBuilder $userSelectQueries */
-        $userSelectQueries = $data['userSelectQueries'];
-
         $userSelectQuery = $userSelectQueries[$iTableNode->getUUID()];
         $userSelections = $userSelectQuery->findAllSelections();
         $userSelectedAllColumns = $this->isSelectAllSelectionSet($userSelections);
@@ -195,9 +188,9 @@ class RelationJoiner
         {
             $selections = $this->mapUserSelectionsFromSubqueryToMainQuery($userSelections, $iTableNode);
 
-            if($userSelectedAllColumns && $iTableNode->getRelation()->getType === Relation::TYPE_MANY_TO_MANY)
+            if($userSelectedAllColumns && $iTableNode->getRelation() instanceof ManyToMany)
             {
-                $extraSelections = $this->getJoinTableExtraSelectionsForNode($builder, $iTableNode);
+                $extraSelections = $this->getJoinTableExtraSelectionsForNode($iBuilder, $iTableNode);
 
                 $selections = array_merge($selections, $extraSelections);
             }
@@ -205,7 +198,7 @@ class RelationJoiner
 
         if($userSelectedAllColumns)
         {
-            $allColumnSelections = $this->getAllColumnSelectionsForNode($builder, $iTableNode);
+            $allColumnSelections = $this->getAllColumnSelectionsForNode($iBuilder, $iTableNode);
 
             $selections = array_merge($selections, $allColumnSelections);
         }
@@ -225,7 +218,7 @@ class RelationJoiner
 
         foreach($iTableNode->getChildNodes() as $iChildNode)
         {
-            $childResult = $this->getSelectionsForNode(['builder'=>$builder, 'tableNode'=>$iChildNode, 'userSelectQueries'=>$userSelectQueries]);
+            $childResult = $this->getSelectionsForNode($iBuilder, $iChildNode, $userSelectQueries);
 
             $selections = array_merge($selections, $childResult['selections']);
             $internalSelections = array_merge($internalSelections, $childResult['internalSelections']);
@@ -242,10 +235,9 @@ class RelationJoiner
 
     private function isSelectAllSelectionSet(array $selections): bool
     {// 2023-07-31 Generate by copilot
-        foreach($selections as $selection)
-        {
-            if($this->isSelectAll($selection)) return true;
-        }
+        if(count($selections) === 0) return true;
+
+        foreach($selections as $selection) if($this->isSelectAll($selection)) return true;
 
         return false;
     }
@@ -267,13 +259,17 @@ class RelationJoiner
         throw new \Exception("identifier ".$alias." is over ".self::ID_LENGTH_LIMIT." characters long and would be truncated by the database engine.");
     }
 
+    /**
+     * @param array<int, Selection> $iSelections
+     * @return Selection[]
+     */
     private function selectionsToStrings(array $iSelections): array
     {// 2023-07-31
         return array_map(function($iSelection)
         {
-            $selectStr = $iSelection->getTableAlias().'.'.$iSelection->getColumn();
+            $selectStr = $iSelection->getTable().'.'.$iSelection->getColumn();
 
-            return $selectStr.' as '.$iSelection->getAlias();
+            return $selectStr.' AS '.$iSelection->getAlias();
         }, $iSelections);
     }
 
@@ -337,6 +333,120 @@ class RelationJoiner
         }, $modelClassIDs);
 
         return $selections;
+    }
+
+    private function buildJoinsForNode(ModelQueryBuilder $iBuilder, TableNode $iTableNode, array &$userSelectQueries)
+    {// 2023-08-01
+        $subQueryToJoin = $this->createSubqueryToJoin($iBuilder, $iTableNode, $this->modifiers);
+
+        $userSelectQuery = clone $subQueryToJoin;
+
+        // relation.join applies the relation modifier that can also contain selects.
+        $userSelectQuery->modify($iTableNode->getRelation()->getModify());
+
+        // Save the query that contains the user specified selects for later use.
+        $userSelectQueries[$iTableNode->getUUID()] = $userSelectQuery;
+
+        $joinOperation = $this->options['joinOperation'];
+        $relatedTableAlias = $iTableNode->getAlias();
+        $relatedJoinSelectQuery = $this->ensureIdAndRelationPropsAreSelected($subQueryToJoin, $iTableNode);
+        $relatedTable = null;
+        $ownerTable = null;
+
+        $iTableNode->getRelation()->join($iBuilder, $joinOperation, $relatedTableAlias, $relatedJoinSelectQuery, $relatedTable, $ownerTable);
+
+        foreach($iTableNode->getChildNodes() as $iChilTableNode)
+        {
+            $this->buildJoinsForNode($iBuilder, $iChilTableNode, $userSelectQueries);
+        }
+    }
+
+    private function createSubqueryToJoin(ModelQueryBuilder $iBuilder, TableNode $iTableNode, array $modifiers): ModelQueryBuilder
+    {// 2023-08-01
+        $iRelation = $iTableNode->getRelation();
+        $iRelationExpression = $iTableNode->getRelationExpression();
+
+        /** @var class-string<Model> $modelClass */
+        $modelClass = $iTableNode->getModelClass();
+
+        $modifierQuery = $modelClass::query()->childQueryOf($iBuilder);
+
+        foreach($iRelationExpression->getNode()->modify as $modifierName)
+        {
+            $modifier = $this->createModifier($modifierName, $modelClass, $modifiers);
+
+            $modifier($modifierQuery);
+        }
+
+        return $modifierQuery;
+    }
+
+    private function createModifier($modifier, string $modelClass, array $modifiers): \Closure
+    {
+        $modelModifiers = $modelClass::getModifiers();
+
+        if(!is_array($modifier)) $modifier = [$modifier];
+
+        $modifierFunctions = array_map(function($modifier) use ($modifiers, $modelModifiers, $modelClass)
+        {
+            $modify = null;
+
+            if(is_string($modifier))
+            {
+                $modify = $modifiers[$modifier] ?? $modelModifiers[$modifier] ?? null;
+
+              // Modifiers can be pointers to other modifiers. Call this function recursively.
+                if($modify !== null && !($modify instanceof \Closure)) return $this->createModifier($modify, $modelClass, $modifiers);
+            }
+            else if($modifier instanceof \Closure)
+            {
+                $modify = $modifier;
+            }
+            else if(is_array($modifier))
+            {
+                return $this->createModifier($modifier, $modelClass, $modifiers);
+            }
+
+            return $modify;
+        }, $modifier);
+
+        return function(ModelQueryBuilder $iBuilder, ...$args) use($modifierFunctions)
+        {
+            foreach($modifierFunctions as $modifierFunction)
+            {
+                $modifierFunction($iBuilder, ...$args);
+            }
+        };
+    }
+
+    private function ensureIdAndRelationPropsAreSelected(ModelQueryBuilder $iBuilder, TableNode $iTableNode)
+    {
+        $tableRef = $iBuilder->getTableRef();
+
+        $modelClass = $iBuilder->getModelClass();
+
+        $cols =
+        [
+            ...$modelClass::getTableIDs(),
+            ...$iTableNode->getRelation()->getRelatedProp()->getColumns(),
+            ...array_reduce($iTableNode->getChildNodes(), function($carry, $extra)
+            {
+                return [...$carry, ...$extra->getRelation()->getOwnerProp()->getColumns()];
+            }, []),
+        ];
+
+        $selectedStrings = array_unique($cols);
+        $selectedStrings = array_filter($selectedStrings, function($col) use ($iBuilder)
+        {
+            return !$iBuilder->hasSelectionAs($col, $col);
+        });
+        $selectedStrings = array_map(function($col) use($tableRef)
+        {
+            return "$tableRef.$col";
+        }, $selectedStrings);
+
+
+        return $iBuilder->select($selectedStrings);
     }
 
 }

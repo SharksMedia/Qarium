@@ -10,14 +10,19 @@ declare(strict_types=1);
 namespace Sharksmedia\Objection\Operations;
 
 use Sharksmedia\Objection\ModelQueryBuilder;
+use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
 use Sharksmedia\QueryBuilder\QueryBuilder;
 
 class QueryBuilderOperation extends ObjectionToQueryBuilderConvertingOperation
 {
-    public function onBuildQueryBuilder(ModelQueryBuilder $iBuilder, QueryBuilder $iQueryBuilder): QueryBuilder
+    /**
+     * @param QueryBuilder|Join|null $iQueryBuilder
+     * @return QueryBuilder|Join|null
+     */
+    public function onBuildQueryBuilder(ModelQueryBuilderOperationSupport $iBuilder, $iQueryBuilder)
     {
         $functionName = $this->getName();
         
-        return $iQueryBuilder->$functionName(...$this->getArguments($iBuilder));
+        return $iQueryBuilder->{$functionName}(...$this->getArguments($iBuilder));
     }
 }

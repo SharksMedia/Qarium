@@ -10,13 +10,14 @@ declare(strict_types=1);
 namespace Sharksmedia\Objection\Operations;
 
 use Sharksmedia\Objection\ModelQueryBuilder;
+use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
 use Sharksmedia\Objection\RelationJoiner;
 
 class JoinEagerOperation extends EagerOperation
 {
     private ?RelationJoiner $iJoiner = null;
 
-    public function onAdd(ModelQueryBuilder $iBuilder, ...$arguments): bool
+    public function onAdd(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
     {
         $iBuilder->setFindOption('callAfterFindDeeply', true);
 
@@ -25,7 +26,7 @@ class JoinEagerOperation extends EagerOperation
         return true;
     }
 
-    public function onBefore3(ModelQueryBuilder $iBuilder, ...$arguments): bool
+    public function onBefore3(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
     {
         return !!$this->iJoiner
             ->setExpression($this->buildFinalExpression())
@@ -34,7 +35,7 @@ class JoinEagerOperation extends EagerOperation
             ->fetchColumnInfo($iBuilder);
     }
 
-    public function onBuild(ModelQueryBuilder $iBuilder): void
+    public function onBuild(ModelQueryBuilderOperationSupport $iBuilder): void
     {
         $this->iJoiner
             ->setExpression($this->buildFinalExpression())
@@ -43,7 +44,7 @@ class JoinEagerOperation extends EagerOperation
             ->build($iBuilder);
     }
 
-    public function onRawResult(ModelQueryBuilder $iBuilder, array $rows)
+    public function onRawResult(ModelQueryBuilderOperationSupport $iBuilder, array $rows)
     {
         return $this->iJoiner->parseResult($iBuilder, $rows);
     }
