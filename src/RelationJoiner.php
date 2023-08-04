@@ -287,14 +287,14 @@ class RelationJoiner
 
     private function getJoinTableExtraSelectionsForNode(ModelQueryBuilder $iBuilder, TableNode $iTableNode): array
     {// 2023-07-31
-        $mapped = array_map(function($extra) use($iBuilder, $iTableNode)
+        $mapped = array_map(function(object $extra) use($iBuilder, $iTableNode)
         {
                 return new Selection(
                     $iTableNode->getJoinTableAlias($iBuilder),
-                    $iTableNode->getRelation()->getThroughFromColumn(),
-                    $iTableNode->getColumnAliasForColumn($iTableNode->getRelation()->getJoinThroughTableAlias())
+                    $extra->joinTableCol,
+                    $iTableNode->getColumnAliasForColumn($extra->joinTableCol)
                 );
-        }, $iTableNode->getRelation()->getThroughExtras());
+        }, $iTableNode->getRelation()->getJoinTableExtras());
 
         return $mapped;
     }

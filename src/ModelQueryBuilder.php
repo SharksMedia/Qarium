@@ -73,7 +73,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     protected $explicitResolveValue = null;
 
     /**
-     * @var array<string, mixed>
+     * @var array<string, callable>
      */
     protected array $modifiers = [];
 
@@ -675,8 +675,11 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         // Set the table only if it hasn't been explicitly set yet.
         if($fromOperation === null) $iQueryBuilder = self::setDefaultTable($iBuilder, $iQueryBuilder);
 
+        $hasFromTable = $fromOperation !== null && $fromOperation->getTable() === null;
+        $hasSelects = $iBuilder->hasSelects();
+
         // Only add `table.*` select if there are no explicit selects and `from` is a table name and not a subquery.
-        if(!$iBuilder->hasSelects() && ($fromOperation === null || $fromOperation->getTable() !== null)) $iQueryBuilder = self::setDefaultSelect($iBuilder, $iQueryBuilder);
+        if(!$hasSelects && !$hasFromTable) $iQueryBuilder = self::setDefaultSelect($iBuilder, $iQueryBuilder);
 
         return $iQueryBuilder;
     }
@@ -741,7 +744,18 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         throw $e;
     }
 
-    public function execute()
+    /**
+     * @return Model[]|Model|null
+     */
+    public function run()
+    {
+        return $this->execute();
+    }
+
+    /**
+     * @return Model[]|Model|null
+     */
+    private function execute()
     {
         $iBuilder = clone $this;
 

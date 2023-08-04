@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace Sharksmedia\Objection\Operations;
 
+use Sharksmedia\Objection\ColumnRef;
 use Sharksmedia\Objection\Model;
 use Sharksmedia\Objection\ModelQueryBuilder;
 use Sharksmedia\Objection\ModelJoinBuilder;
@@ -158,7 +159,7 @@ class ObjectionToQueryBuilderConvertingOperation extends ModelQueryBuilderOperat
 
     private static function convertQueryBuilderFunction(QueryBuilder $iQueryBuilder, $func, ModelQueryBuilderOperationSupport $iBuilder)
     {
-        $convertedQueryBuilder = ModelQueryBuilderOperationSupport::forClass($iBuilder->getModelClass());
+        $convertedQueryBuilder = ModelQueryBuilder::forClass($iBuilder->getModelClass());
 
         $convertedQueryBuilder->setIsPartial(true)->subQueryOf($iBuilder);
         $func($convertedQueryBuilder);
@@ -215,6 +216,6 @@ class ObjectionToQueryBuilderConvertingOperation extends ModelQueryBuilderOperat
 
     private static function isObject(&$item): bool
     {
-        return is_object($item) && !self::isFunction($item);
+        return is_object($item) && !self::isFunction($item) && !($item instanceof ColumnRef);
     }
 }

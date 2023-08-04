@@ -22,7 +22,7 @@ class JoinResultParser
 
     /**
      * 2023-07-31
-     * @var array<string, JoinResultColumn>
+     * @var array<string, array<int, JoinResultColumn>>
      */
     private array $columnsByTableNode;
 
@@ -36,9 +36,13 @@ class JoinResultParser
      * 2023-07-31
      * @var array<string, Model>
      */
-    private array $rootModels;
+    private array $iRootModels;
 
-
+    /**
+     * 2023-07-31
+     * @param TableTree $iTableTree
+     * @param array<int, string> $omitColumnAliases
+     */
     public function __construct(TableTree $iTableTree, array $omitColumnAliases=[])
     {// 2023-07-31
         $this->iTableTree = $iTableTree;
@@ -46,120 +50,144 @@ class JoinResultParser
 
         $this->columnsByTableNode = [];
         $this->parentMap = [];
-        $this->rootModels = [];
+        $this->iRootModels = [];
     }
 
-    public static function create(...$args)
+    /**
+     * 2023-07-31
+     * @param TableTree $iTableTree
+     * @param array<int, string> $omitColumnAliases
+     */
+    public static function create(TableTree $iTableTree, array $omitColumnAliases=[]): self
     {// 2023-07-31
-        return new static(...$args);
+        return new static($iTableTree, $omitColumnAliases);
     }
 
-    public function parse(array $flatRows)
+    /**
+     * 2023-08-03
+     * @param array<int, array<string, mixed>> $flatRows
+     * @return array<string, Model>
+     */
+    public function parse(array $flatRows): array
     {
         if(count($flatRows) === 0) return $flatRows;
 
         $this->columnsByTableNode = $this->createColumns($flatRows[0]);
         $this->parentMap = [];
-        $this->rootModels = [];
-    
+        $this->iRootModels = [];
+
         foreach($flatRows as $flatRow)
         {
             $this->parseNode($this->iTableTree->getRootNode(), $flatRow);
         }
 
-        return $this->rootModels;
+        return $this->iRootModels;
     }
 
-    private function parseNode($tableNode, $flatRow, $parentModel = null, $parentKey = null)
+    /**
+     * 2023-08-03
+     * @param TableNode $iTableNode
+     * @param array<string, mixed> $flatRow
+     * @param Model $iParentModel
+     * @param string|null $parentKey
+     */
+    private function parseNode(TableNode $iTableNode, array $flatRow, Model $iParentModel=null, ?string $parentKey=null): void
     {
-        $id = $tableNode->getIdFromFlatRow($flatRow);
+        $id = $iTableNode->getIdFromFlatRow($flatRow);
 
         if($id === null) return;
 
-        $key = $this->getKey($parentKey, $id, $tableNode);
-        if(!isset($this->parentMap[$key]))
-        {
-            $model = $this->createModel($tableNode, $flatRow);
+        $key = $this->getKey($parentKey, $id, $iTableNode);
+        $iModel = $this->parentMap[$key] ?? null;
 
-            $this->addToParent($tableNode, $model, $parentModel);
-            $this->parentMap[$key] = $model;
-        }
-        else
+        if($iModel === null)
         {
-            $model = $this->parentMap[$key];
+            $iModel = $this->createModel($iTableNode, $flatRow);
+
+            $this->addToParent($iTableNode, $iModel, $iParentModel);
+            $this->parentMap[$key] = $iModel;
         }
 
-        foreach($tableNode->getChildNodes() as $childNode)
+        foreach($iTableNode->getChildNodes() as $iChildTableNode)
         {
-            $this->parseNode($childNode, $flatRow, $model, $key);
+            $this->parseNode($iChildTableNode, $flatRow, $iModel, $key);
         }
     }
 
-    private function addToParent($tableNode, $model, &$parentModel)
+    private function addToParent(TableNode $iTableNode, Model $iModel, Model &$iParentModel): void
     {// 2023-07-31
-        if($tableNode->getParentNode())
+        if($iTableNode->getParentNode())
         {
-            if($tableNode->relation->isOneToOne())
-            {
-                $parentModel[$tableNode->relationProperty] = $model;
-            }
-            else
-            {
-                $parentModel[$tableNode->relationProperty][] = $model;
-            }
+            $iTableNode->getRelation()->isOneToOne()
+                ? $iParentModel[$iTableNode->getRelationProperty()] = $iModel
+                : $iParentModel[$iTableNode->getRelationProperty()][] = $iModel;
+            
+            return;
         }
-        else
-        {
-            // Root model. Add to root list.
-            $this->rootModels[] = $model;
-        }
+
+        // Root model. Add to root list.
+        $this->iRootModels[] = $iModel;
     }
 
-    private function getKey($parentKey, $id, $tableNode)
+    private function getKey(?string $parentKey, string $id, TableNode $iTableNode): string
     {
-        if($parentKey !== null) return $parentKey . "/" . $tableNode->relationProperty . "/" . $id;
+        if($parentKey !== null) return $parentKey . "/" . $iTableNode->getRelationProperty() . "/" . $id;
 
         return "/" . $id;
     }
 
-    private function createModel(TableNode $iTableNode, array $flatRow)
+    /**
+     * 2023-08-03
+     * @param TableNode $iTableNode
+     * @param array<string, mixed> $flatRow
+     * @return Model
+     */
+    private function createModel(TableNode $iTableNode, array $flatRow): Model
     {
         $row = [];
-        $columns = $this->columnsByTableNode[$iTableNode->getUUID()];
+        $columns = $this->columnsByTableNode[$iTableNode->getUUID()] ?? [];
 
-        if($columns)
+        if(count($columns) !== 0)
         {
-            foreach($columns as $column)
+            foreach($columns as $iColumn)
             {
-                if(!isset($this->omitColumnAliases[$column->getColumnAlias()]))
+                if(!isset($this->omitColumnAliases[$iColumn->getColumnAlias()]))
                 {
-                    $row[$column->getName()] = $flatRow[$column->getColumnAlias()];
+                    $row[$iColumn->getName()] = $flatRow[$iColumn->getColumnAlias()];
                 }
             }
         }
 
         /** @var class-string<Model> $modelClass */
         $modelClass = $iTableNode->getModelClass();
+
+        /** @var Model $model */
         $model = $modelClass::createFromDatabaseArray($row);
 
-        foreach($iTableNode->getChildNodes() as $childNode)
+        foreach($iTableNode->getChildNodes() as $iChildTableNode)
         {
-            $model[$childNode->relationProperty] = $childNode->relation->isOneToOne() ? null : [];
+            $model->{$iChildTableNode->getRelationProperty()} = $iChildTableNode->getRelation()->isOneToOne() ? null : [];
         }
 
         return $model;
     }
 
+    /**
+     * 2023-08-03
+     * @param array<string, mixed> $row
+     * @return array<string, JoinResultColumn[]>
+     */
     private function createColumns($row): array
     {
         $iTableTree = $this->iTableTree;
-        $columns = array_map(function($columnAlias) use ($iTableTree) {
+        $iColumns = array_map(function(string $columnAlias) use ($iTableTree)
+            {
             return JoinResultColumn::create($iTableTree, $columnAlias);
         }, array_keys($row));
 
-        $groupedColumns = Utilities::groupBy($columns, function($item)
+        $groupedColumns = Utilities::groupBy($iColumns, function(JoinResultColumn $iColumn)
         {
-            return $item->getTableNode()->getUUID();
+            return $iColumn->getTableNode()->getUUID();
         });
 
         return $groupedColumns;

@@ -93,11 +93,11 @@ class RelationExpression
             {
                 if(isset($childNode1Map[$name]) && isset($childNode2Map[$name]))
                 {
-                    $childNodes[] = self::mergeNodes($childNode1Map[$name], $childNode2Map[$name]);
+                    $childNodes[$name] = self::mergeNodes($childNode1Map[$name], $childNode2Map[$name]);
                 }
                 else
                 {
-                    $childNodes[] = isset($childNode1Map[$name])
+                    $childNodes[$name] = isset($childNode1Map[$name])
                         ? $childNode1Map[$name]
                         : $childNode2Map[$name];
                 }

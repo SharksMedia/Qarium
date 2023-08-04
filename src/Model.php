@@ -64,17 +64,23 @@ abstract class Model
      */
     private static array $metadataCache = [];
 
+    public static string $tableName;
+    public static array $idColumn = [];
+    public static $concurrency = null;
+
     /**
      * 2023-06-12
      * @return string
      */
-    abstract static function getTableName(): string;
+    static function getTableName(): string { return static::$tableName; }
+    // abstract static function getTableName(): string;
 
     /**
      * 2023-06-12
      * @return array<int, string>
      */
-    abstract static function getTableIDs(): array;
+    static function getTableIDs(): array { return static::$idColumn; }
+    // abstract static function getTableIDs(): array;
 
     /**
      * 2023-06-12
@@ -134,7 +140,7 @@ abstract class Model
 
     private static function getIdRelationProperty(string $modelClass)
     {
-        $idColumn = $modelClass::getIdColumn();
+        $idColumn = $modelClass::getTableIDs();
         if(!is_array($idColumn)) $idColumn = [$idColumn];
 
         $idColumns = array_map(function($column)
@@ -154,12 +160,17 @@ abstract class Model
         if($propertyName !== null) return $propertyName;
 
         $model = new static();
-        $addedProps = array_keys((array)$model->createFromDatabaseArray([]));
+        $addedProps = $model->isAnonymous()
+            ? [$columnName]
+            : array_keys((array)$model->createFromDatabaseArray([])); // NOTE: possible to use get_class_vars
 
         $row = [];
         $row[$columnName] = null;
 
-        $props = array_keys((array)$model->createFromDatabaseArray($row));
+        $props = $model->isAnonymous()
+            ? [$columnName]
+            : array_keys((array)$model->createFromDatabaseArray($row));
+
         $propertyName = array_diff($props, $addedProps)[0] ?? null;
 
         $cache[$columnName] = $propertyName ?? $columnName;
@@ -251,6 +262,11 @@ abstract class Model
     public function _relatedQuery(): void
     {
 
+    }
+
+    public function isAnonymous(): bool
+    {
+        return false;
     }
 
     public static function startTransaction(?Client $iClient=null): Transaction
@@ -357,7 +373,11 @@ abstract class Model
 
         foreach($result as $columnName=>$columnValue)
         {
-            if(!property_exists($iModel, $columnName)) throw new \Exception("Column $columnName does not exist on model " . static::class);
+            if(!property_exists($iModel, $columnName))
+            {
+                debug_print_backtrace();
+                throw new \Exception("Column \"$columnName\" does not exist on model " . static::class);
+            }
 
             $iModel->{$columnName} = $columnValue;
         }
@@ -370,8 +390,8 @@ abstract class Model
         return [];
     }
 
-    public static function modifierNotFound(ModelQueryBuilder $iBuilder, \Cloure $modifier): void
+    public static function modifierNotFound(ModelQueryBuilder $iBuilder, string $modifierName): void
     {// 2023-08-02
-        throw new ModifierNotFoundError($modifier);
+        throw new ModifierNotFoundError($modifierName);
     }
 }

@@ -16,6 +16,9 @@ use Sharksmedia\Objection\Operations\WhereCompositeOperation;
 use Sharksmedia\Objection\Operations\WhereInCompositeOperation;
 use Sharksmedia\Objection\Operations\MergeOperation;
 
+/**
+ * Place \Sharksmedia\QueryBuilder functions here
+ */
 class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
 {
     /**
@@ -27,11 +30,36 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
 
         if($func === null) return $this;
 
+        if(is_array($func))
+        {
+            foreach($func as $f)
+            {
+                if(is_string($f)) $f = $this->resolveModifier($f);
+
+                $this->modify($f, ...array_slice($args, 1));
+            }
+
+            return $this;
+        }
+
+        if(is_string($func)) $func = $this->resolveModifier($func);
+
         $args[0] = $this;
 
         $func(...$args);
 
         return $this;
+    }
+
+    private function resolveModifier(string $modifier): callable
+    {
+        $modifiers = $this->modelClass::getModifiers();
+
+        $fn = $modifiers[$modifier] ?? null;
+
+        if($fn === null) $this->modelClass::modifierNotFound($this, $modifier);
+
+        return $fn;
     }
 
     /**
@@ -662,6 +690,62 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
+    public function clearWith(...$args): static
+    {
+        return $this->addOperation(new QueryBuilderOperation('clearWith'), $args);
+    }
+
+    /**
+     * @param array $args
+     */
+    public function clearJoin(...$args): static
+    {
+        return $this->addOperation(new QueryBuilderOperation('clearJoin'), $args);
+    }
+
+    /**
+     * @param array $args
+     */
+    public function clearUnion(...$args): static
+    {
+        return $this->addOperation(new QueryBuilderOperation('clearUnion'), $args);
+    }
+
+    /**
+     * @param array $args
+     */
+    public function clearHintComments(...$args): static
+    {
+        return $this->addOperation(new QueryBuilderOperation('clearHintComments'), $args);
+    }
+
+    /**
+     * @param array $args
+     */
+    public function clearCounters(...$args): static
+    {
+        return $this->addOperation(new QueryBuilderOperation('clearCounters'), $args);
+    }
+
+    /**
+     * @param array $args
+     */
+    public function clearLimit(...$args): static
+    {
+        return $this->addOperation(new QueryBuilderOperation('clearLimit'), $args);
+    }
+
+    /**
+     * @param array $args
+     */
+    public function clearOffset(...$args): static
+    {
+        return $this->addOperation(new QueryBuilderOperation('clearOffset'), $args);
+    }
+
+    /**
+     * @param array $args
+     */
     public function orHaving(...$args): static
     {
         return $this->addOperation(new QueryBuilderOperation('orHaving'), $args);
@@ -998,6 +1082,30 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
+    public function withRecursiveWrapped(...$args): static
+    {
+        return $this->addOperation(new QueryBuilderOperation('withRecursiveWrapped'), $args);
+    }
+
+    /**
+     * @param array $args
+     */
+    public function withMaterializedWrapped(...$args): static
+    {
+        return $this->addOperation(new QueryBuilderOperation('withMaterializedWrapped'), $args);
+    }
+
+    /**
+     * @param array $args
+     */
+    public function withNotMaterializedWrapped(...$args): static
+    {
+        return $this->addOperation(new QueryBuilderOperation('withNotMaterializedWrapped'), $args);
+    }
+
+    /**
+     * @param array $args
+     */
     public function whereComposite(...$args): static
     {
         return $this->addOperation(new WhereCompositeOperation('whereComposite'), $args);
@@ -1089,5 +1197,77 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     public function merge(...$args): static
     {
         return $this->addOperation(new MergeOperation('merge'), $args);
+    }
+
+    /**
+     * @param array $args
+     */
+    public function hintComment(...$args): static
+    {
+        return $this->addOperation(new QueryBuilderOperation('hintComment'), $args);
+    }
+
+    /**
+     * @param array $args
+     */
+    public function comment(...$args): static
+    {
+        return $this->addOperation(new QueryBuilderOperation('comment'), $args);
+    }
+
+    /**
+     * @param array $args
+     */
+    public function or(...$args): static
+    {
+        return $this->addOperation(new QueryBuilderOperation('or'), $args);
+    }
+
+    /**
+     * @param array $args
+     */
+    public function not(...$args): static
+    {
+        return $this->addOperation(new QueryBuilderOperation('not'), $args);
+    }
+
+    /**
+     * @param array $args
+     */
+    public function andWhereIn(...$args): static
+    {
+        return $this->addOperation(new QueryBuilderOperation('andWhereIn'), $args);
+    }
+
+    /**
+     * @param array $args
+     */
+    public function andWhereNotIn(...$args): static
+    {
+        return $this->addOperation(new QueryBuilderOperation('andWhereNotIn'), $args);
+    }
+
+    /**
+     * @param array $args
+     */
+    public function clone(...$args): static
+    {
+        return $this->addOperation(new QueryBuilderOperation('clone'), $args);
+    }
+
+    /**
+     * @param array $args
+     */
+    public function orHavingWrapped(...$args): static
+    {
+        return $this->addOperation(new QueryBuilderOperation('orHavingWrapped'), $args);
+    }
+
+    /**
+     * @param array $args
+     */
+    public function transaction(...$args): static
+    {
+        return $this->addOperation(new QueryBuilderOperation('transaction'), $args);
     }
 }

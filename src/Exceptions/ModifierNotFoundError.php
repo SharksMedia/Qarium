@@ -8,9 +8,9 @@ class ModifierNotFoundError extends \Exception
 {
     private string $modifierName;
 
-    public function __construct(string $modifierName, $code=0, \Throwable $previous=null)
+    public function __construct(?string $modifierName=null, $code=0, \Throwable $previous=null)
     {
-        parent::__construct('Unable to determine modify function from provided value: $modifierName.', $code, $previous);
+        parent::__construct('Unable to determine modify function from provided value: "'.($modifierName ?? 'unknown').'".', $code, $previous);
 
         $this->modifierName = $modifierName;
     }

@@ -109,6 +109,10 @@ class TableNode
         return $this->iParentTableNode;
     }
 
+    /**
+     * 2023-07-31
+     * @return array<int, TableNode>
+     */
     public function getChildNodes(): array
     {
         return $this->iChildNodes;

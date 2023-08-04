@@ -300,7 +300,7 @@ abstract class ModelQueryBuilderOperationSupport
 
     public function getUnsafeQueryBuilder(): ?QueryBuilder
     {
-        return $this->context->iQueryBuilder ?? $this->modelClass::getQueryBuilder() ?? null;
+        return $this->context->iQueryBuilder ?? clone $this->modelClass::getQueryBuilder() ?? null;
     }
     /**
      * @param mixed $operationSelector
@@ -423,7 +423,7 @@ abstract class ModelQueryBuilderOperationSupport
         {
             if($selector($operation) === $match && $callback($operation) === false) break;
 
-            $childRes = $operation->forEachDescendantOperation(function($operation) use(&$selector, &$callback, &$match)
+            $childRes = $operation->forEachDescendantOperation(function($operation) use(&$selector, &$callback, &$match, $operationSelector)
             {
                 if($selector($operation) === $match && $callback($operation) === false) return false;
 
@@ -591,16 +591,18 @@ abstract class ModelQueryBuilderOperationSupport
      */
     public function toQueryBuilder($iQueryBuilder=null)
     {
-        $iQueryBuilder = $iQueryBuilder ?? $this->getQueryBuilder();
+        $iClonedBuilder = clone $this;
 
-        $this->executeOnBuild();
+        $iQueryBuilder = $iQueryBuilder ?? $iClonedBuilder->getQueryBuilder();
 
-        return $this->executeOnBuildQueryBuilder($iQueryBuilder);
+        $iClonedBuilder->executeOnBuild();
+
+        return $iClonedBuilder->executeOnBuildQueryBuilder($iQueryBuilder);
     }
 
     public function executeOnBuild(): void
     {
-        $this->forEachOperations(true, function($operation)
+        $this->forEachOperations(self::ALL_SELECTOR, function($operation)
         {
             if($operation->hasOnBuild()) $this->callOperationMethod($operation, 'onBuild', [$this]);
 
@@ -614,7 +616,7 @@ abstract class ModelQueryBuilderOperationSupport
      */
     public function executeOnBuildQueryBuilder($iQueryBuilder)
     {
-        $this->forEachOperations(true, function($operation) use(&$iQueryBuilder)
+        $this->forEachOperations(self::ALL_SELECTOR, function($operation) use(&$iQueryBuilder)
         {
             if($operation->hasOnBuildQueryBuilder())
             {
@@ -636,10 +638,14 @@ abstract class ModelQueryBuilderOperationSupport
 
     public function toQuery(): Query
     {
-        $iBuilder = clone $this;
-
-        return $iBuilder->toQueryBuilder()->toSQL();
+        return $this->toQueryBuilder()->toSQL();
     }
+
+    public function toSQL(): string
+    {
+        return $this->toQuery()->getSQL();
+    }
+
     /**
      * @param mixed $operationSelector
      * @return callable
@@ -648,7 +654,7 @@ abstract class ModelQueryBuilderOperationSupport
     {
         if($operationSelector === true) return function(){ return true; };
         else if($operationSelector === false) return function(){ return false; };
-        else if(is_string($operationSelector) && preg_match('/^\/.+\/[a-z]+?$/', $operationSelector) === 1)
+        else if(is_string($operationSelector) && preg_match('/^\/.+\/$/', $operationSelector) === 1) // Assuming it's a regex if the string starts and ends with a slash
         {
             return function($operation) use(&$operationSelector)
             {
