@@ -24,9 +24,16 @@ class WhereInCompositeOperation extends ObjectionToQueryBuilderConvertingOperati
         $this->prefix = $this->options['prefix'] ?? null;
     }
 
+    /**
+     * @param ModelQueryBuilderOperationSupport $iBuilder
+     * @param QueryBuilder|Join|null $iQueryBuilder
+     * @return QueryBuilder|Join|null
+     */
     public function onBuildQueryBuilder(ModelQueryBuilderOperationSupport $iBuilder, $iQueryBuilder)
     {
         $whereInArgs = self::buildWhereInArgs($iBuilder->getQueryBuilder(), ...$this->getArguments($iBuilder));
+
+        codecept_debug($whereInArgs);
 
         if($this->prefix === 'not') return $iQueryBuilder->whereNotIn(...$whereInArgs);
 
@@ -35,6 +42,7 @@ class WhereInCompositeOperation extends ObjectionToQueryBuilderConvertingOperati
 
     private static function buildWhereInArgs($iQueryBuilder, $columns, $values)
     {
+        codecept_debug(self::isCompositeKey($columns));
         if(self::isCompositeKey($columns))
         {
             return self::buildCompositeArgs($iQueryBuilder, $columns, $values);
