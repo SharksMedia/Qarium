@@ -15,6 +15,9 @@ use Sharksmedia\Objection\ModelQueryBuilder;
 use Sharksmedia\Objection\ModelJoinBuilder;
 use Sharksmedia\Objection\ModelQueryBuilderBase;
 use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
+use Sharksmedia\Objection\ReferenceBuilder;
+use Sharksmedia\Objection\Transformations\CompositeQueryTransformation;
+use Sharksmedia\Objection\Transformations\WrapMysqlModifySubqueryTransformation;
 use Sharksmedia\QueryBuilder\QueryBuilder;
 use Sharksmedia\QueryBuilder\Statement\Join;
 
@@ -30,6 +33,11 @@ class ObjectionToQueryBuilderConvertingOperation extends ModelQueryBuilderOperat
     {
         parent::__construct($name, $options);
         $this->arguments = null;
+    }
+
+    public function getArgumentsRaw(): ?array
+    {
+        return $this->arguments;
     }
 
     public function getArguments(ModelQueryBuilderOperationSupport $iBuilder): ?array
@@ -90,7 +98,12 @@ class ObjectionToQueryBuilderConvertingOperation extends ModelQueryBuilderOperat
         return self::isObject($item) && method_exists($item, 'toQueryBuilderRaw');
     }
 
-    private static function convertToQueryBuilderRaw($item, ModelQueryBuilderOperationSupport $iBuilder)
+    /**
+     * @param ReferenceBuilder $item
+     * @param ModelQueryBuilderOperationSupport $iBuilder
+     * @return \Sharksmedia\QueryBuilder\Statement\Raw
+     */
+    private static function convertToQueryBuilderRaw($item, ModelQueryBuilderOperationSupport $iBuilder): \Sharksmedia\QueryBuilder\Statement\Raw
     {
         return $item->toQueryBuilderRaw($iBuilder);
     }
@@ -111,10 +124,13 @@ class ObjectionToQueryBuilderConvertingOperation extends ModelQueryBuilderOperat
         return $item instanceof \Sharksmedia\QueryBuilder\Statement\Join;
     }
 
-    private static function convertQueryBuilderBase($item, ModelQueryBuilderOperationSupport $iBuilder)
+    private static function convertQueryBuilderBase(ModelQueryBuilderOperationSupport $iQuery, ModelQueryBuilderOperationSupport $iBuilder): QueryBuilder
     {
-        // FIXME:: Implement me !!!
-        throw new \Exception('Not implemented yet');
+        $iTransformation = new CompositeQueryTransformation([new WrapMysqlModifySubqueryTransformation()]);
+        
+        $iQuery = $iTransformation->onConvertQueryBuilderBase($iQuery, $iBuilder);
+
+        return $iQuery->subQueryOf($iBuilder)->toQueryBuilder();
     }
 
     private function convertArray(array $arr, ModelQueryBuilderOperationSupport $iBuilder): array

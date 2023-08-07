@@ -10,23 +10,24 @@ declare(strict_types=1);
 namespace Sharksmedia\Objection\Operations;
 
 use Sharksmedia\Objection\ModelQueryBuilder;
-use Throwable;
+use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
 
 class OnErrorOperation extends ModelQueryBuilderOperation
 {
     private ?\Closure $function = null;
     
-    public function onAdd(ModelQueryBuilder $builder, array $arguments): bool
+    public function onAdd(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
     {
         $this->function = $arguments[0] ?? null;
+
+        return true;
     }
 
-    public function onError(ModelQueryBuilder $builder, array $arguments): void
+    public function onError(ModelQueryBuilder $iBuilder, ...$arguments)
     {
-        if($this->function !== null)
-        {
-            $func = $this->function;
-            $func($builder, $arguments);
-        }
+        if($this->function === null) return;
+
+        $func = $this->function;
+        return $func($iBuilder, ...$arguments);
     }
 }

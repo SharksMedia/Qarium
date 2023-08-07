@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace Sharksmedia\Objection;
 
 use Sharksmedia\Objection\Operations\ModelQueryBuilderOperation;
+use Sharksmedia\Objection\Relations\Relation;
 
 // 2023-07-11
 
 class StaticHookArguments
 {
     /**
-     * @var ModelQueryBuilderContextUser|null
+     * @var ModelQueryBuilder|null
      */
     private ModelQueryBuilder $iBuilder;
 
@@ -51,7 +52,7 @@ class StaticHookArguments
         return $this->iBuilder->getUnsafeQueryBuilder();
     }
 
-    public function getRelation()
+    public function getRelation(): Relation
     {
         $operation = $this->iBuilder->findOperation(function($operation){ return self::_hasRelation($operation); });
 

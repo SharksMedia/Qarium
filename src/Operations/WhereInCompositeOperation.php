@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace Sharksmedia\Objection\Operations;
 
-use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
+use Sharksmedia\Objection\ModelQueryBuilder;
 use Sharksmedia\QueryBuilder\QueryBuilder;
 use Sharksmedia\QueryBuilder\Statement\Raw;
 
@@ -25,15 +25,15 @@ class WhereInCompositeOperation extends ObjectionToQueryBuilderConvertingOperati
     }
 
     /**
-     * @param ModelQueryBuilderOperationSupport $iBuilder
+     * @param ModelQueryBuilder $iBuilder
      * @param QueryBuilder|Join|null $iQueryBuilder
      * @return QueryBuilder|Join|null
      */
-    public function onBuildQueryBuilder(ModelQueryBuilderOperationSupport $iBuilder, $iQueryBuilder)
+    public function onBuildQueryBuilder(ModelQueryBuilder $iBuilder, $iQueryBuilder)
     {
-        $whereInArgs = self::buildWhereInArgs($iBuilder->getQueryBuilder(), ...$this->getArguments($iBuilder));
+        $argus = $this->getArguments($iBuilder);
 
-        codecept_debug($whereInArgs);
+        $whereInArgs = self::buildWhereInArgs($iBuilder->getQueryBuilder(), ...$this->getArguments($iBuilder));
 
         if($this->prefix === 'not') return $iQueryBuilder->whereNotIn(...$whereInArgs);
 
@@ -42,7 +42,6 @@ class WhereInCompositeOperation extends ObjectionToQueryBuilderConvertingOperati
 
     private static function buildWhereInArgs($iQueryBuilder, $columns, $values)
     {
-        codecept_debug(self::isCompositeKey($columns));
         if(self::isCompositeKey($columns))
         {
             return self::buildCompositeArgs($iQueryBuilder, $columns, $values);

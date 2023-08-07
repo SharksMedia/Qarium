@@ -9,11 +9,11 @@ declare(strict_types=1);
 
 namespace Sharksmedia\Objection\Operations;
 
-use Sharksmedia\Objection\ModelQueryBuilder;
+use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
 
 class FindByIdOperation extends ModelQueryBuilderOperation
 {
-    private ?string $id;
+    private $id;
 
     public function __construct(string $name, array $options=[])
     {
@@ -22,16 +22,16 @@ class FindByIdOperation extends ModelQueryBuilderOperation
         $this->id = $this->options['id'] ?? null;
     }
 
-    public function onAdd(ModelQueryBuilder $builder, array $arguments): bool
+    public function onAdd(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
     {
         if($this->id === null) $this->id = $arguments[0];
 
-        return parent::onAdd($builder, $arguments);
+        return parent::onAdd($iBuilder, $arguments);
     }
 
-    public function onBuild(ModelQueryBuilder $builder): void
+    public function onBuild(ModelQueryBuilderOperationSupport $iBuilder): void
     {
-        $builder->whereComposite($builder->fullIdColumn(), $this->id);
+        $iBuilder->whereComposite($iBuilder->fullIdColumn(), $this->id);
     }
 
 }

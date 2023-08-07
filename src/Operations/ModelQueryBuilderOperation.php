@@ -180,11 +180,11 @@ abstract class ModelQueryBuilderOperation
      * This method should never call any methods that add operations to the builder.
      * This method should always return the shark query builder.
      *
-     * @param ModelQueryBuilderOperationSupport $iBuilder
+     * @param ModelQueryBuilder $iBuilder
      * @param QueryBuilder|Join|null $iQueryBuilder
      * @return QueryBuilder|Join|null
      */
-    public function onBuildQueryBuilder(ModelQueryBuilderOperationSupport $iBuilder, $iQueryBuilder) { return $iQueryBuilder; }
+    public function onBuildQueryBuilder(ModelQueryBuilder $iBuilder, $iQueryBuilder) { return $iQueryBuilder; }
 
     public function hasOnBuildQueryBuilder(): bool { return static::funcHasBeenOverriden('onBuildQueryBuilder'); }
 
@@ -254,10 +254,10 @@ abstract class ModelQueryBuilderOperation
      * This is called if an error occurs in the query execution.
      *
      * This method must return a QueryBuilder instance.
-     * @param ModelQueryBuilderOperationSupport $iBuilder
+     * @param ModelQueryBuilder $iBuilder
      * @param \Throwable $error
      */
-    public function onError(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): void { }
+    public function onError(ModelQueryBuilder $iBuilder, ...$arguments) { }
 
     public function hasOnError(): bool { return static::funcHasBeenOverriden('onError'); }
 
@@ -272,7 +272,7 @@ abstract class ModelQueryBuilderOperation
      * @param QueryBuilder $iSharkQueryBuilder
      * @return ModelQueryBuilderOperation
      */
-    public function toFindOperation(ModelQueryBuilderOperationSupport $iBuilder): ModelQueryBuilderOperation { return $this; }
+    public function toFindOperation(ModelQueryBuilderOperationSupport $iBuilder): ?ModelQueryBuilderOperation { return $this; }
 
     protected function hasToFindOperation(): bool { return false; }
 

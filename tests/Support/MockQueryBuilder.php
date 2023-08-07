@@ -1,0 +1,97 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Support;
+
+use Sharksmedia\QueryBuilder\QueryBuilder;
+
+class MockQUeryBuilder
+{
+    private QueryBuilder $iQueryBuilder;
+    private \Closure $mockExecutor;
+    private $mock;
+    private $queryBuilderMethods = []; // Initialize this array with required method names.
+
+    public function __construct(QueryBuilder $iQueryBuilder, \Closure $mockExecutor)
+    {
+        $this->iQueryBuilder = $iQueryBuilder;
+        $this->mockExecutor = $mockExecutor;
+
+        $this->mock = new \stdClass();
+
+        $this->initMockMethods();
+        $this->initMockProperties();
+    }
+
+    public function _mock($table): QueryBuilder
+    {
+        return $this->mock->getQueryBuilder()->table($table);
+    }
+
+    private function initMockMethods(): void
+    {
+        foreach($this->queryBuilderMethods as $methodName)
+        {
+            $this->mock[$methodName] = function(...$args) use ($methodName)
+            {
+                return $this->wrapBuilder(call_user_func_array([$this->iQueryBuilder, $methodName], $args));
+            };
+        }
+    }
+
+    private function initMockProperties()
+    {
+        $keys = array_unique(array_merge(array_keys(get_object_vars($this->iQueryBuilder)), ['client']));
+        
+        foreach ($keys as $key)
+        {
+            $value = $this->iQueryBuilder->$key;
+
+            if(in_array($key, $this->queryBuilderMethods)) continue;
+
+            if(is_callable($value))
+            {
+                $this->mock[$key] = function(...$args) use($value)
+                {
+                    return call_user_func_array($value, $args);
+                };
+            }
+            else
+            {
+                $this->mock[$key] = $value;
+            }
+        }
+    }
+
+    private function wrapBuilder($builder)
+    {
+        $builder->execute = function(...$args) use ($builder)
+        {
+            return call_user_func($this->mockExecutor, $this->mock, $builder, $args);
+        };
+
+        return $builder;
+    }
+
+    public function __call($methodName, $arguments)
+    {
+        if(isset($this->mock[$methodName]) && is_callable($this->mock[$methodName]))
+        {
+            return call_user_func_array($this->mock[$methodName], $arguments);
+        }
+
+        return null;
+    }
+
+    public function __get($key)
+    {
+        return isset($this->mock[$key]) ? $this->mock[$key] : null;
+    }
+
+    public function __set($key, $value)
+    {
+        $this->mock[$key] = $value;
+    }
+}
+

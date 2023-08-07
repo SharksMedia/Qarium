@@ -10,10 +10,15 @@ use Sharksmedia\Objection\Model;
 use Sharksmedia\Objection\ModelQueryBuilderBase;
 use Sharksmedia\Objection\ModelQueryBuilder;
 use Sharksmedia\Objection\Objection;
+use Sharksmedia\Objection\Operations\FindOperation;
 use Sharksmedia\Objection\ReferenceBuilder;
 use Sharksmedia\QueryBuilder\Client;
+use Sharksmedia\QueryBuilder\Client\MySQL;
 use Sharksmedia\QueryBuilder\Config;
+use Sharksmedia\QueryBuilder\Query;
 use Sharksmedia\QueryBuilder\QueryBuilder;
+use Tests\Support\MockMySQLClient;
+use Tests\Support\MockPDOStatement;
 
 class QueryBuilderTest extends Unit
 {
@@ -21,6 +26,9 @@ class QueryBuilderTest extends Unit
      * @var \UnitTester
      */
     protected $tester;
+    
+    protected array $mockQueryResults = [];
+    protected array $executedQueries = [];
 
     protected function _before()
     {
@@ -32,7 +40,25 @@ class QueryBuilderTest extends Unit
             ->database('db')
             ->charset('utf8mb4');
 
-        $iClient = Client::create($iConfig);
+        $iTempClient = new MySQL($iConfig);
+
+        $iClient = new MockMySQLClient($iConfig, function(Query $iQuery, array $options) use($iTempClient)
+        {
+            $sql = $iQuery->getSQL();
+            $bindings = $iQuery->getBindings();
+
+            $dsn = $iTempClient->createDSN();
+
+            $iPDOStatement = new MockPDOStatement();
+
+            $iPDOStatement->setResults($this->mockQueryResults);
+
+            $this->executedQueries[] = $sql;
+
+            return $iPDOStatement;
+        });
+        //
+        // $iClient = Client::create($iConfig);
 
         $iClient->initializeDriver();
 
@@ -52,6 +78,30 @@ class QueryBuilderTest extends Unit
     public static function ref(string $expression): ReferenceBuilder
     {
         return new ReferenceBuilder($expression);
+    }
+
+    public static function createFindOperation(ModelQueryBuilder $iBuilder, array $whereObj): FindOperation
+    {
+        $findOperationFactory = $iBuilder->getFindOperationFactory();
+
+        $iFindOperation = $findOperationFactory($iBuilder);
+
+        $iFindOperation->onBefore2 = \Closure::bind(function()
+        {
+
+        }, $iFindOperation);
+
+        $iFindOperation->onAfter2 = \Closure::bind(function()
+        {
+
+        }, $iFindOperation);
+
+        $iFindOperation->onBuildQueryBuilder = \Closure::bind(function(ModelQueryBuilder $iBuilder, $iQueryBuilder) use($whereObj)
+        {
+            return $iQueryBuilder->where(...$whereObj);
+        }, $iFindOperation);
+
+        return $iFindOperation;
     }
 
     // Tests
@@ -436,7 +486,7 @@ class QueryBuilderTest extends Unit
             }
         };
 
-        $executedQueries = []; // Placeholder for your actual implementation.
+        $this->executedQueries = [];
 
         // Initialize the builder.
         $queryBuilder = ModelQueryBuilder::forClass($TestModel::class);
@@ -786,15 +836,14 @@ class QueryBuilderTest extends Unit
         };
 
         $subQuery = ModelQueryBuilder::forClass($TestModel::class)
-            ->select('a')
-            ->toSQL();
+            ->select('a');
 
         $query = ModelQueryBuilder::forClass($TestModel::class)
             ->whereInComposite('A.a', $subQuery)
             ->toSQL();
 
         $this->assertEquals(
-            'SELECT `Model`.* FROM `Model` WHERE `A`.`a` IN('.$subQuery.')',
+            'SELECT `Model`.* FROM `Model` WHERE `A`.`a` IN('.$subQuery->toSQL().')',
             $query
         );
     }
@@ -830,17 +879,388 @@ class QueryBuilderTest extends Unit
         };
 
         $subQuery = ModelQueryBuilder::forClass($TestModel::class)
-            ->select('a', 'b')
-            ->toSQL();
+            ->select('a', 'b');
 
         $query = ModelQueryBuilder::forClass($TestModel::class)
             ->whereInComposite(['A.a', 'B.b'], $subQuery)
             ->toSQL();
 
         $this->assertEquals(
-            'SELECT `Model`.* FROM `Model` WHERE (`A`.`a`,`B`.`b`) IN('.$subQuery.')',
+            'SELECT `Model`.* FROM `Model` WHERE (`A`.`a`,`B`.`b`) IN('.$subQuery->toSQL().')',
             $query
         );
     }
 
+    public function testShouldConvertArrayQueryResultIntoModelInstances(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Objection\Model
+        {
+            public int $a;
+
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+        };
+
+        $this->mockQueryResults = [['a' => 1], ['a' => 2]];
+
+        $results = ModelQueryBuilder::forClass($TestModel::class)->run();
+
+        $this->assertCount(2, $results);
+        $this->assertInstanceOf($TestModel::class, $results[0]);
+        $this->assertInstanceOf($TestModel::class, $results[1]);
+        // $this->assertEquals($this->mockQueryResults, $results); // This assertion makes no sense. The results should be of type Model, not array.
+    }
+
+    public function testShouldConvertAnObjectQueryResultIntoAModelInstance(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Objection\Model
+        {
+            public int $a;
+
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+        };
+
+        $this->mockQueryResults = [['a' => 1]];
+
+        $result = ModelQueryBuilder::forClass($TestModel::class)
+            ->first()
+            ->run();
+
+        $this->assertInstanceOf($TestModel::class, $result);
+        $this->assertEquals(1, $result->a);
+    }
+
+    public function testShouldPassTheQueryBuilderAsThisAndParameterForTheHooks(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Objection\Model
+        {
+            public int $a;
+            public int $b;
+            public int $c;
+            public int $d;
+            public int $e;
+            public int $f;
+
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+        };
+
+        $this->mockQueryResults = [['a' => 1]];
+
+        $text = '';
+
+        $exception = new \Exception('abort');
+
+        try
+        {
+            ModelQueryBuilder::forClass($TestModel::class)
+                ->runBefore(function(ModelQueryBuilder $builder) use(&$text)
+                    {
+                        $this->assertInstanceOf(ModelQueryBuilder::class, $builder);
+                        $text .= 'a';
+                    })
+                ->onBuild(function(ModelQueryBuilder $builder) use(&$text)
+                    {
+                        $this->assertInstanceOf(ModelQueryBuilder::class, $builder);
+                        $text .= 'b';
+                    })
+                ->onBuildQueryBuilder(function(ModelQueryBuilder $iBuilder, QueryBuilder $iQueryBuilder) use(&$text)
+                    {
+                        $this->assertInstanceOf(ModelQueryBuilder::class, $iBuilder);
+                        // Assuming isQueryBuilder() is equivalent to checking if $iQueryBuilder is an instance of a specific class
+                        $this->assertInstanceOf(QueryBuilder::class, $iQueryBuilder);
+                        $text .= 'c';
+                    })
+                ->runAfter(function($builder, ?array $data) use(&$text)
+                    {
+                        $this->assertInstanceOf(ModelQueryBuilder::class, $builder);
+                        $text .= 'd';
+                    })
+                ->runAfter(function($builder, ?array $data) use(&$text)
+                    {
+                        $this->assertInstanceOf(ModelQueryBuilder::class, $builder);
+                        $text .= 'e';
+                    })
+                ->runAfter(function() use($exception)
+                    {
+                        throw $exception;
+                    })
+                ->onError(function($builder, \Exception $err) use(&$text)
+                    {
+                        $this->assertInstanceOf(ModelQueryBuilder::class, $builder);
+                        $this->assertEquals('abort', $err->getMessage());
+                        $text .= 'f';
+                    })
+                ->run();
+        }
+        catch(\Exception $error)
+        {
+            if($error !== $exception) throw $error;
+
+            // Catch the exception so the test can continue and we can check the $text value
+        }
+
+        $this->assertEquals('abcdef', $text);
+    }
+
+    public function testThrowingAtAnyPhaseShouldCallTheOnErrorHook(): void
+    {
+        $called = false;
+
+        $TestModel = new class extends \Sharksmedia\Objection\Model
+        {
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+        };
+
+        try
+        {
+            ModelQueryBuilder::forClass($TestModel::class)
+                ->runBefore(function($result, $builder)
+                    {
+                        throw new \Exception();
+                    })
+                ->onError(function($builder, $err) use (&$called)
+                    {
+                        $this->assertInstanceOf(ModelQueryBuilder::class, $builder);
+                        $called = true;
+                    })
+                ->run();
+        }
+        catch(\Exception $e)
+        {
+            // Handle error if needed
+        }
+
+        $this->assertTrue($called);
+    }
+
+    public function testAnyReturnValueFromOnErrorShouldBeTheResultOfTheQuery(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Objection\Model
+        {
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+        };
+
+        $result = null;
+
+        try
+        {
+            $result = ModelQueryBuilder::forClass($TestModel::class)
+                ->runBefore(function($builder, $result)
+                    {
+                        throw new \Exception();
+                    })
+                ->onError(function($builder, $err)
+                    {
+                        return 'my custom error';
+                    })
+                ->run();
+        }
+        catch(\Exception $e)
+        {
+            // Handle error if needed
+        }
+
+        $this->assertEquals('my custom error', $result);
+    }
+
+    public function testShouldCallRunMethodsInTheCorrectOrder(): void
+    {
+        $this->mockQueryResults = [['a'=>0]];
+
+        $TestModel = new class extends \Sharksmedia\Objection\Model
+        {
+            public int $a;
+
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+        };
+
+        $res = 0;
+
+        try
+        {
+            ModelQueryBuilder::forClass($TestModel::class)
+                ->runBefore(function() use(&$res)
+                    {
+                        $this->assertEquals(0, $res);
+                        ++$res;
+                    })
+                ->runBefore(function() use(&$res)
+                    {
+                        $this->assertEquals(1, $res);
+                        ++$res;
+                    })
+                ->runBefore(function() use(&$res)
+                    {
+                        $this->assertEquals(2, $res);
+                        ++$res;
+                    })
+                ->runAfter(function($builder) use(&$res)
+                    {
+                        $this->assertEquals(3, $res);
+                        // Assuming there's a delay or wait function available in PHP
+                        return ++$res;
+                    })
+                ->runAfter(function($builder) use(&$res)
+                    {
+                        $this->assertEquals(4, $res);
+                        return ++$res;
+                    })
+                ->run();
+        }
+        catch(\Exception $e)
+        {
+            // Handle error if needed
+        }
+
+        $this->assertEquals(5, $res);
+    }
+
+    public function testShouldNotExecuteQueryIfAnErrorIsThrownFromRunBefore(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Objection\Model
+        {
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+        };
+
+        try {
+            ModelQueryBuilder::forClass($TestModel::class)
+                ->runBefore(function()
+                    {
+                        throw new \Exception('some error');
+                    })
+                ->onBuild(function()
+                    {
+                        $this->fail('should not get here');
+                    })
+                ->runAfter(function()
+                    {
+                        $this->fail('should not get here');
+                    })
+                ->run();
+        }
+        catch(\Exception $e)
+        {
+            $this->assertEquals('some error', $e->getMessage());
+            // Replace 'executedQueries' with the appropriate method to get the number of executed queries
+            $this->assertCount(0, $this->executedQueries);
+        }
+    }
+
+    public function testShouldCallCustomFindImplementationDefinedByFindOperationFactory(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Objection\Model
+        {
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+        };
+
+        $builder = ModelQueryBuilder::forClass($TestModel::class)
+            ->findOperationFactory(function($iBuilder)
+                {
+                    $this->assertEquals($iBuilder, $this);
+                    return self::createFindOperation($iBuilder, ['a' => 1]);
+                })
+            ->run();
+
+        // Replace 'executedQueries' with the appropriate method to get the executed queries
+        $this->assertCount(1, $this->executedQueries);
+        $this->assertEquals('select "Model".* from "Model" where "a" = 1', $this->executedQueries[0]);
+    }
+
+    public function testShouldNotCallCustomFindImplementationDefinedByFindOperationFactoryIfInsertIsCalled(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Objection\Model
+        {
+            public int $a;
+
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+        };
+
+        $builder = ModelQueryBuilder::forClass($TestModel::class)
+            ->findOperationFactory(function($iBuilder)
+                {
+                    return self::createFindOperation($iBuilder, ['a' => 1]);
+                })
+            ->insert(['a' => 1])
+            ->run();
+
+        // Replace 'executedQueries' with the appropriate method to get the executed queries
+        $this->assertCount(1, $this->executedQueries);
+        $this->assertEquals('insert into "Model" ("a") values (1) returning "id"', $this->executedQueries[0]);
+    }
+
+    public function testShouldNotCallCustomFindImplementationDefinedByFindOperationFactoryIfUpdateIsCalled(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Objection\Model
+        {
+            public int $a;
+
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+        };
+
+        $builder = ModelQueryBuilder::forClass($TestModel::class)
+            ->findOperationFactory(function($iBuilder)
+                {
+                    return self::createFindOperation($iBuilder, ['a' => 1]);
+                })
+            ->update(['a' => 1])
+            ->run();
+
+        // Replace 'executedQueries' with the appropriate method to get the executed queries
+        $this->assertCount(1, $this->executedQueries);
+        $this->assertEquals('update "Model" set "a" = 1', $this->executedQueries[0]);
+    }
+
+    public function testShouldNotCallCustomFindImplementationDefinedByFindOperationFactoryIfDeleteIsCalled(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Objection\Model
+        {
+            public int $a;
+
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+        };
+
+        $builder = ModelQueryBuilder::forClass($TestModel::class)
+            ->findOperationFactory(function($iBuilder)
+                {
+                    return self::createFindOperation($iBuilder, ['a' => 1]);
+                })
+            ->delete()
+            ->run();
+
+        // Replace 'executedQueries' with the appropriate method to get the executed queries
+        $this->assertCount(1, $this->executedQueries);
+        $this->assertEquals('DELETE FROM `Model`', $this->executedQueries[0]);
+    }
 }

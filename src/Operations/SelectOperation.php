@@ -47,13 +47,17 @@ class SelectOperation extends ObjectionToQueryBuilderConvertingOperation
     }
 
     /**
-     * @param ModelQueryBuilderOperationSupport $iBuilder
+     * @param ModelQueryBuilder $iBuilder
      * @param QueryBuilder|Join|null $iQueryBuilder
      * @return QueryBuilder|Join|null
      */
-    public function onBuildQueryBuilder(ModelQueryBuilderOperationSupport $iBuilder, $iQueryBuilder)
+    public function onBuildQueryBuilder(ModelQueryBuilder $iBuilder, $iQueryBuilder)
     {
-        return $iQueryBuilder->{$this->name}(...$this->getArguments($iBuilder));
+        if($iQueryBuilder !== null && !($iQueryBuilder instanceof QueryBuilder) && !($iQueryBuilder instanceof Join))  throw new \Exception('Invalid QueryBuilder type: '.get_class($iQueryBuilder));
+
+        $arguments = $this->getArguments($iBuilder);
+
+        return $iQueryBuilder->{$this->name}(...$arguments);
     }
 
 

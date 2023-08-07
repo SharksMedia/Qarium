@@ -74,14 +74,18 @@ class FindOperation extends ModelQueryBuilderOperation
      */
     public function callInstanceAfterFind($context, $results, $deep)
     {
-        if(is_array(reset($results)))
+        $firstResult = reset($results);
+
+        if(is_bool($firstResult)) $firstResult = null;
+
+        if(is_array($firstResult))
         {
-            if(count($results) === 1) return $this->callAfterFindForOne($context, reset($results), $results, $deep);
+            if(count($results) === 1) return $this->callAfterFindForOne($context, $firstResult, $results, $deep);
 
             return $this->callAfterFindArray($context, $results, $deep);
         }
 
-        return $this->callAfterFindForOne($context, reset($results), $results, $deep);
+        return $this->callAfterFindForOne($context, $firstResult, $results, $deep);
     }
 
     public function callAfterFindArray($context, array $results, $deep)
@@ -100,7 +104,7 @@ class FindOperation extends ModelQueryBuilderOperation
     /**
      * @return array|Model|null
      */
-    public function callAfterFindForOne($context, Model $model, $results, $deep)
+    public function callAfterFindForOne($context, ?Model $model, $results, $deep)
     {
         if(!is_array($model)) return $model;
 

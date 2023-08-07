@@ -394,4 +394,22 @@ abstract class Model
     {// 2023-08-02
         throw new ModifierNotFoundError($modifierName);
     }
+
+    public static function ensureModel($model, $options=[])
+    {
+        $modelClass = static::class;
+
+        if(!$model) return null;
+
+        if($model instanceof $modelClass)
+        {
+            return self::parseRelationsIntoModelInstances($model, $model, $options);
+        }
+        else
+        {
+            // return $modelClass::createFromArray($model, $options);
+
+            return self::createFromDatabaseArray($model);
+        }
+    }
 }

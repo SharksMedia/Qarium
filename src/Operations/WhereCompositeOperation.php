@@ -9,16 +9,16 @@ declare(strict_types=1);
 
 namespace Sharksmedia\Objection\Operations;
 
-use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
+use Sharksmedia\Objection\ModelQueryBuilder;
 
 class WhereCompositeOperation extends ObjectionToQueryBuilderConvertingOperation
 {
     /**
-     * @param ModelQueryBuilderOperationSupport $iBuilder
+     * @param ModelQueryBuilder $iBuilder
      * @param QueryBuilder|Join|null $iQueryBuilder
      * @return QueryBuilder|Join|null
      */
-    public function onBuildQueryBuilder(ModelQueryBuilderOperationSupport $iBuilder, $iQueryBuilder)
+    public function onBuildQueryBuilder(ModelQueryBuilder $iBuilder, $iQueryBuilder)
     {
         $arguments = $this->getArguments($iBuilder);
 
@@ -31,7 +31,9 @@ class WhereCompositeOperation extends ObjectionToQueryBuilderConvertingOperation
             throw new \Exception('Invalid number of arguments ' . count($arguments));
         }
 
-        return $iQueryBuilder->where(...$this->buildWhereArgs(...$arguments));
+        $whereArgs = $this->buildWhereArgs(...$arguments);
+
+        return $iQueryBuilder->where(...$whereArgs);
     }
 
     private function buildWhereArgs($cols, string $op, $values): array

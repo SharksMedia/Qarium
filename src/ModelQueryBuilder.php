@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace Sharksmedia\Objection;
 
+use Closure;
 use Sharksmedia\Objection\Operations\RunBeforeOperation;
 use Sharksmedia\Objection\Operations\RunAfterOperation;
 
@@ -92,6 +93,23 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
      */
     protected ?string $relatedQueryFor = null;
 
+    /**
+     * @var \Closure|null
+     */
+    private ?\Closure $findOperationFactory;
+
+    private ?\Closure $insertOperationFactory;
+
+    private ?\Closure $updateOperationFactory;
+
+    private ?\Closure $patchOperationFactory;
+
+    private ?\Closure $relateOperationFactory;
+
+    private ?\Closure $unrelateOperationFactory;
+
+    private ?\Closure $deleteOperationFactory;
+
 
     /**
      * @param class-string<Model> $modelClass
@@ -102,6 +120,14 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
         $this->resultModelClass = $modelClass;
         $this->findOperationOptions = $modelClass::getDefaultFindOptions();
+
+        $this->findOperationFactory = function() { return new FindOperation('find'); };
+        $this->insertOperationFactory = function() { return new InsertOperation('insert'); };
+        $this->updateOperationFactory = function() { return new UpdateOperation('update'); };
+        $this->patchOperationFactory = function() { return new UpdateOperation('patch'); };
+        $this->deleteOperationFactory = function() { return new DeleteOperation('delete'); };
+        $this->relateOperationFactory = function() { return new RelateOperation('relate'); };
+        $this->unrelateOperationFactory = function() { return new UnrelateOperation('unrealte'); };
     }
 
     public function getFindOptions(): array
@@ -329,27 +355,27 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return !$isNotFind;
     }
 
-    private function isInsert(): bool
+    public function isInsert(): bool
     {
         return $this->has(InsertOperation::class);
     }
 
-    private function isUpdate(): bool
+    public function isUpdate(): bool
     {
         return $this->has(UpdateOperation::class);
     }
 
-    private function isDelete(): bool
+    public function isDelete(): bool
     {
         return $this->has(DeleteOperation::class);
     }
 
-    private function isRelate(): bool
+    public function isRelate(): bool
     {
         return $this->has(RelateOperation::class);
     }
 
-    private function isUnrelate(): bool
+    public function isUnrelate(): bool
     {
         return $this->has(UnrelateOperation::class);
     }
@@ -484,12 +510,12 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return self::buildQueryBuilderQuery($prebuildQuery, $iQueryBuilder);
     }
 
-    private static function prebuildQuery(ModelQueryBuilder $iBuilder): ModelQueryBuilder
+    private function prebuildQuery(ModelQueryBuilder $iBuilder): ModelQueryBuilder
     {
         // $iBuilder = self::addImplicitOperations($iBuilder);
         // $iBuilder = self::callOnBuildHooks($iBuilder);
         var_dump('1 beforeExecute', count($iBuilder->operations));
-        self::beforeExecute($iBuilder);
+        $this->beforeExecute($iBuilder);
         var_dump('2 callOnBuildHooks', count($iBuilder->operations));
         $iBuilder = self::callOnBuildHooks($iBuilder);
         var_dump('3 findQueryExecutorOperation', count($iBuilder->operations));
@@ -501,13 +527,13 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return self::prebuildQuery($queryExecutorOperation->queryExecutor($iBuilder));
     }
 
-    private static function addImplicitOperations(self &$iBuilder): static
+    private function addImplicitOperations(self &$iBuilder): static
     {
         if($iBuilder->isFind())
         {
             // If no write operations have been called at this point this query is a
             // find query and we need to call the custom find implementation.
-            if(!$iBuilder->has(FindOperation::class)) self::addFindOperation($iBuilder);
+            if(!$iBuilder->has(FindOperation::class)) $this->addFindOperation($iBuilder);
         }
 
         if($iBuilder->hasWithGraph()) self::moveEagerOperationToEnd($iBuilder);
@@ -515,9 +541,11 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return $iBuilder;
     }
 
-    private static function addFindOperation(self $iBuilder): void
+    private function addFindOperation(self $iBuilder): void
     {
-        $iFindOperation = static::findOperationFactory();
+        $findOperationFactory = $this->getFindOperationFactory();
+
+        $iFindOperation = $findOperationFactory($this);
 
         $iBuilder->addOperationToFront($iFindOperation, []);
     }
@@ -564,17 +592,17 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         throw new \Exception('Invalid hook type');
     }
 
-    private static function beforeExecute(self &$iBuilder): void
+    private function beforeExecute(self &$iBuilder): void
     {
-        $iBuilder = self::addImplicitOperations($iBuilder);
+        $iBuilder = $this->addImplicitOperations($iBuilder);
 
-        self::chainOperationHooks(null, $iBuilder, 'onBefore1');
+        $this->chainOperationHooks(null, $iBuilder, 'onBefore1');
 
-        self::chainHooks($iBuilder, $iBuilder->getContext()->getRunBeforeCallback());
-        self::chainHooks($iBuilder, $iBuilder->getInternalContext()->getRunBeforeCallback());
+        $this->chainHooks($iBuilder, $iBuilder->getContext()->getRunBeforeCallback());
+        $this->chainHooks($iBuilder, $iBuilder->getInternalContext()->getRunBeforeCallback());
 
-        self::chainOperationHooks(null, $iBuilder, 'onBefore2');
-        self::chainOperationHooks(null, $iBuilder, 'onBefore3');
+        $this->chainOperationHooks(null, $iBuilder, 'onBefore2');
+        $this->chainOperationHooks(null, $iBuilder, 'onBefore3');
     }
 
     /**
@@ -582,9 +610,9 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
      * @param array|null $results
      * @return array|Model|null
      */
-    private static function afterExecute(self $iBuilder, ?array $results)
+    private function afterExecute(self $iBuilder, ?array $results)
     {
-        self::addImplicitOperations($iBuilder);
+        $this->addImplicitOperations($iBuilder);
 
         $results = self::chainOperationHooks($results, $iBuilder, 'onAfter1');
         $results = self::chainOperationHooks($results, $iBuilder, 'onAfter2');
@@ -737,11 +765,21 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return is_array($result) && count($result) > 0 && !(reset($result) instanceof $modelClass);
     }
 
-    private static function handleExecuteException(self $iBuilder, \Exception $e)
+    private static function handleExecuteException(self $iBuilder, \Exception $exceptions)
     {
-        self::chainOperationHooks($e, $iBuilder, 'onError');
+        $result = null;
 
-        throw $e;
+        $iBuilder->forEachOperations(self::ALL_SELECTOR, function(ModelQueryBuilderOperation $iOperation) use ($iBuilder, $exceptions, &$result)
+        {
+            if(!$iOperation->hasOnError()) return;
+
+            $result = $iOperation->onError($iBuilder, $exceptions);
+        });
+
+        // FIXME: Add option to throw all exceptions.
+        if(false) throw $exceptions;
+
+        return $result;
     }
 
     /**
@@ -765,7 +803,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
             $results = self::doExecute($iBuilder);
 
-            return self::afterExecute($iBuilder, $results);
+            return $this->afterExecute($iBuilder, $results);
         }
         catch(\Exception $e)
         {
@@ -970,9 +1008,11 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     {
         return self::writeOperation($this, function() use($modelsOrObjects)
         {
-            $insertOperation = self::insertOperationFactory($this);
+            $insertOperationFactory = $this->getInsertOperationFactory();
 
-            $this->addOperation($insertOperation, [$modelsOrObjects]);
+            $iInsertOperation = $insertOperationFactory($this);
+
+            $this->addOperation($iInsertOperation, [$modelsOrObjects]);
         });
     }
 
@@ -984,9 +1024,11 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     {
         return self::writeOperation($this, function() use($modelsOrObjects)
         {
-            $insertOperation = self::insertOperationFactory($this);
+            $insertOperationFactory = $this->getInsertOperationFactory();
 
-            $insertAndFetchOperation = new InsertAndFetchOperation('insertAndFetch', ['delegate'=>$insertOperation]);
+            $iInsertOperation = $insertOperationFactory($this);
+
+            $insertAndFetchOperation = new InsertAndFetchOperation('insertAndFetch', ['delegate'=>$iInsertOperation]);
 
             $this->addOperation($insertAndFetchOperation, [$modelsOrObjects]);
         });
@@ -1001,9 +1043,11 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     {
         return self::writeOperation($this, function() use($modelsOrObjects, $opt)
         {
-            $insertOperation = self::insertOperationFactory($this);
+            $insertOperationFactory = $this->getInsertOperationFactory();
 
-            $insertGraphOperation = new InsertGraphOperation('insertGraph', ['delegate'=>$insertOperation, 'options'=>$opt]);
+            $iInsertOperation = $insertOperationFactory($this);
+
+            $insertGraphOperation = new InsertGraphOperation('insertGraph', ['delegate'=>$iInsertOperation, 'options'=>$opt]);
 
             $this->addOperation($insertGraphOperation, [$modelsOrObjects]);
         });
@@ -1018,9 +1062,11 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     {
         return self::writeOperation($this, function() use($modelsOrObjects, $opt)
         {
-            $insertOperation = self::insertOperationFactory($this);
+            $insertOperationFactory = $this->getInsertOperationFactory();
 
-            $insertGraphOperation = new InsertGraphOperation('insertGraph', ['delegate'=>$insertOperation, 'options'=>$opt]);
+            $iInsertOperation = $insertOperationFactory($this);
+
+            $insertGraphOperation = new InsertGraphOperation('insertGraph', ['delegate'=>$iInsertOperation, 'options'=>$opt]);
 
             $insertGraphAndFetchOperation = new InsertGraphAndFetchOperation('insertGraphAndFetch', ['delegate'=>$insertGraphOperation]);
 
@@ -1032,9 +1078,11 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     {
         return self::writeOperation($this, function() use($modelOrObject)
         {
-            $updateOperation = self::updateOperationFactory($this);
+            $updateOperationFactory = $this->getUpdateOperationFactory();
 
-            $this->addOperation($updateOperation, [$modelOrObject]);
+            $iUpdateOperation = $updateOperationFactory($this);
+
+            $this->addOperation($iUpdateOperation, [$modelOrObject]);
         });
     }
 
@@ -1042,12 +1090,14 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     {
         return self::writeOperation($this, function() use($modelOrObject)
         {
-            $updateOperation = self::updateOperationFactory($this);
+            $updateOperationFactory = $this->getUpdateOperationFactory();
+
+            $iUpdateOperation = $updateOperationFactory($this);
             
             $modelClass = $this->getModelClass();
-            if(!($updateOperation instanceof $modelClass)) throw new \Exception('updateAndFetch can only be called for instance operations');
+            if(!($iUpdateOperation instanceof $modelClass)) throw new \Exception('updateAndFetch can only be called for instance operations');
 
-            $updateAndFetchOperation = new UpdateAndFetchOperation('updateAndFetch', ['delegate'=>$updateOperation]);
+            $updateAndFetchOperation = new UpdateAndFetchOperation('updateAndFetch', ['delegate'=>$iUpdateOperation]);
 
             $this->addOperation($updateAndFetchOperation, [$modelOrObject]);
         });
@@ -1057,9 +1107,11 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     {
         return self::writeOperation($this, function() use($id, $modelOrObject)
         {
-            $updateOperation = self::updateOperationFactory($this);
+            $updateOperationFactory = $this->getUpdateOperationFactory();
+
+            $iUpdateOperation = $updateOperationFactory($this);
             
-            $updateAndFetchOperation = new UpdateAndFetchOperation('updateAndFetch', ['delegate'=>$updateOperation]);
+            $updateAndFetchOperation = new UpdateAndFetchOperation('updateAndFetch', ['delegate'=>$iUpdateOperation]);
 
             $this->addOperation($updateAndFetchOperation, [$id, $modelOrObject]);
         });
@@ -1091,9 +1143,11 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     {
         return self::writeOperation($this, function() use($modelOrObject)
         {
-            $patchOperation = self::patchOperationFactory($this);
+            $patchOperationFactory = self::patchOperationFactory($this);
 
-            $this->addOperation($patchOperation, [$modelOrObject]);
+            $iPatchOperation = $patchOperationFactory($this);
+
+            $this->addOperation($iPatchOperation, [$modelOrObject]);
         });
     }
 
@@ -1101,18 +1155,20 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     {
         return self::writeOperation($this, function() use($modelOrObject)
         {
-            $patchOperation = self::patchOperationFactory($this);
+            $patchOperationFactory = self::patchOperationFactory($this);
+
+            $iPatchOperation = $patchOperationFactory($this);
 
             $modelClass = $this->getModelClass();
-            if(!($patchOperation instanceof $modelClass)) throw new \Exception('patchAndFetch can only be called for instance operations');
+            if(!($iPatchOperation instanceof $modelClass)) throw new \Exception('patchAndFetch can only be called for instance operations');
 
-            $patchAndFetchOperation = new UpdateAndFetchOperation('patchAndFetch', ['delegate'=>$patchOperation]);
+            $patchAndFetchOperation = new UpdateAndFetchOperation('patchAndFetch', ['delegate'=>$iPatchOperation]);
 
-            // patchOperation is an instance update operation that already adds the
+            //$iPatchOperation is an instance update operation that already adds the
             // required "where id = $" clause.
             $patchAndFetchOperation->skipIdWhere(true);
 
-            $this->addOperation($patchAndFetchOperation, [$patchOperation->getInstance()->getID(), $modelOrObject]);
+            $this->addOperation($patchAndFetchOperation, [$iPatchOperation->getInstance()->getID(), $modelOrObject]);
         });
     }
 
@@ -1120,9 +1176,11 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     {
         return self::writeOperation($this, function() use($id, $modelOrObject)
         {
-            $patchOperation = self::patchOperationFactory($this);
+            $patchOperationFactory = $this->getPatchOperationFactory();
 
-            $patchAndFetchOperation = new UpdateAndFetchOperation('patchAndFetch', ['delegate'=>$patchOperation]);
+            $iPatchOperation = $patchOperationFactory($this);
+
+            $patchAndFetchOperation = new UpdateAndFetchOperation('patchAndFetch', ['delegate'=>$iPatchOperation]);
 
             $this->addOperation($patchAndFetchOperation, [$id, $modelOrObject]);
         });
@@ -1134,9 +1192,11 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         {
             if(count($args) !== 0) throw new \Exception("Don't pass arguments to delete(). You should use it like this: delete()->where('foo', 'bar')->andWhere(...)");
 
-            $deleteOperation = self::deleteOperationFactory($this);
+            $deleteOperationFactory = $this->getDeleteOperationFactory();
 
-            $this->addOperation($deleteOperation, $args);
+            $iDeleteOperation = $deleteOperationFactory($this);
+
+            $this->addOperation($iDeleteOperation, $args);
         });
     }
 
@@ -1149,9 +1209,11 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     {
         return self::writeOperation($this, function() use($args)
         {
-            $relateOperation = self::relateOperationFactory($this);
+            $relateOperationFactory = $this->getRelateOperationFactory();
 
-            $this->addOperation($relateOperation, $args);
+            $iRelateOperation = $relateOperationFactory($this);
+
+            $this->addOperation($iRelateOperation, $args);
         });
     }
 
@@ -1161,9 +1223,11 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         {
             if(count($args) !== 0) throw new \Exception("Don't pass arguments to unrelate(). You should use it like this: unrelate()->where('foo', 'bar')->andWhere(...)");
 
-            $unrelateOperation = self::unrelateOperationFactory($this);
+            $unrelateOperationFactory = $this->getUnrelateOperationFactory();
 
-            $this->addOperation($unrelateOperation, $args);
+            $iUnrelateOperation = $unrelateOperationFactory($this);
+
+            $this->addOperation($iUnrelateOperation, $args);
         });
     }
 
@@ -1333,64 +1397,120 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
     /**
      * 2023-07-10
-     * @return FindOperation
+     * @param \Closure $factory
+     * @return ModelQueryBuilder
      */
-    private static function findOperationFactory(): FindOperation
+    public function findOperationFactory(\Closure $factory): self
     {
-        return new FindOperation('find');
+        $this->findOperationFactory = $factory;
+
+        return $this;
     }
 
     /**
      * 2023-07-10
-     * @return InsertOperation
+     * @param \Closure $factory
+     * @return ModelQueryBuilder
      */
-    private static function insertOperationFactory(): InsertOperation
+    public function insertOperationFactory(\Closure $factory): self
     {
-        return new InsertOperation('insert');
+        $this->insertOperationFactory = $factory;
+
+        return $this;
     }
 
     /**
      * 2023-07-10
-     * @return UpdateOperation
+     * @param \Closure $factory
+     * @return ModelQueryBuilder
      */
-    private static function updateOperationFactory(): UpdateOperation
+    public function updateOperationFactory(\Closure $factory): self
     {
-        return new UpdateOperation('update');
+        $this->updateOperationFactory = $factory;
+
+        return $this;
     }
 
     /**
      * 2023-07-10
-     * @return UpdateOperation
+     * @param \Closure $factory
+     * @return ModelQueryBuilder
      */
-    private static function patchOperationFactory(): UpdateOperation
+    public function patchOperationFactory(\Closure $factory): self
     {
-        return new UpdateOperation('patch');
+        $this->patchOperationFactory = $factory;
+
+        return $this;
     }
 
     /**
      * 2023-07-10
-     * @return RelateOperation
+     * @param \Closure $factory
+     * @return ModelQueryBuilder
      */
-    private static function relateOperationFactory(): RelateOperation
+    public function relateOperationFactory(\Closure $factory): self
     {
-        return new RelateOperation('relate');
+        $this->relateOperationFactory = $factory;
+
+        return $this;
     }
 
     /**
      * 2023-07-10
-     * @return UnrelateOperation
+     * @param \Closure $factory
+     * @return ModelQueryBuilder
      */
-    private static function unrelateOperationFactory(): UnrelateOperation
+    public function unrelateOperationFactory(\Closure $factory): self
     {
-        return new UnrelateOperation('unrelate');
+        $this->unrelateOperationFactory = $factory;
+
+        return $this;
     }
 
     /**
      * 2023-07-10
-     * @return DeleteOperation
+     * @param \Closure $factory
+     * @return ModelQueryBuilder
      */
-    private static function deleteOperationFactory(): DeleteOperation
+    public function deleteOperationFactory(\Closure $factory): self
     {
-        return new DeleteOperation('delete');
+        $this->deleteOperationFactory = $factory;
+
+        return $this;
+    }
+    
+    public function getFindOperationFactory(): ?\Closure
+    {
+        return $this->findOperationFactory;
+    }
+
+    public function getInsertOperationFactory(): ?\Closure
+    {
+        return $this->insertOperationFactory;
+    }
+
+    public function getUpdateOperationFactory(): ?\Closure
+    {
+        return $this->updateOperationFactory;
+    }
+
+    public function getDeleteOperationFactory(): ?\Closure
+    {
+        return $this->deleteOperationFactory;
+    }
+
+    public function getPatchOperationFactory(): ?\Closure
+    {
+        return $this->patchOperationFactory;
+    }
+
+    public function getRelateOperationFactory(): ?\Closure
+    {
+        return $this->relateOperationFactory;
+    }
+
+    public function getUnrelateOperationFactory(): ?\Closure
+    {
+        return $this->unrelateOperationFactory;
     }
 }

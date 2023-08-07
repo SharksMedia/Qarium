@@ -425,7 +425,10 @@ abstract class ModelQueryBuilderOperationSupport
 
             $childRes = $operation->forEachDescendantOperation(function($operation) use(&$selector, &$callback, &$match, $operationSelector)
             {
-                if($selector($operation) === $match && $callback($operation) === false) return false;
+                $selectorResult = $selector($operation);
+                $callbackResult = $callback($operation);
+
+                if($selectorResult === $match && $callbackResult === false) return false;
 
                 return true;
             });
@@ -620,7 +623,7 @@ abstract class ModelQueryBuilderOperationSupport
         {
             if($operation->hasOnBuildQueryBuilder())
             {
-                $iNewQueryBuilder = $this->callOperationMethod($operation, 'onBuildQueryBuilder', [$iQueryBuilder, $this]);
+                $iNewQueryBuilder = $this->callOperationMethod($operation, 'onBuildQueryBuilder', [$iQueryBuilder]);
 
                 $iQueryBuilder = $iNewQueryBuilder ?? $iQueryBuilder;
             }
