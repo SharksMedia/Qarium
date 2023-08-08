@@ -9,16 +9,17 @@ declare(strict_types=1);
 
 namespace Sharksmedia\Objection\Operations;
 
+use Sharksmedia\Objection\JoinBuilder;
 use Sharksmedia\Objection\ModelQueryBuilder;
 
 class WhereCompositeOperation extends ObjectionToQueryBuilderConvertingOperation
 {
     /**
-     * @param ModelQueryBuilder $iBuilder
+     * @param ModelQueryBuilder|ModelQueryBuilderOperationSupport $iBuilder
      * @param QueryBuilder|Join|null $iQueryBuilder
      * @return QueryBuilder|Join|null
      */
-    public function onBuildQueryBuilder(ModelQueryBuilder $iBuilder, $iQueryBuilder)
+    public function onBuildQueryBuilder(ModelQueryBuilderOperationSupport $iBuilder, $iQueryBuilder)
     {
         $arguments = $this->getArguments($iBuilder);
 

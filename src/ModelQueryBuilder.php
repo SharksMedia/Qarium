@@ -25,6 +25,9 @@ use Sharksmedia\Objection\Operations\InsertGraphAndFetchOperation;
 use Sharksmedia\Objection\Operations\UpdateOperation;
 use Sharksmedia\Objection\Operations\UpdateAndFetchOperation;
 
+use Sharksmedia\Objection\Operations\UpsertGraphOperation;
+use Sharksmedia\Objection\Operations\UpsertGraphAndFetchOperation;
+
 use Sharksmedia\Objection\Operations\RangeOperation;
 use Sharksmedia\Objection\Operations\FirstOperation;
 
@@ -514,11 +517,9 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     {
         // $iBuilder = self::addImplicitOperations($iBuilder);
         // $iBuilder = self::callOnBuildHooks($iBuilder);
-        var_dump('1 beforeExecute', count($iBuilder->operations));
+
         $this->beforeExecute($iBuilder);
-        var_dump('2 callOnBuildHooks', count($iBuilder->operations));
         $iBuilder = self::callOnBuildHooks($iBuilder);
-        var_dump('3 findQueryExecutorOperation', count($iBuilder->operations));
 
         $queryExecutorOperation = self::findQueryExecutorOperation($iBuilder);
 
@@ -658,7 +659,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     {
         return $iBuilder->findOperation(function(ModelQueryBuilderOperation $iOperation)
         {
-            return $iOperation->hasQueryExecutor();
+            $hasQueryExecutor = $iOperation->hasQueryExecutor();
         });
     }
 
@@ -718,9 +719,15 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
         $queryExecutorOperation = self::findQueryExecutorOperation($iBuilder);
 
-        if($queryExecutorOperation !== null) return $queryExecutorOperation->queryExecutor($iBuilder);
+        if($queryExecutorOperation !== null)
+        {
+            $query = $queryExecutorOperation->queryExecutor($iBuilder);
+
+            return $query;
+        }
 
         $iQueryBuilder = self::buildQueryBuilderQuery($iBuilder);
+
 
         $results = $iQueryBuilder->run();
 
@@ -776,8 +783,10 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
             $result = $iOperation->onError($iBuilder, $exceptions);
         });
 
+        $internalOptions = $iBuilder->getInternalOptions();
+
         // FIXME: Add option to throw all exceptions.
-        if(false) throw $exceptions;
+        if(!($internalOptions['returnError'] ?? false)) throw $exceptions;
 
         return $result;
     }
@@ -988,6 +997,15 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return $this;
     }
 
+    public function returnError(bool $doIt=true): static
+    {
+        $internalOptions = $this->getInternalOptions();
+        $internalOptions['returnError'] = $doIt;
+        $this->setInternalOptions($internalOptions);
+
+        return $this;
+    }
+
     private static function writeOperation(ModelQueryBuilder $iBuilder, \Closure $callback): static
     {
         if(!$iBuilder->isFind())
@@ -1143,7 +1161,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     {
         return self::writeOperation($this, function() use($modelOrObject)
         {
-            $patchOperationFactory = self::patchOperationFactory($this);
+            $patchOperationFactory = self::getPatchOperationFactory($this);
 
             $iPatchOperation = $patchOperationFactory($this);
 
@@ -1155,7 +1173,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     {
         return self::writeOperation($this, function() use($modelOrObject)
         {
-            $patchOperationFactory = self::patchOperationFactory($this);
+            $patchOperationFactory = self::getPatchOperationFactory($this);
 
             $iPatchOperation = $patchOperationFactory($this);
 
@@ -1273,7 +1291,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         if($operation === null)
         {
             $operation = new JoinRelatedOperation($operationName, ['joinOperation'=>$joinOperation]);
-            $iBuilder->addOperation($operation);
+            $iBuilder->addOperation($operation, []);
         }
 
         return $operation;

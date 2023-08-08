@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace Sharksmedia\Objection\Operations;
 
-use Sharksmedia\Objection\ModelQueryBuilder;
 use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
 use Sharksmedia\Objection\RelationJoiner;
 

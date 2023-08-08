@@ -105,9 +105,9 @@ abstract class ModelQueryBuilderOperationSupport
     /**
      * 2023-07-07
      * @param class-string<Model> $modelClass
-     * @return ModelQueryBuilderOperationSupport|ModelQueryBuilderBase|ModelQueryBuilder
+     * @return ModelQueryBuilderOperationSupport|ModelQueryBuilder
      */
-    public static function forClass(string $modelClass)
+    public static function forClass(string $modelClass): static
     {
         return new static($modelClass);
     }
@@ -173,7 +173,7 @@ abstract class ModelQueryBuilderOperationSupport
      */
     public function setInternalOptions(array $options): ModelQueryBuilderOperationSupport
     {
-        $this->context->options = array_merge($this->context->options, $options);
+        $this->context->options = array_merge($this->context->options ?? [], $options);
 
         return $this;
     }
@@ -421,12 +421,14 @@ abstract class ModelQueryBuilderOperationSupport
 
         foreach($this->operations as $operation)
         {
-            if($selector($operation) === $match && $callback($operation) === false) break;
+            $selectorResult = $selector($operation);
+            $callbackResult = $callback($operation, $selectorResult);
+            if($selectorResult === $match && $callbackResult === false) break;
 
             $childRes = $operation->forEachDescendantOperation(function($operation) use(&$selector, &$callback, &$match, $operationSelector)
             {
                 $selectorResult = $selector($operation);
-                $callbackResult = $callback($operation);
+                $callbackResult = $callback($operation, $selectorResult);
 
                 if($selectorResult === $match && $callbackResult === false) return false;
 
@@ -445,9 +447,10 @@ abstract class ModelQueryBuilderOperationSupport
     {
         $operation = null;
 
-        $this->forEachOperations($operationSelector, function($op) use(&$operation)
+        $this->forEachOperations($operationSelector, function($op, $selectionResult) use(&$operation)
         {
-            $operation = $op;
+            if($selectionResult) $operation = $op;
+
             return false;
         });
 
@@ -460,9 +463,9 @@ abstract class ModelQueryBuilderOperationSupport
     {
         $operation = null;
 
-        $this->forEachOperations($operationSelector, function($op) use(&$operation)
+        $this->forEachOperations($operationSelector, function($op, $selectorResult) use(&$operation)
         {
-            $operation = $op;
+            if($selectorResult) $operation = $op;
 
             return null;
         });

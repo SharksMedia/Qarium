@@ -12,15 +12,16 @@ namespace Sharksmedia\Objection\Operations;
 use Sharksmedia\Objection\ModelQueryBuilder;
 use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
 use Sharksmedia\QueryBuilder\QueryBuilder;
+use Sharksmedia\QueryBuilder\Statement\Join;
 
 class FirstOperation extends ModelQueryBuilderOperation
 {
     /**
-     * @param ModelQueryBuilder $iBuilder
+     * @param ModelQueryBuilder|ModelQueryBuilderOperationSupport $iBuilder
      * @param QueryBuilder|Join|null $iQueryBuilder
      * @return QueryBuilder|Join|null
      */
-    public function onBuildQueryBuilder(ModelQueryBuilder $iBuilder, $iQueryBuilder)
+    public function onBuildQueryBuilder(ModelQueryBuilderOperationSupport $iBuilder, $iQueryBuilder)
     {
         if($iQueryBuilder !== null && !($iQueryBuilder instanceof QueryBuilder) && !($iQueryBuilder instanceof Join))  throw new \Exception('Invalid QueryBuilder type: '.get_class($iQueryBuilder));
 

@@ -124,4 +124,24 @@ class Utilities
             return (bool)$value;
         });
     }
+
+    public static function isQueryBuilder($value): bool
+    {
+        return $value instanceof \Sharksmedia\QueryBuilder\QueryBuilder;
+    }
+
+    public static function isQueryBuilderRaw($value): bool
+    {
+        return $value instanceof \Sharksmedia\QueryBuilder\Statement\Raw;
+    }
+
+    public static function isQueryBuilderRawConvertable($value): bool
+    {
+        return false;
+    }
+
+    public static function isModelQueryBuilderBase($value): bool
+    {
+        return $value instanceof \Sharksmedia\Objection\ModelQueryBuilderBase;
+    }
 }

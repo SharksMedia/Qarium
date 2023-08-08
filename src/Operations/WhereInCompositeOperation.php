@@ -25,11 +25,11 @@ class WhereInCompositeOperation extends ObjectionToQueryBuilderConvertingOperati
     }
 
     /**
-     * @param ModelQueryBuilder $iBuilder
+     * @param ModelQueryBuilder|ModelQueryBuilderOperationSupport $iBuilder
      * @param QueryBuilder|Join|null $iQueryBuilder
      * @return QueryBuilder|Join|null
      */
-    public function onBuildQueryBuilder(ModelQueryBuilder $iBuilder, $iQueryBuilder)
+    public function onBuildQueryBuilder(ModelQueryBuilderOperationSupport $iBuilder, $iQueryBuilder)
     {
         $argus = $this->getArguments($iBuilder);
 

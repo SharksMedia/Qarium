@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace Sharksmedia\Objection\Operations;
 
+use Sharksmedia\Objection\JoinBuilder;
 use Sharksmedia\Objection\ModelQueryBuilder;
 use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
 use Sharksmedia\QueryBuilder\QueryBuilder;
@@ -70,9 +71,12 @@ abstract class ModelQueryBuilderOperation
 
     protected static function funcHasBeenOverriden(string $function): bool
     {
-        $rc = new \ReflectionClass(static::class);
-        $namepc = $rc->getParentClass()->name;
-        return method_exists($namepc, $function);
+        $reflector = new \ReflectionMethod(static::class, $function);
+        $hasOverriden = ($reflector->getDeclaringClass()->getName() === static::class);
+
+        if(static::class === ModelQueryBuilderOperation::class) return false;
+
+        return $hasOverriden;
     }
 
     /**
@@ -180,11 +184,11 @@ abstract class ModelQueryBuilderOperation
      * This method should never call any methods that add operations to the builder.
      * This method should always return the shark query builder.
      *
-     * @param ModelQueryBuilder $iBuilder
+     * @param ModelQueryBuilder|ModelQueryBuilderOperationSupport $iBuilder
      * @param QueryBuilder|Join|null $iQueryBuilder
      * @return QueryBuilder|Join|null
      */
-    public function onBuildQueryBuilder(ModelQueryBuilder $iBuilder, $iQueryBuilder) { return $iQueryBuilder; }
+    public function onBuildQueryBuilder(ModelQueryBuilderOperationSupport $iBuilder, $iQueryBuilder) { return $iQueryBuilder; }
 
     public function hasOnBuildQueryBuilder(): bool { return static::funcHasBeenOverriden('onBuildQueryBuilder'); }
 
@@ -245,9 +249,9 @@ abstract class ModelQueryBuilderOperation
      * @param ModelQueryBuilderOperationSupport $iBuilder
      * @return ModelQueryBuilderOperationSupport
      */
-    public function queryExecutor(ModelQueryBuilderOperationSupport $iBuilder): ModelQueryBuilderOperationSupport { return $iBuilder; }
+    public function queryExecutor(ModelQueryBuilderOperationSupport $iBuilder): ?ModelQueryBuilderOperationSupport { return null; }
 
-    public function hasQueryExecutor(): bool { return false; }
+    public function hasQueryExecutor(): bool { return static::funcHasBeenOverriden('queryExecutor'); }
 
     /**
      * 2023-07-04

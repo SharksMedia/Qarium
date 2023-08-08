@@ -9,8 +9,14 @@ use Sharksmedia\Objection\Exceptions\ModifierNotFoundError;
 use Sharksmedia\Objection\Model;
 use Sharksmedia\Objection\ModelQueryBuilderBase;
 use Sharksmedia\Objection\ModelQueryBuilder;
+use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
 use Sharksmedia\Objection\Objection;
+use Sharksmedia\Objection\Operations\DeleteOperation;
 use Sharksmedia\Objection\Operations\FindOperation;
+use Sharksmedia\Objection\Operations\InsertOperation;
+use Sharksmedia\Objection\Operations\RelateOperation;
+use Sharksmedia\Objection\Operations\UnrelateOperation;
+use Sharksmedia\Objection\Operations\UpdateOperation;
 use Sharksmedia\Objection\ReferenceBuilder;
 use Sharksmedia\QueryBuilder\Client;
 use Sharksmedia\QueryBuilder\Client\MySQL;
@@ -82,26 +88,136 @@ class QueryBuilderTest extends Unit
 
     public static function createFindOperation(ModelQueryBuilder $iBuilder, array $whereObj): FindOperation
     {
-        $findOperationFactory = $iBuilder->getFindOperationFactory();
-
-        $iFindOperation = $findOperationFactory($iBuilder);
-
-        $iFindOperation->onBefore2 = \Closure::bind(function()
+        $TestFindOperation = new class('find') extends FindOperation
         {
+            public ?array $whereObject = null;
 
-        }, $iFindOperation);
+            public function onBefore2(ModelQueryBuilderOperationSupport $builder, ...$arguments): bool { return true; }
 
-        $iFindOperation->onAfter2 = \Closure::bind(function()
-        {
+            public function onAfter2(ModelQueryBuilderOperationSupport $builder, &$result) { return $result; }
 
-        }, $iFindOperation);
+            public function onBuildQueryBuilder($iBuilder, $iQueryBuilder)
+            {
+                return $iQueryBuilder->where($this->whereObject);
+            }
+        };
 
-        $iFindOperation->onBuildQueryBuilder = \Closure::bind(function(ModelQueryBuilder $iBuilder, $iQueryBuilder) use($whereObj)
-        {
-            return $iQueryBuilder->where(...$whereObj);
-        }, $iFindOperation);
+        $iFindOperation = new $TestFindOperation('find');
+
+        $iFindOperation->whereObject = $whereObj;
 
         return $iFindOperation;
+    }
+
+    public static function createInsertOperation(ModelQueryBuilder $iBuilder, array $whereObj): InsertOperation
+    {
+        $TestInsertOperation = new class('insert') extends InsertOperation
+        {
+            public array $insertData = [];
+
+            public function onBefore2(ModelQueryBuilderOperationSupport $builder, ...$arguments): bool { return true; }
+
+            public function onBefore3(ModelQueryBuilderOperationSupport $builder, ...$arguments): bool { return true; }
+
+            public function onAfter2(ModelQueryBuilderOperationSupport $iBuilder, &$result) { return $result; }
+
+            public function onAdd(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
+            {
+                $this->iModels = [$arguments[0]];
+
+                return true;
+            }
+
+            public function onBuildQueryBuilder($iBuilder, $iQueryBuilder)
+            {
+                $modelClass = $iBuilder->getModelClass();
+
+                $iModel = $modelClass::ensureModel($this->iModels[0], $this->modelOptions);
+
+                $this->iModels = [$iModel];
+                
+                $data = $this->iModels[0]->toDatabaseArray($iBuilder);
+
+                $data = array_merge($data, $this->insertData);
+
+                $modelClass = $iBuilder->getModelClass();
+                
+                $this->iModels[0] = $data;
+
+                return $iQueryBuilder->insert($this->iModels);
+            }
+        };
+
+        $iInsertOperation = new $TestInsertOperation('insert');
+
+        $iInsertOperation->insertData = $whereObj;
+
+        return $iInsertOperation;
+    }
+
+    public static function createUpdateOperation(ModelQueryBuilder $iBuilder, array $whereObj): UpdateOperation
+    {
+        $TestUpdateOperation = new class('update') extends UpdateOperation
+        {
+            public $updateData = [];
+
+            public function onBefore2(ModelQueryBuilderOperationSupport $builder, ...$arguments): bool { return true; }
+
+            public function onBefore3(ModelQueryBuilderOperationSupport $builder, ...$arguments): bool { return true; }
+
+            public function onAfter2(ModelQueryBuilderOperationSupport $iBuilder, &$result) { return $result; }
+
+            public function onAdd(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
+            {
+                $data = $arguments[0];
+
+                $modelClass = $iBuilder->getModelClass();
+
+                $this->iModel = $modelClass::ensureModel($data, $this->modelOptions);
+
+                return true;
+            }
+
+            public function onBuildQueryBuilder($iBuilder, $iQueryBuilder)
+            {
+                $data = $this->iModel->toDatabaseArray($iBuilder);
+
+                $data = array_merge($data, $this->updateData);
+
+                $modelClass = $iBuilder->getModelClass();
+                
+                $this->iModel = $modelClass::ensureModel($data, $this->modelOptions);
+
+                return $iQueryBuilder->update($this->iModel);
+            }
+        };
+
+        $iUpdateOperation = new $TestUpdateOperation('update');
+
+        $iUpdateOperation->updateData = $whereObj;
+
+        return $iUpdateOperation;
+    }
+
+    public static function createDeleteOperation(ModelQueryBuilder $iBuilder, array $whereObj): DeleteOperation
+    {
+        $TestDeleteOperation = new class('delete') extends DeleteOperation
+        {
+            public array $whereObject = [];
+
+            public function onAfter2(ModelQueryBuilderOperationSupport $iBuilder, &$result) { return $result; }
+
+            public function onBuildQueryBuilder($iBuilder, $iQueryBuilder)
+            {
+                return $iQueryBuilder->delete()->where($this->whereObject);
+            }
+        };
+
+        $iDeleteOperation = new $TestDeleteOperation('delete');
+
+        $iDeleteOperation->whereObject = $whereObj;
+
+        return $iDeleteOperation;
     }
 
     // Tests
@@ -465,10 +581,7 @@ class QueryBuilderTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Objection\Model
         {
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
 
         $iModelQueryBuilder = ModelQueryBuilder::forClass($TestModel::class);
@@ -480,10 +593,7 @@ class QueryBuilderTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Objection\Model
         {
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
 
         $this->executedQueries = [];
@@ -525,10 +635,7 @@ class QueryBuilderTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Objection\Model
         {
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
 
         $builder = ModelQueryBuilder::forClass($TestModel::class)->timeout(3000);
@@ -544,10 +651,7 @@ class QueryBuilderTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Objection\Model
         {
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
 
         $query = ModelQueryBuilder::forClass($TestModel::class)
@@ -564,10 +668,7 @@ class QueryBuilderTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Objection\Model
         {
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
 
         $query = ModelQueryBuilder::forClass($TestModel::class)
@@ -587,10 +688,7 @@ class QueryBuilderTest extends Unit
 
         $TestModel = new class extends \Sharksmedia\Objection\Model
         {
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
 
         ModelQueryBuilder::forClass($TestModel::class)
@@ -602,10 +700,7 @@ class QueryBuilderTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Objection\Model
         {
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
 
         $query = ModelQueryBuilder::forClass($TestModel::class)
@@ -627,10 +722,7 @@ class QueryBuilderTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Objection\Model
         {
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
 
         $query = ModelQueryBuilder::forClass($TestModel::class)
@@ -650,10 +742,7 @@ class QueryBuilderTest extends Unit
 
         $TestModel = new class extends \Sharksmedia\Objection\Model
         {
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
 
         ModelQueryBuilder::forClass($TestModel::class)
@@ -665,10 +754,7 @@ class QueryBuilderTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Objection\Model
         {
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
 
         $query = ModelQueryBuilder::forClass($TestModel::class)
@@ -685,10 +771,7 @@ class QueryBuilderTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Objection\Model
         {
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
 
         $query = ModelQueryBuilder::forClass($TestModel::class)
@@ -705,10 +788,7 @@ class QueryBuilderTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Objection\Model
         {
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
 
         $query = ModelQueryBuilder::forClass($TestModel::class)
@@ -729,10 +809,7 @@ class QueryBuilderTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Objection\Model
         {
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
 
         $query = ModelQueryBuilder::forClass($TestModel::class)
@@ -749,10 +826,7 @@ class QueryBuilderTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Objection\Model
         {
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
 
         $query = ModelQueryBuilder::forClass($TestModel::class)
@@ -769,10 +843,7 @@ class QueryBuilderTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Objection\Model
         {
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
 
         $query = ModelQueryBuilder::forClass($TestModel::class)
@@ -789,10 +860,7 @@ class QueryBuilderTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Objection\Model
         {
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
 
         $query = ModelQueryBuilder::forClass($TestModel::class)
@@ -809,10 +877,7 @@ class QueryBuilderTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Objection\Model
         {
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
 
         $query = ModelQueryBuilder::forClass($TestModel::class)
@@ -829,10 +894,7 @@ class QueryBuilderTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Objection\Model
         {
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
 
         $subQuery = ModelQueryBuilder::forClass($TestModel::class)
@@ -852,10 +914,7 @@ class QueryBuilderTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Objection\Model
         {
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
 
         $query = ModelQueryBuilder::forClass($TestModel::class)
@@ -872,10 +931,7 @@ class QueryBuilderTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Objection\Model
         {
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
 
         $subQuery = ModelQueryBuilder::forClass($TestModel::class)
@@ -897,10 +953,7 @@ class QueryBuilderTest extends Unit
         {
             public int $a;
 
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
 
         $this->mockQueryResults = [['a' => 1], ['a' => 2]];
@@ -919,10 +972,7 @@ class QueryBuilderTest extends Unit
         {
             public int $a;
 
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
 
         $this->mockQueryResults = [['a' => 1]];
@@ -946,10 +996,7 @@ class QueryBuilderTest extends Unit
             public int $e;
             public int $f;
 
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
 
         $this->mockQueryResults = [['a' => 1]];
@@ -971,7 +1018,7 @@ class QueryBuilderTest extends Unit
                         $this->assertInstanceOf(ModelQueryBuilder::class, $builder);
                         $text .= 'b';
                     })
-                ->onBuildQueryBuilder(function(ModelQueryBuilder $iBuilder, QueryBuilder $iQueryBuilder) use(&$text)
+                ->onBuildQueryBuilder(function($iBuilder, $iQueryBuilder) use(&$text)
                     {
                         $this->assertInstanceOf(ModelQueryBuilder::class, $iBuilder);
                         // Assuming isQueryBuilder() is equivalent to checking if $iQueryBuilder is an instance of a specific class
@@ -1016,10 +1063,7 @@ class QueryBuilderTest extends Unit
 
         $TestModel = new class extends \Sharksmedia\Objection\Model
         {
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
 
         try
@@ -1048,10 +1092,7 @@ class QueryBuilderTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Objection\Model
         {
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
 
         $result = null;
@@ -1059,6 +1100,7 @@ class QueryBuilderTest extends Unit
         try
         {
             $result = ModelQueryBuilder::forClass($TestModel::class)
+                ->returnError(true)
                 ->runBefore(function($builder, $result)
                     {
                         throw new \Exception();
@@ -1085,10 +1127,17 @@ class QueryBuilderTest extends Unit
         {
             public int $a;
 
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            protected static array $metadataCache =
+            [
+                'Model'=>
+                [
+                    [
+                        'Field'=>'a',
+                    ]
+                ]
+            ];
+
+            public static function getTableName(): string { return 'Model'; }
         };
 
         $res = 0;
@@ -1136,11 +1185,10 @@ class QueryBuilderTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Objection\Model
         {
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
+
+        $this->executedQueries = [];
 
         try {
             ModelQueryBuilder::forClass($TestModel::class)
@@ -1170,23 +1218,35 @@ class QueryBuilderTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Objection\Model
         {
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public int $a;
+
+            protected static array $metadataCache =
+            [
+                'Model'=>
+                [
+                    [
+                        'Field'=>'a',
+                    ]
+                ]
+            ];
+
+            public static function getTableName(): string { return 'Model'; }
         };
+
+        $this->executedQueries = [];
 
         $builder = ModelQueryBuilder::forClass($TestModel::class)
             ->findOperationFactory(function($iBuilder)
                 {
-                    $this->assertEquals($iBuilder, $this);
-                    return self::createFindOperation($iBuilder, ['a' => 1]);
+                    $iFindOperation = self::createFindOperation($iBuilder, ['a' => 1]);
+
+                    return $iFindOperation;
                 })
             ->run();
 
         // Replace 'executedQueries' with the appropriate method to get the executed queries
         $this->assertCount(1, $this->executedQueries);
-        $this->assertEquals('select "Model".* from "Model" where "a" = 1', $this->executedQueries[0]);
+        $this->assertEquals('SELECT `Model`.* FROM `Model` WHERE `a` = ?', $this->executedQueries[0]);
     }
 
     public function testShouldNotCallCustomFindImplementationDefinedByFindOperationFactoryIfInsertIsCalled(): void
@@ -1195,11 +1255,20 @@ class QueryBuilderTest extends Unit
         {
             public int $a;
 
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            protected static array $metadataCache =
+            [
+                'Model'=>
+                [
+                    [
+                        'Field'=>'a',
+                    ]
+                ]
+            ];
+
+            public static function getTableName(): string { return 'Model'; }
         };
+
+        $this->executedQueries = [];
 
         $builder = ModelQueryBuilder::forClass($TestModel::class)
             ->findOperationFactory(function($iBuilder)
@@ -1211,20 +1280,29 @@ class QueryBuilderTest extends Unit
 
         // Replace 'executedQueries' with the appropriate method to get the executed queries
         $this->assertCount(1, $this->executedQueries);
-        $this->assertEquals('insert into "Model" ("a") values (1) returning "id"', $this->executedQueries[0]);
+        $this->assertEquals('INSERT INTO `Model` (`a`) VALUES (?)', $this->executedQueries[0]);
     }
 
     public function testShouldNotCallCustomFindImplementationDefinedByFindOperationFactoryIfUpdateIsCalled(): void
     {
         $TestModel = new class extends \Sharksmedia\Objection\Model
         {
+            protected static array $metadataCache =
+            [
+                'Model'=>
+                [
+                    [
+                        'Field'=>'a',
+                    ]
+                ]
+            ];
+
             public int $a;
 
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            public static function getTableName(): string { return 'Model'; }
         };
+
+        $this->executedQueries = [];
 
         $builder = ModelQueryBuilder::forClass($TestModel::class)
             ->findOperationFactory(function($iBuilder)
@@ -1236,7 +1314,7 @@ class QueryBuilderTest extends Unit
 
         // Replace 'executedQueries' with the appropriate method to get the executed queries
         $this->assertCount(1, $this->executedQueries);
-        $this->assertEquals('update "Model" set "a" = 1', $this->executedQueries[0]);
+        $this->assertEquals('UPDATE `Model` SET `a` = ?', $this->executedQueries[0]);
     }
 
     public function testShouldNotCallCustomFindImplementationDefinedByFindOperationFactoryIfDeleteIsCalled(): void
@@ -1245,11 +1323,20 @@ class QueryBuilderTest extends Unit
         {
             public int $a;
 
-            public static function getTableName(): string
-            {
-                return 'Model';
-            }
+            protected static array $metadataCache =
+            [
+                'Model'=>
+                [
+                    [
+                        'Field'=>'a',
+                    ]
+                ]
+            ];
+
+            public static function getTableName(): string { return 'Model'; }
         };
+
+        $this->executedQueries = [];
 
         $builder = ModelQueryBuilder::forClass($TestModel::class)
             ->findOperationFactory(function($iBuilder)
@@ -1262,5 +1349,376 @@ class QueryBuilderTest extends Unit
         // Replace 'executedQueries' with the appropriate method to get the executed queries
         $this->assertCount(1, $this->executedQueries);
         $this->assertEquals('DELETE FROM `Model`', $this->executedQueries[0]);
+    }
+
+    public function testShouldCallCustomInsertImplementationDefinedByInsertOperationFactory(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Objection\Model
+        {
+            public ?int $a=null;
+            public ?int $b=null;
+
+            protected static array $metadataCache =
+            [
+                'Model'=>
+                [
+                    [ 'Field'=>'a', ],
+                    [ 'Field'=>'b', ]
+                ]
+            ];
+
+            public static function getTableName(): string { return 'Model'; }
+        };
+
+        $this->executedQueries = [];
+
+        $result = ModelQueryBuilder::forClass($TestModel::class)
+            ->insertOperationFactory(function($iBuilder)
+                {
+                    return self::createInsertOperation($iBuilder, ['b'=>2]);
+                })
+            ->insert(['a' => 1])
+            ->run();
+
+        $this->assertCount(1, $this->executedQueries);
+        $this->assertEquals('INSERT INTO `Model` (`a`, `b`) VALUES (?, ?)', $this->executedQueries[0]);
+    }
+
+    public function testShouldCallCustomUpdateImplementationDefinedByUpdateOperationFactory(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Objection\Model
+        {
+            public ?int $a=null;
+            public ?int $b=null;
+
+            protected static array $metadataCache =
+            [
+                'Model'=>
+                [
+                    [ 'Field'=>'a', ],
+                    [ 'Field'=>'b', ]
+                ]
+            ];
+
+            public static function getTableName(): string { return 'Model'; }
+        };
+
+        $this->executedQueries = [];
+
+        $result = ModelQueryBuilder::forClass($TestModel::class)
+            ->updateOperationFactory(function ($iBuilder) {
+                return self::createUpdateOperation($iBuilder, ['b'=>2]);
+            })
+            ->update(['a' => 1])
+            ->run();
+
+        $this->assertCount(1, $this->executedQueries);
+        $this->assertEquals('UPDATE `Model` SET `a` = ?, `b` = ?', $this->executedQueries[0]);
+    }
+
+    public function testShouldCallCustomPatchImplementationDefinedByPatchOperationFactory(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Objection\Model
+        {
+            public ?int $a=null;
+            public ?int $b=null;
+
+            protected static array $metadataCache =
+            [
+                'Model'=>
+                [
+                    [ 'Field'=>'a', ],
+                    [ 'Field'=>'b', ]
+                ]
+            ];
+
+            public static function getTableName(): string { return 'Model'; }
+        };
+
+        $this->executedQueries = [];
+
+        $result = ModelQueryBuilder::forClass($TestModel::class)
+            ->patchOperationFactory(function ($iBuilder) {
+                return self::createUpdateOperation($iBuilder, ['b'=>2]);
+            })
+            ->patch(['a' => 1])
+            ->run();
+
+        $this->assertCount(1, $this->executedQueries);
+        $this->assertEquals('UPDATE `Model` SET `a` = ?, `b` = ?', $this->executedQueries[0]);
+    }
+
+    public function testShouldCallCustomDeleteImplementationDefinedByDeleteOperationFactory(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Objection\Model
+        {
+            public ?int $a=null;
+            public ?int $b=null;
+
+            protected static array $metadataCache =
+            [
+                'Model'=>
+                [
+                    [ 'Field'=>'a', ],
+                    [ 'Field'=>'b', ]
+                ]
+            ];
+
+            public static function getTableName(): string { return 'Model'; }
+        };
+
+        $this->executedQueries = [];
+
+        $result = ModelQueryBuilder::forClass($TestModel::class)
+            ->deleteOperationFactory(function($iBuilder)
+                {
+                    return self::createDeleteOperation($iBuilder, ['id'=>100]);
+                })
+            ->delete()
+            ->run();
+
+        $this->assertCount(1, $this->executedQueries);
+        $this->assertEquals('DELETE FROM `Model` WHERE `id` = ?', $this->executedQueries[0]);
+    }
+
+    public function testShouldCallCustomRelateImplementationDefinedByRelateOperationFactory(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Objection\Model
+        {
+            public ?int $a=null;
+            public ?int $b=null;
+
+            protected static array $metadataCache =
+            [
+                'Model'=>
+                [
+                    [ 'Field'=>'a', ],
+                    [ 'Field'=>'b', ]
+                ]
+            ];
+
+            public static function getTableName(): string { return 'Model'; }
+        };
+
+        $this->executedQueries = [];
+
+        $result = ModelQueryBuilder::forClass($TestModel::class)
+            ->relateOperationFactory(function($iBuilder)
+                {
+                    return self::createInsertOperation($iBuilder, ['b'=>2]);
+                })
+            ->relate(['a'=>1])
+            ->run();
+
+        $this->assertCount(1, $this->executedQueries);
+        $this->assertEquals('INSERT INTO `Model` (`a`, `b`) VALUES (?, ?)', $this->executedQueries[0]);
+    }
+
+    public function testShouldCallCustomUnrelateImplementationDefinedByUnrelateOperationFactory(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Objection\Model
+        {
+            public ?int $a=null;
+            public ?int $b=null;
+
+            protected static array $metadataCache =
+            [
+                'Model'=>
+                [
+                    [ 'Field'=>'a', ],
+                    [ 'Field'=>'b', ]
+                ]
+            ];
+
+            public static function getTableName(): string { return 'Model'; }
+        };
+
+        $this->executedQueries = [];
+
+        $result = ModelQueryBuilder::forClass($TestModel::class)
+            ->unrelateOperationFactory(function($iBuilder)
+                {
+                    return self::createDeleteOperation($iBuilder, ['id'=>100]);
+                })
+            ->unrelate()
+            ->run();
+
+        $this->assertCount(1, $this->executedQueries);
+        $this->assertEquals('DELETE FROM `Model` WHERE `id` = ?', $this->executedQueries[0]);
+    }
+
+    public function testShouldBeAbleToExecuteSameQueryMultipleTimes(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Objection\Model
+        {
+            public ?int $a=null;
+            public ?int $b=null;
+
+            protected static array $metadataCache =
+            [
+                'Model'=>
+                [
+                    [ 'Field'=>'a', ],
+                    [ 'Field'=>'b', ],
+                ]
+            ];
+
+            public static function getTableName(): string { return 'Model'; }
+        };
+
+        /** @var ModelQueryBuilder $query */
+        $query = ModelQueryBuilder::forClass($TestModel::class)
+        ->updateOperationFactory(function($builder)
+            {
+                return self::createUpdateOperation($builder, ['b' => 2]);
+            })
+            ->where('test', '<', 100)
+            ->update(['a' => 1]);
+
+        $query->run();
+
+        $this->assertCount(1, $this->executedQueries);
+        $this->assertEquals($query->toQuery()->getSQL(), $this->executedQueries[0]);
+        $this->assertEquals('UPDATE `Model` SET `a` = ?, `b` = ? WHERE `test` < ?', $this->executedQueries[0]);
+        $this->executedQueries = [];
+
+        $query->run();
+
+        $this->assertCount(1, $this->executedQueries);
+        $this->assertEquals($query->toQuery()->getSQL(), $this->executedQueries[0]);
+        $this->assertEquals('UPDATE `Model` SET `a` = ?, `b` = ? WHERE `test` < ?', $this->executedQueries[0]);
+    }
+
+    public function testResultSizeShouldCreateAndExecuteAQueryThatReturnsTheSizeOfTheQuery(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Objection\Model
+        {
+            public ?int $a=null;
+            public ?int $b=null;
+            public ?int $test=null;
+
+            protected static array $metadataCache =
+            [
+                'Model'=>
+                [
+                    [ 'Field'=>'a', ],
+                    [ 'Field'=>'b', ],
+                    [ 'Field'=>'test' ],
+                ]
+            ];
+
+            public static function getTableName(): string { return 'Model'; }
+        };
+
+        $this->mockQueryResults = [['count' => '123']];
+        
+        $result = ModelQueryBuilder::forClass($TestModel::class)
+            ->where('test', 100)
+            ->orderBy('order')
+            ->limit(10)
+            ->offset(100)
+            ->resultSize();
+
+        $this->assertCount(1, $this->executedQueries);
+        $this->assertEquals(123, $result);
+        $this->assertEquals(
+            'SELECT COUNT(*) AS `count` FROM (SELECT `Model`.* FROM `Model` WHERE `test` = ?) AS `temp`',
+            $this->executedQueries[0]
+        );
+    }
+
+    public function testShouldConsiderWithSchemaWhenLookingForColumnInfo(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Objection\Model
+        {
+            protected ?int $id=null;
+            protected ?string $count=null;
+
+            public static $RelatedClass; 
+
+            protected static array $metadataCache =
+            [
+                'Model'=>
+                [
+                    [ 'Field'=>'id', ],
+                    [ 'Field'=>'count' ],
+                ]
+            ];
+
+            public static function getTableName(): string { return 'Model'; }
+
+            public static function getTableIDs(): array { return ['id']; }
+
+            public static function getRelationMappings(): array
+            {
+                $mappings =
+                [
+                    'relatedModel'=>
+                    [
+                        'relation' => Model::BELONGS_TO_ONE_RELATION,
+                        'modelClass' => self::$RelatedClass::class,
+                        'join'=>
+                        [
+                            'from' => 'Model.id',
+                            'to' => 'Related.id',
+                        ],
+                    ]
+                ];
+
+                return $mappings;
+            }
+
+            public static function fetchTableMetadata(?Client $iClient=null): array
+            {
+                parent::fetchTableMetadata(); // Just to get the query executed
+
+                return static::$metadataCache;
+            }
+        };
+
+        $TestModelRelated = new class extends \Sharksmedia\Objection\Model
+        {
+            protected ?int $id=null;
+
+            protected static array $metadataCache =
+            [
+                'Related'=>
+                [
+                    [ 'Field'=>'id' ],
+                ]
+            ];
+
+            public static function getTableName(): string { return 'Related'; }
+
+            public static function getTableIDs(): array { return ['id']; }
+
+            public static function fetchTableMetadata(?Client $iClient=null): array
+            {
+                parent::fetchTableMetadata(); // Just to get the query executed
+
+                return static::$metadataCache;
+            }
+        };
+
+        $TestModel::$RelatedClass = $TestModelRelated;
+
+        $this->executedQueries = [];
+        $this->mockQueryResults = [[ 'count'=>'123' ]];
+        
+        ModelQueryBuilder::forClass($TestModel::class)
+            ->withSchema('someSchema')
+            ->withGraphJoined('relatedModel')
+            ->run();
+
+        $expectedQueries =
+        [
+            // "select * from information_schema.columns where table_name = 'Model' and table_catalog = current_database() and table_schema = 'someSchema'",
+            // "select * from information_schema.columns where table_name = 'Related' and table_catalog = current_database() and table_schema = 'someSchema'",
+            'SHOW COLUMNS FROM Model',
+            'SHOW COLUMNS FROM Related',
+            'select "Model"."0" as "0" from "someSchema"."Model" left join "someSchema"."Related" as "relatedModel" on "relatedModel"."id" = "Model"."id"',
+        ];
+
+        $this->assertEquals($expectedQueries, $this->executedQueries);
     }
 }

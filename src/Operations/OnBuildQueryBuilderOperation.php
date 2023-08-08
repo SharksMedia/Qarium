@@ -23,7 +23,7 @@ class OnBuildQueryBuilderOperation extends ModelQueryBuilderOperation
         return true;
     }
 
-    public function onBuildQueryBuilder(ModelQueryBuilder $iBuilder, $iQueryBuilder)
+    public function onBuildQueryBuilder(ModelQueryBuilderOperationSupport $iBuilder, $iQueryBuilder)
     {
         if($this->closure === null) return $iQueryBuilder;
 

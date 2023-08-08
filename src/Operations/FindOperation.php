@@ -74,6 +74,8 @@ class FindOperation extends ModelQueryBuilderOperation
      */
     public function callInstanceAfterFind($context, $results, $deep)
     {
+        $results = $results ?? [];
+
         $firstResult = reset($results);
 
         if(is_bool($firstResult)) $firstResult = null;

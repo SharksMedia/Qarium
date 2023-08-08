@@ -14,6 +14,9 @@
     "scripts": {
         "unit-tests": "./vendor/bin/codecept run unit --debug"
     },
+    "scripts-descriptions": {
+        "unit-tests": "Run unit tests"
+    },
     "autoload": {
         "psr-4": {
             "Sharksmedia\\Objection\\": "src/"
