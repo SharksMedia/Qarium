@@ -9,11 +9,16 @@ namespace Sharksmedia\Objection\Relations;
 use Exception;
 use Sharksmedia\Objection\Model;
 use Sharksmedia\Objection\ModelQueryBuilder;
-use Sharksmedia\QueryBuilder\Statement\Join;
 
 use Sharksmedia\Objection\Exceptions\ModelNotFoundError;
 use Sharksmedia\Objection\Exceptions\InvalidReferenceError;
 use Sharksmedia\Objection\JoinBuilder;
+
+use Sharksmedia\Objection\Operations\RelationFindOperation;
+use Sharksmedia\Objection\Operations\RelationUpdateOperation;
+use Sharksmedia\Objection\Operations\RelationDeleteOperation;
+use Sharksmedia\Objection\Operations\RelationRelateOperation;
+use Sharksmedia\Objection\Operations\RelationUnrelateOperation;
 
 class Relation
 {
@@ -147,7 +152,10 @@ class Relation
     {// 2023-08-01
         if($this->joinTableModelClass === null) return null;
 
-        return $this->joinTableModelClass::getTableName();
+        /** @var \Model $modelClass */
+        $modelClass = $this->joinTableModelClass;
+
+        return $modelClass::getTableName();
     }
 
     public function getJoinTableExtras(): array
@@ -162,12 +170,12 @@ class Relation
 
     public function getRelatedProp(): RelationProperty
     {// 2023-08-01
-        return $this->iRelatedProperty ?? new RelationProperty();
+        return $this->iRelatedProperty;
     }
 
     public function getOwnerProp(): RelationProperty
     {// 2023-08-01
-        return $this->iOwnerProperty ?? new RelationProperty();
+        return $this->iOwnerProperty;
     }
 
     /**
@@ -176,6 +184,11 @@ class Relation
     public function getRelatedModelClass(): string
     {// 2023-08-01
         return $this->relatedModelClass;
+    }
+
+    public function getOwnerModelClass(): string
+    {// 2023-08-10
+        return $this->ownerModelClass;
     }
 
     public function getJoinTableAlias(?string $aliasPrefix=null): string
@@ -193,6 +206,41 @@ class Relation
     public function isOneToOne(): bool
     {
         return false;
+    }
+
+    public function find($_, RelationOwner $iOwner): RelationFindOperation
+    {
+        return new RelationFindOperation('find', ['relation'=>$this, 'iOwner'=>$iOwner]);
+    }
+
+    public function insert($_, RelationOwner $iOwner)
+    {
+        throw new $this->createError("not implemented");
+    }
+
+    public function update($_, RelationOwner $iOwner)
+    {
+        return new RelationUpdateOperation('update', ['relation'=>$this, 'iOwner'=>$iOwner]);
+    }
+
+    public function patch($_, RelationOwner $iOwner)
+    {
+        return new RelationUpdateOperation('patch', ['relation'=>$this, 'iOwner'=>$iOwner]);
+    }
+
+    public function delete($_, RelationOwner $iOwner)
+    {
+        return new RelationDeleteOperation('delete', ['relation'=>$this, 'iOwner'=>$iOwner]);
+    }
+
+    public function relate($_, RelationOwner $iOwner)
+    {
+        return new RelationRelateOperation('relate', ['relation'=>$this, 'iOwner'=>$iOwner]);
+    }
+
+    public function unrelate($_, RelationOwner $iOwner)
+    {
+        return new RelationUnrelateOperation('unrelate', ['relation'=>$this, 'iOwner'=>$iOwner]);
     }
 
     public function join(ModelQueryBuilder $iBuilder, ?string $joinOperation=null, ?string $relatedTableAlias=null, ?ModelQueryBuilder $relatedJoinSelectQuery=null, ?string $relatedTable=null, ?string $ownerTable=null): ModelQueryBuilder
@@ -433,7 +481,10 @@ class Relation
             {
                 foreach([$context->ownerModelClass, $context->relatedModelClass] as $it)
                 {
-                    if($it::getTableName() === $table) return $it;
+                    if($it::getTableName() === $table)
+                    {
+                        return $it;
+                    }
                 }
 
                 return null;
@@ -516,5 +567,13 @@ class Relation
         {
             return new \Exception(get_class($this) . ": {$message}");
         }
+    }
+
+    public function findQuery(ModelQueryBuilder $iBuilder, RelationOwner $iOwner)
+    {
+        $relatedRefs = $this->iRelatedProperty->refs($iBuilder);
+        $iOwner->buildFindQuery($iBuilder, $this, $relatedRefs);
+
+        return $this->applyModify($iBuilder);
     }
 }

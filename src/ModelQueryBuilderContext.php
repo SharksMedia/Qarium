@@ -30,4 +30,28 @@ class ModelQueryBuilderContext extends ModelQueryBuilderContextBase
     {
         $this->onBuild[] = $callback;
     }
+
+    public function getRunBeforeCallback(): callable
+    {
+        return function(ModelQueryBuilder $iBuilder)
+        {
+            foreach($this->runBefore as $callback) $callback($iBuilder);
+        };
+    }
+
+    public function getRunAfterCallback(): callable
+    {
+        return function(ModelQueryBuilder $iBuilder)
+        {
+            foreach($this->runAfter as $callback) $callback($iBuilder);
+        };
+    }
+
+    public function getOnBuildCallback(): callable
+    {
+        return function(ModelQueryBuilder $iBuilder)
+        {
+            foreach($this->onBuild as $callback) $callback($iBuilder);
+        };
+    }
 }

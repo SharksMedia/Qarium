@@ -71,7 +71,12 @@ class SelectOperation extends ObjectionToQueryBuilderConvertingOperation
         return $this->selections;
     }
 
-    public function findSelection(ModelQueryBuilderOperationSupport $iBuilder, string $selectionToFind): ?Selection
+    public function hasSelections(): bool
+    {
+        return count($this->selections) > 0;
+    }
+
+    public function findSelection(ModelQueryBuilderOperationSupport $iBuilder, $selectionToFind): ?Selection
     {
         $selectionInstanceToFind = Selection::create($selectionToFind);
 

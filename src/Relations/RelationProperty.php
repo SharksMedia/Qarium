@@ -10,6 +10,7 @@ use Sharksmedia\Objection\ReferenceBuilder;
 use Sharksmedia\Objection\Exceptions\InvalidReferenceError;
 use Sharksmedia\Objection\Exceptions\ModelNotFoundError;
 use Sharksmedia\Objection\ModelQueryBuilder;
+use Sharksmedia\Objection\Utilities;
 
 /**
  * A pair of these define how two tables are related to each other.
@@ -21,6 +22,8 @@ use Sharksmedia\Objection\ModelQueryBuilder;
  */
 class RelationProperty
 {
+    private const PROP_KEY_PREFIX = 'k_';
+
     /**
      * 2023-08-01
      * @var array
@@ -41,9 +44,29 @@ class RelationProperty
 
     /**
      * 2023-08-01
-     * @var class-string<Model>
+     * @var class-string<Model> $modelClass
      */
     private string $modelClass = '';
+
+    /**
+     * 2023-08-01
+     * @var array<int, \Closure> $propGetters
+     */
+    private array $propGetters = [];
+
+    /**
+     * 2023-08-01
+     * @var array<int, \Closure> $propSetters
+     */
+    private array $propSetters = [];
+
+    /**
+     * 2023-08-01
+     * @var array<int, \Closure> $propSetters
+     */
+    private array $patchers = [];
+
+    private array $propCheckers;
 
     /**
      * references must be a reference string like `Table.column:maybe.some.json[1].path`.
@@ -77,6 +100,105 @@ class RelationProperty
             {
                 return $it->getColumn();
             }, $refs);
+
+        $this->propGetters = array_map(function($it)
+            {
+                return self::createGetter($it->path);
+            }, $paths);
+
+        $this->propSetters = array_map(function($it)
+            {
+                return self::createSetter($it->path);
+            }, $paths);
+
+        $this->propCheckers = array_map(function($it)
+            {
+                return self::createChecker($it->path);
+            }, $paths);
+
+        $this->patchers = array_map(function($it, $path)
+            {
+                return self::createPatcher($it, $path->path);
+            }, $refs, $paths);
+        
+
+
+    // this._propGetters = paths.map((it) => createGetter(it.path));
+    // this._propSetters = paths.map((it) => createSetter(it.path));
+    // this._patchers = refs.map((it, i) => createPatcher(it, paths[i].path));
+
+
+    }
+
+    private static function createGetter(array $path): \Closure
+    {
+        if(count($path) === 1)
+        {
+            $prop = $path[0];
+
+            return function(&$obj) use ($prop)
+            {
+                return $obj[$prop];
+            };
+        }
+
+        return function(&$obj) use ($path)
+        {
+            return Utilities::get($obj, $path);
+        };
+    }
+
+    private static function createSetter(array $path): \Closure
+    {
+        if(count($path) === 1)
+        {
+            $prop = $path[0];
+
+            return function(&$obj, $value) use ($prop)
+            {
+                $obj[$prop] = $value;
+            };
+        }
+
+        return function(&$obj, $value) use ($path)
+        {
+            Utilities::set($obj, $path, $value);
+        };
+    }
+
+    private static function createPatcher(ReferenceBuilder $ref, array $path): \Closure
+    {
+        if($ref->isPlainColumnRef())
+        {
+            return function(&$patch, $value) use ($path)
+            {
+                $patch[$path[0]] = $value;
+            };
+        }
+
+        // Objection `patch`, `update` etc. methods understand field expressions.
+        return function(&$patch, $value) use ($ref)
+        {
+            $patch[$ref->getExpression()] = $value;
+        };
+    }
+
+    private static function createChecker(array $path): \Closure
+    {
+        if(count($path) === 1)
+        {
+            $prop = $path[0];
+
+            return function(&$obj) use ($prop)
+            {
+                return array_key_exists($prop, $obj);
+            };
+        }
+
+        return function(&$obj) use ($path)
+        {
+            return Utilities::has($obj, $path);
+        };
     }
 
     /**
@@ -84,7 +206,7 @@ class RelationProperty
      * @param array<int, string> $references
      * @return array
      */
-    private function createReferences(array $references): array
+    public function createReferences(array $references): array
     {// 2023-08-01
         try
         {
@@ -130,7 +252,8 @@ class RelationProperty
             {
                 if($iReference->getTableName() === null) throw new InvalidReferenceError();
 
-                $modelClass = $modelClassResolver($iReference->getTableName());
+                /** @var Model $modelClass */
+                $modelClass = $modelClassResolver($iReference->getTableName(), $iReference->getColumn());
 
                 if(!$modelClass) throw new ModelNotFoundError($iReference->getTableName());
 
@@ -190,6 +313,11 @@ class RelationProperty
         return $this->references;
     }
 
+    public function getSize(): int
+    {
+        return count($this->references);
+    }
+
     /**
      * Returns an instance of ReferenceBuilder that points to the index:th value of a row.
      */
@@ -200,6 +328,101 @@ class RelationProperty
         $ref = clone $this->references[$index];
 
         return $ref->table($table);
+    }
+
+    public function refs(ModelQueryBuilder $iBuilder): array
+    {
+        $refs = [];
+
+        foreach($this->references as $index=>$reference)
+        {
+            $refs[] = $this->ref($iBuilder, $index);
+        }
+
+        return $refs;
+    }
+
+    // Appends an update operation for the index:th column into `patch` object.
+    public function patch(&$patch, int $index, $value)
+    {
+        $patcher = $this->patchers[$index] ?? null;
+
+        if(!$patcher) throw new \Exception('No patcher for index: '.$index);
+
+        return $patcher($patch, $value);
+    }
+
+    // Returns the index:th property value of the given object.
+    public function setProp(&$obj, int $index, $value)
+    {
+        $setter = $this->propSetters[$index] ?? null;
+
+        if(!$setter) throw new \Exception('No setter for index: '.$index);
+
+        return $setter($obj, $value);
+    }
+
+    // Returns the index:th property value of the given object.
+    public function getProp(&$obj, int $index)
+    {
+        $getter = $this->propGetters[$index] ?? null;
+
+        if(!$getter) throw new \Exception('No getter for index: '.$index);
+
+        return $getter($obj);
+    }
+
+    // Returns the property values of the given object as an array.
+    public function getProps(&$obj)
+    {
+        $props = [];
+
+        foreach($this->propGetters as $getter)
+        {
+            $props[] = $getter($obj);
+        }
+
+        return $props;
+    }
+
+    public function getPropKey(&$obj)
+    {
+        $size = $this->getSize();
+        $key = self::PROP_KEY_PREFIX;
+
+        for($i = 0; $i < $size; ++$i)
+        {
+            $key .= self::propToStr($this->getProp($obj, $i));
+
+            if($i < $size - 1) $key .= ',';
+        }
+
+        return $key;
+    }
+
+    private static function propToStr($value)
+    {
+        if($value === null) return 'null';
+        if(is_object(($value))) return json_encode($value);
+
+        return $value.'';
+    }
+
+    public function hasProp(&$obj, int $index): bool
+    {
+        $checker = $this->propCheckers[$index] ?? null;
+
+        if(!$checker) throw new \Exception('No getter for index: '.$index);
+
+        return $checker($obj);
+    }
+
+    // String representation of this property's index:th column for logging.
+    public function getPropDescription(int $index): ?string
+    {
+        $iReference = $this->references[$index];
+
+        return $iReference->getExpression();
     }
 }
 

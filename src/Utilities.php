@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Sharksmedia\Objection;
 
+use Sharksmedia\Objection\Relations\RelationProperty;
+
 class Utilities
 {
     public const SMALL_ARRAY_SIZE = 10;
@@ -143,5 +145,175 @@ class Utilities
     public static function isModelQueryBuilderBase($value): bool
     {
         return $value instanceof \Sharksmedia\Objection\ModelQueryBuilderBase;
+    }
+
+    public static function normalizeIds($ids, RelationProperty $prop, $opt = [])
+    {
+        $isComposite = $prop->getSize() > 1;
+
+        if ($isComposite) {
+            if (is_array($ids)) {
+                if (is_array($ids[0])) {
+                    $ret = array_fill(0, count($ids), null);
+                    for ($i = 0; $i < count($ids); ++$i) {
+                        $ret[$i] = self::convertIdArrayToObject($ids[$i], $prop);
+                    }
+                } elseif (is_array($ids[0])) {
+                    $ret = array_fill(0, count($ids), null);
+                    for ($i = 0; $i < count($ids); ++$i) {
+                        $ret[$i] = self::ensureObject($ids[$i], $prop);
+                    }
+                } else {
+                    $ret = [self::convertIdArrayToObject($ids, $prop)];
+                }
+            } elseif (is_array($ids)) {
+                $ret = [$ids];
+            } else {
+                throw new \Exception("invalid composite key " . json_encode($ids));
+            }
+        } else {
+            if (is_array($ids)) {
+                if (is_array($ids[0])) {
+                    $ret = array_fill(0, count($ids), null);
+                    for ($i = 0; $i < count($ids); ++$i) {
+                        $ret[$i] = self::ensureObject($ids[$i]);
+                    }
+                } else {
+                    $ret = array_fill(0, count($ids), []);
+                    for ($i = 0; $i < count($ids); ++$i) {
+                        $ret[$i] = [];
+                        $prop->setProp($ret[$i], 0, $ids[$i]);
+                    }
+                }
+            } elseif (is_array($ids)) {
+                $ret = [$ids];
+            } else {
+                $obj = [];
+                $prop->setProp($obj, 0, $ids);
+                $ret = [$obj];
+            }
+        }
+
+        self::checkProperties($ret, $prop);
+
+        if ($opt['arrayOutput']) {
+            return self::normalizedToArray($ret, $prop);
+        } else {
+            return $ret;
+        }
+    }
+
+    public static function convertIdArrayToObject($ids, $prop) {
+        if (!is_array($ids)) {
+            throw new \Exception("invalid composite key " . json_encode($ids));
+        }
+
+        if (count($ids) != $prop->size) {
+            throw new \Exception("composite identifier " . json_encode($ids) . " should have " . $prop->size . " values");
+        }
+
+        $obj = [];
+        for ($i = 0; $i < count($ids); ++$i) {
+            $prop->setProp($obj, $i, $ids[$i]);
+        }
+
+        return $obj;
+    }
+
+    public static function ensureObject($ids) {
+        if (is_array($ids)) {
+            return $ids;
+        } else {
+            throw new \Exception("invalid composite key " . json_encode($ids));
+        }
+    }
+
+    public static function checkProperties($ret, RelationProperty $prop) {
+        for ($i = 0; $i < count($ret); ++$i) {
+            $obj = $ret[$i];
+            for ($j = 0; $j < $prop->getSize(); ++$j) {
+                $val = $prop->getProp($obj, $j);
+                if (!$prop->hasProp($obj, $j)) {
+                    throw new \Exception("expected id " . json_encode($obj) . " to have property " . $prop->getPropDescription($j));
+                }
+            }
+        }
+    }
+
+    public static function normalizedToArray($ret, RelationProperty $prop) {
+        $arr = array_fill(0, count($ret), null);
+        for ($i = 0; $i < count($ret); ++$i) {
+            $arr[$i] = $prop->getProps($ret[$i]);
+        }
+        return $arr;
+    }
+
+    public static function get($obj, $path) {
+        for ($i = 0, $l = count($path); $i < $l; ++$i) {
+            $key = $path[$i];
+
+            // if (!isObject($obj)) {
+            //     return null;
+            // }
+
+            // Check if the key exists in the object before accessing it
+            if (!array_key_exists($key, $obj)) {
+                return null;
+            }
+
+            $obj = $obj[$key];
+        }
+
+        return $obj;
+    }
+
+    public static function has($obj, $path)
+    {
+        $has = count($path) > 0;
+        foreach($path as $key)
+        {
+            $has = $has && array_key_exists($key, $obj);
+        }
+
+        return $has;
+    }
+
+    public static function set(&$obj, $path, $value) {
+        $inputObj = &$obj;
+
+        for ($i = 0, $l = count($path) - 1; $i < $l; ++$i) {
+            $key = $path[$i];
+
+            if (!self::isSafeKey($key)) {
+                return $inputObj;
+            }
+
+            if (!isset($obj[$key]) || !is_array($obj[$key])) {
+                $nextKey = $path[$i + 1];
+
+                if (is_numeric($nextKey)) {
+                    $obj[$key] = [];
+                } else {
+                    $obj[$key] = [];
+                }
+            }
+
+            $obj = &$obj[$key];
+        }
+
+        if (count($path) > 0 && is_array($obj)) {
+            $key = $path[count($path) - 1];
+
+            if (self::isSafeKey($key)) {
+                $obj[$key] = $value;
+            }
+        }
+
+        return $inputObj;
+    }
+
+    // Assuming you have the isSafeKey function similar to JavaScript
+    private static function isSafeKey($key) {
+        return is_string($key) || is_numeric($key);
     }
 }

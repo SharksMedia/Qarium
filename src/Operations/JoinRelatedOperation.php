@@ -10,7 +10,9 @@ declare(strict_types=1);
 namespace Sharksmedia\Objection\Operations;
 
 use Sharksmedia\Objection\ModelQueryBuilder;
+use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
 use Sharksmedia\Objection\RelationExpression;
+use Sharksmedia\Objection\RelationJoiner;
 
 class JoinRelatedOperation extends ModelQueryBuilderOperation
 {
@@ -30,7 +32,7 @@ class JoinRelatedOperation extends ModelQueryBuilderOperation
         $this->calls[] = $call;
     }
 
-    public function onBuild(ModelQueryBuilder $iBuilder): void
+    public function onBuild(ModelQueryBuilderOperationSupport $iBuilder): void
     {
         /** @var class-string<Model> $modelClass */
         $modelClass = $iBuilder->getModelClass();
@@ -41,7 +43,8 @@ class JoinRelatedOperation extends ModelQueryBuilderOperation
         foreach($this->calls as $call)
         {
             $options = $call['options'] ?? [];
-            $expression = RelationExpression::create($call['expression']);
+
+            $expression = RelationExpression::create($call['expression'], $options);
             if($expression->getChildCount() === 1) self::applyAlias($expression, $modelClass, $iBuilder, $options);
 
             if(isset($options['aliases'])) self::applyAliases($expression, $modelClass, $options);
@@ -60,16 +63,19 @@ class JoinRelatedOperation extends ModelQueryBuilderOperation
     private static function applyAlias(RelationExpression $expression, string $modelClass, ModelQueryBuilder $iBuilder, array $options)
     {
         $children = $expression->getNode()->iChildNodes;
+
+        /** @var \Sharksmedia\Objection\RelationNode $child */
         $child = array_shift($children);
 
-        $relation = $modelClass::getRelation($child->relationName);
+        /** @var \Model $modelClass */
+        $relation = $modelClass::getRelation($child->relationName); 
 
-        $alias = $child->getName();
+        $alias = $child->name;
 
         if(($options['alias'] ?? false) === false) $alias = $iBuilder->getTableRefFor($relation->getRelatedModelClass());
         else if(is_string($options['alias'] ?? false)) $alias = $options['alias'];
 
-        if($child->getName() !== $alias) self::renameRelationExpressionNode($expression, $child->getName(), $alias);
+        if($child->name !== $alias) self::renameRelationExpressionNode($expression, $child->name, $alias);
     }
 
     private static function applyAliases(RelationExpression $expression, string $modelClass, array $options)

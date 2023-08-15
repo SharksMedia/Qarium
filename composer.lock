@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "git@github.com:SharkMagnus/QueryBuilder.git",
-                "reference": "f57b0fae329f186bccc4cb21d2cf3890ab1bbcb3"
+                "reference": "522b8ce08b20db7661b9df2c14c92fcbbdea1f41"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SharkMagnus/QueryBuilder/zipball/f57b0fae329f186bccc4cb21d2cf3890ab1bbcb3",
-                "reference": "f57b0fae329f186bccc4cb21d2cf3890ab1bbcb3",
+                "url": "https://api.github.com/repos/SharkMagnus/QueryBuilder/zipball/522b8ce08b20db7661b9df2c14c92fcbbdea1f41",
+                "reference": "522b8ce08b20db7661b9df2c14c92fcbbdea1f41",
                 "shasum": ""
             },
             "require-dev": {
@@ -53,7 +53,7 @@
                 "source": "https://github.com/SharkMagnus/QueryBuilder/tree/master",
                 "issues": "https://github.com/SharkMagnus/QueryBuilder/issues"
             },
-            "time": "2023-08-04T12:46:06+00:00"
+            "time": "2023-08-09T12:26:41+00:00"
         }
     ],
     "packages-dev": [

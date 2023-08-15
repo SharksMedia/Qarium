@@ -91,7 +91,7 @@ class ModelQueryBuilderBase extends ModelQueryBuilderOperationSupport
     /**
      * @param array $args
      */
-    public function update($modelOrObject): static
+    public function update($modelOrObject): self
     {
          return $this->addOperation(new QueryBuilderOperation('update'), [$modelOrObject]);
     }

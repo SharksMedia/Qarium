@@ -50,8 +50,11 @@ use Sharksmedia\Objection\Operations\NaiveEagerOperation;
 use Sharksmedia\Objection\Operations\FromOperation;
 use Sharksmedia\Objection\Operations\OnErrorOperation;
 use Sharksmedia\Objection\Operations\QueryBuilderOperation;
-use Sharksmedia\Objection\Operations\WhereInEagerOperation;
 
+use Sharksmedia\Objection\Operations\ResultSizeOperation;
+
+use Sharksmedia\Objection\Operations\WhereInEagerOperation;
+use Sharksmedia\Objection\Relations\RelationOwner;
 use Sharksmedia\QueryBuilder\QueryBuilder;
 use Sharksmedia\QueryBuilder\Statement\Raw;
 
@@ -121,16 +124,17 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     {
         parent::__construct($modelClass);
 
+        /** @var \Model $modelClass */
         $this->resultModelClass = $modelClass;
         $this->findOperationOptions = $modelClass::getDefaultFindOptions();
 
         $this->findOperationFactory = function() { return new FindOperation('find'); };
         $this->insertOperationFactory = function() { return new InsertOperation('insert'); };
         $this->updateOperationFactory = function() { return new UpdateOperation('update'); };
-        $this->patchOperationFactory = function() { return new UpdateOperation('patch'); };
+        $this->patchOperationFactory = function() { return new UpdateOperation('patch', ['modelOptions'=>['patch'=>true]]); };
         $this->deleteOperationFactory = function() { return new DeleteOperation('delete'); };
-        $this->relateOperationFactory = function() { return new RelateOperation('relate'); };
-        $this->unrelateOperationFactory = function() { return new UnrelateOperation('unrealte'); };
+        $this->relateOperationFactory = function() { throw new \BadMethodCallException('Relate operation not supported'); };
+        $this->unrelateOperationFactory = function() { throw new \BadMethodCallException('Unrelate operation not supported'); };
     }
 
     public function getFindOptions(): array
@@ -151,9 +155,9 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return new ModelQueryBuilderContextBase();
     }
 
-    protected static function parseRelationExpression(string $expression, string $releatedExpression): RelationExpression
+    public static function parseRelationExpression(string $expression): RelationExpression
     {// 2023-08-01
-        return RelationExpression::create($releatedExpression);
+        return RelationExpression::create($expression);
     }
 
     private static function checkEager(ModelQueryBuilder $iBuilder): void
@@ -172,19 +176,21 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         }
     }
 
-    public function getTableNameFor(string $modelClassOrTableName, ?string $newTableName=null): string
+    public function getTableNameFor(string $modelClassOrTableName): string
     {
-        return parent::getTableNameFor(self::resolveTableName($modelClassOrTableName), $newTableName);
+        return parent::getTableNameFor(self::resolveTableName($modelClassOrTableName));
     }
 
     public function getTableName(?string $newTableName=null): string
     {
+        /** @var \Model $modelClass */
         $modelClass = $this->getModelClass();
         return $this->getTableNameFor($modelClass::getTableName(), $newTableName);
     }
 
     public function getTableRef(): string
     {
+        /** @var class-string<\Model> $modelClass */
         $modelClass = $this->getModelClass();
         return $this->getTableRefFor($modelClass);
     }
@@ -194,16 +200,39 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return parent::getAliasFor(self::resolveTableName($modelClassOrTableName), $newTableName);
     }
 
-    public function getAlias(string $alias): ?string
+    public function getAlias(?string $alias=null): ?string
     {
+        /** @var \Model $modelClass */
         $modelClass = $this->getModelClass();
         return $this->getAliasFor($modelClass::getTableName(), $alias);
     }
 
+    public function setAlias(?string $alias): void
+    {
+        /** @var \Model $modelClass */
+        $modelClass = $this->getModelClass();
+        $this->setAliasFor($modelClass::getTableName(), $alias);
+    }
+
+    public function alias(string $alias): self
+    {
+        $this->setAlias($alias);
+
+        return $this;
+    }
+
+    public function setAliasFor(string $modelClassOrTableName, ?string $newTableName=null): static
+    {
+        return parent::setAliasFor(self::resolveTableName($modelClassOrTableName), $newTableName);
+    }
+
     public function getFullIdColumnFor(string $modelClass)
     {
+        /** @var class-string<\Model> $modelClass */
         $tableName = $this->getTableRefFor($modelClass);
-        $idColumn = $modelClass::getIdColumn();
+
+        /** @var \Model $modelClass */
+        $idColumn = $modelClass::getTableIDs();
 
         if(is_array($idColumn)) return array_map(fn($column) => $tableName.'.'.$column, $idColumn);
 
@@ -218,7 +247,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
     public function withGraphFetched(string $relationExpression, array $options=[]): static
     {
-        throw new \Exception('Not Supported');
+        throw new \Exception('withGraphFetched is not supported');
     }
 
     public function withGraphJoined(string $relationExpression, array $options=[]): static
@@ -240,6 +269,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
     private static function &ensureEagerOperation(self $iBuilder, ?string $eagerAlgorithm=null): EagerOperation
     {
+        /** @var \Model $modelClass */
         $modelClass = $iBuilder->getModelClass();
         $defaultGraphOptions = $modelClass::getDefaultGraphOptions();
         $eagerOperation = $iBuilder->findOperation(EagerOperation::class);
@@ -274,7 +304,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     private function _withGraph(string $relationExpression, array $options, string $eagerAlgorithm): static
     {
         $eagerOperation = &self::ensureEagerOperation($this, $eagerAlgorithm);
-        $parsedExpression = self::parseRelationExpression($this->getModelClass(), $relationExpression);
+        $parsedExpression = self::parseRelationExpression($relationExpression);
 
         $expression = $eagerOperation->getExpression();
         $expression = $expression->merge($parsedExpression);
@@ -297,7 +327,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     {
         $currentExpression = $this->allowedGraphExpression ?? RelationExpression::create();
 
-        $parsedExpression = self::parseRelationExpression($this->getModelClass(), $expression);
+        $parsedExpression = self::parseRelationExpression($expression);
 
         $this->allowedGraphExpression = $currentExpression->merge($parsedExpression);
 
@@ -383,20 +413,22 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return $this->has(UnrelateOperation::class);
     }
 
-    private function hasWheres(): bool
+    public function hasWheres(): bool
     {
         $queryClone = clone $this;
         $queryWithoutGraph = $queryClone->clearWithGraph();
 
-        return self::prebuildQuery($queryClone)->has(QueryBuilderBase::WHERE_SELECTOR);
+        $prebuildQuery = self::prebuildQuery($queryWithoutGraph);
+
+        return $prebuildQuery->has(ModelQueryBuilderBase::WHERE_SELECTOR);
     }
 
-    private function hasSelects(): bool
+    public function hasSelects(): bool
     {
         return $this->has(ModelQueryBuilderBase::SELECT_SELECTOR);
     }
 
-    private function hasWithGraph(): bool
+    public function hasWithGraph(): bool
     {
         /** @var EagerOperation|null $iEagerOperation */
         $iEagerOperation = $this->findOperation(EagerOperation::class);
@@ -428,7 +460,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
             {
                 return $operation->getTable() === $tableName;
             }
-            else if($operation->getName() === 'as' || $operation->is(FindOperation::class) || $operation->is(OnErrorOperation::class))
+            else if(/* $operation->getName() === 'as' ||*/ $operation->is(FindOperation::class) || $operation->is(OnErrorOperation::class))
             {
                 return true;
             }
@@ -447,6 +479,13 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     public function clearWithGraphFetched(): static
     {
         $this->clear(WhereInEagerOperation::class);
+
+        return $this;
+    }
+
+    public function clearReject(): static
+    {
+        $this->explicitRejectValue = null;
 
         return $this;
     }
@@ -481,24 +520,22 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return $this;
     }
 
-    public function resultSize()
+    public function resultSize(...$args): int
     {
         $iQueryBuilder = $this->getQueryBuilder();
-
         $iBuilder = clone $this;
-        $iBuilder->clear('/orderBy|offset|limit/');
 
-        $countQuery = $iQueryBuilder->count('* as count')->from(function($q) use($iBuilder)
+        $iBuilder->clear(self::LIMIT_SELECTOR);
+        $iBuilder->clear(self::ORDER_BY_SELECTOR);
+
+        $countQuery = $iQueryBuilder->count('* AS count')->from(function($q) use($iBuilder)
         {
             $iBuilder->toQueryBuilder($q)->as('temp');
         });
 
-        // $internalOptions = $this->getInternalOptions();
-        // if($internalOptions['debug']) $countQuery->debug(true);
+        $result = $countQuery->run(...$args);
 
-        $result = $countQuery->run();
-
-        return $result[0]['count'] ?? 0;
+        return $result[0] && $result[0]['count'] ? intval($result[0]['count']) : 0;
     }
 
     /**
@@ -515,11 +552,11 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
     private function prebuildQuery(ModelQueryBuilder $iBuilder): ModelQueryBuilder
     {
-        // $iBuilder = self::addImplicitOperations($iBuilder);
-        // $iBuilder = self::callOnBuildHooks($iBuilder);
-
-        $this->beforeExecute($iBuilder);
+        $iBuilder = self::addImplicitOperations($iBuilder);
         $iBuilder = self::callOnBuildHooks($iBuilder);
+
+        // $this->beforeExecute($iBuilder);
+        // $iBuilder = self::callOnBuildHooks($iBuilder);
 
         $queryExecutorOperation = self::findQueryExecutorOperation($iBuilder);
 
@@ -611,7 +648,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
      * @param array|null $results
      * @return array|Model|null
      */
-    private function afterExecute(self $iBuilder, ?array $results)
+    private function afterExecute(self $iBuilder, $results)
     {
         $this->addImplicitOperations($iBuilder);
 
@@ -655,11 +692,13 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return $iBuilder;
     }
 
-    private static function findQueryExecutorOperation(self $iBuilder)
+    public static function findQueryExecutorOperation(self $iBuilder)
     {
         return $iBuilder->findOperation(function(ModelQueryBuilderOperation $iOperation)
         {
             $hasQueryExecutor = $iOperation->hasQueryExecutor();
+
+            return $hasQueryExecutor;
         });
     }
 
@@ -669,9 +708,47 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
      */
     private static function resolveTableName(string $modelClassOrTableName): string
     {
-        if(is_subclass_of($modelClassOrTableName, Model::class)) return $modelClassOrTableName::getTableName();
+        if(is_subclass_of($modelClassOrTableName, Model::class))
+        {
+            /** @var \Model $modelClassOrTableName */
+            return $modelClassOrTableName::getTableName();
+        }
 
         return $modelClassOrTableName;
+    }
+
+    public function resolve($value): self
+    {
+        $this->explicitResolveValue = $value;
+
+        return $this;
+    }
+
+    public function reject($value): self
+    {
+        $this->explicitRejectValue = $value;
+
+        return $this;
+    }
+
+    public function getExplicitResolveValue()
+    {
+        return $this->explicitResolveValue;
+    }
+
+    public function getExplicitRejectValue()
+    {
+        return $this->explicitRejectValue;
+    }
+
+    public function isExplicitlyResolvedOrRejected(): bool
+    {
+        return $this->explicitResolveValue !== null || $this->explicitRejectValue !== null;
+    }
+
+    public function isExecuteable(): bool
+    {
+        return !$this->isExplicitlyResolvedOrRejected() && $this->findQueryExecutorOperation($this) === null;
     }
 
     private static function setDefaultTable(self $iBuilder, QueryBuilder $iQueryBuilder): QueryBuilder
@@ -717,6 +794,8 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     {
         self::callOnBuildHooks($iBuilder);
 
+        if($iBuilder->isExplicitlyResolvedOrRejected()) return $iBuilder->getExplicitResolveValue();
+
         $queryExecutorOperation = self::findQueryExecutorOperation($iBuilder);
 
         if($queryExecutorOperation !== null)
@@ -727,7 +806,6 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         }
 
         $iQueryBuilder = self::buildQueryBuilderQuery($iBuilder);
-
 
         $results = $iQueryBuilder->run();
 
@@ -755,12 +833,14 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
             {
                 foreach($result as &$re)
                 {
+                    /** @var \Model $modelClass */
                     $re = $modelClass::createFromDatabaseArray($re);
                 }
             }
         }
         else if(self::shouldBeConvertedToModel($result, $modelClass))
         {
+            /** @var \Model $modelClass */
             $result = $modelClass::createFromDatabaseArray($result);
         }
 
@@ -785,7 +865,6 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
         $internalOptions = $iBuilder->getInternalOptions();
 
-        // FIXME: Add option to throw all exceptions.
         if(!($internalOptions['returnError'] ?? false)) throw $exceptions;
 
         return $result;
@@ -820,39 +899,40 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         }
     }
 
-    /**
-     * @param mixed $data
-     * @return ModelQueryBuilder
-     */
-    private function throwIfNotFound($data): static
-    {
-        return $this->runAfter(function($result)
-        {
-            $isEmpty =
-            (
-                is_array($result) && count($result) === 0
-                ||
-                $result === null
-                ||
-                $result === 0
-            );
-
-            if($isEmpty)
-            {
-                $modelClass = $this->getModelClass();
-                throw $modelClass::createNotFoundError($this->getContext(), $data);
-            }
-
-            return $result;
-        });
-    }
+    // /**
+    //  * @param mixed $data
+    //  * @return ModelQueryBuilder
+    //  */
+    // private function throwIfNotFound($data): static
+    // {
+    //     return $this->runAfter(function($result)
+    //     {
+    //         $isEmpty =
+    //         (
+    //             is_array($result) && count($result) === 0
+    //             ||
+    //             $result === null
+    //             ||
+    //             $result === 0
+    //         );
+    //
+    //         if($isEmpty)
+    //         {
+    //             /** @var \Model $modelClass */
+    //             $modelClass = $this->getModelClass();
+    //             throw $modelClass::createNotFoundError($this->getContext(), $data);
+    //         }
+    //
+    //         return $result;
+    //     });
+    // }
 
     private function findSelection($selection, bool $explicit=false): ?Selection
     {
         $noSelectStatements = true;
         $selectionInstance = null;
 
-        $this->forEachOperations(true, function($operation) use(&$noSelectStatements, &$selectionInstance, $selection, $explicit)
+        $this->forEachOperations(self::ALL_SELECTOR, function($operation) use(&$noSelectStatements, &$selectionInstance, $selection, $explicit)
             {
                 if(!($operation instanceof SelectOperation)) return null;
 
@@ -882,7 +962,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     { 
         $allSelections = [];
 
-        $this->forEachOperations(true, function($operation) use(&$allSelections)
+        $this->forEachOperations(self::ALL_SELECTOR, function($operation) use(&$allSelections)
         {
             if(!($operation instanceof SelectOperation)) return null;
 
@@ -894,14 +974,17 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return $allSelections;
     }
 
-    public function hasSelection($selection, $explicit): bool
+    public function hasSelection($selection, bool $explicit=false): bool
     { 
         return $this->findSelection($selection, $explicit) !== null;
     }
 
     public function hasSelectionAs($selection, $alias, bool $explicit=false): bool
     { 
+        /** @var Selection $selection */
         $selection = Selection::create($selection);
+
+        /** @var Selection|null $foundSelection */
         $foundSelection = $this->findSelection($selection, $explicit);
 
         if($foundSelection === null) return false;
@@ -921,6 +1004,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
         return $this->runAfter(function($result) use($modelClass, $traverser)
         {
+            /** @var \Model $resultModelClass */
             $resultModelClass = $this->getResultModelClass();
 
             $resultModelClass::traverse($modelClass, $result, $traverser);
@@ -950,6 +1034,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
         $internalOptions = $this->getInternalOptions();
 
+        // TODO: Implement columnInfo
         $columnInfoQuery = $iQueryBuilder->table(end($tableParts))->columnInfo();
         $schema = $internalOptions['schema'] ?? null;
 
@@ -972,7 +1057,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
         $context->addOnBuildCallback(function($iBuilder) use($schema)
             {
-                if(!$iBuilder->has('/withSchema/'))
+                if(!$iBuilder->has('/^withSchema$/'))
                 {
                     $iBuilder->addOperationToFront(new QueryBuilderOperation('withSchema'), [$schema]);
                 }
@@ -1076,7 +1161,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
      * @param array $opt
      * @return ModelQueryBuilder
      */
-    public function insertGraphAndFetch($modelsOrObjects, $opt): static
+    public function insertGraphAndFetch($modelsOrObjects, $opt): self
     {
         return self::writeOperation($this, function() use($modelsOrObjects, $opt)
         {
@@ -1092,7 +1177,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         });
     }
 
-    public function update($modelOrObject): static
+    public function update($modelOrObject): self
     {
         return self::writeOperation($this, function() use($modelOrObject)
         {
@@ -1104,7 +1189,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         });
     }
 
-    public function updateAndFetch($modelOrObject): static
+    public function updateAndFetch($modelOrObject): self
     {
         return self::writeOperation($this, function() use($modelOrObject)
         {
@@ -1159,9 +1244,9 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
     public function patch($modelOrObject): static
     {
-        return self::writeOperation($this, function() use($modelOrObject)
+        return static::writeOperation($this, function() use($modelOrObject)
         {
-            $patchOperationFactory = self::getPatchOperationFactory($this);
+            $patchOperationFactory = $this->getPatchOperationFactory();
 
             $iPatchOperation = $patchOperationFactory($this);
 
@@ -1169,12 +1254,17 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         });
     }
 
+    /**
+     * @param Model|object $modelOrObject
+     * @return ModelQueryBuilder
+     */
     public function patchAndFetch($modelOrObject): static
     {
         return self::writeOperation($this, function() use($modelOrObject)
         {
-            $patchOperationFactory = self::getPatchOperationFactory($this);
+            $patchOperationFactory = $this->getPatchOperationFactory($this);
 
+            /** @var PatchOperation $iPatchOperation */
             $iPatchOperation = $patchOperationFactory($this);
 
             $modelClass = $this->getModelClass();
@@ -1251,6 +1341,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
     public function increment($propertyName, $howMuch): static
     {
+        /** @var Model $modelClass */
         $modelClass = $this->getModelClass();
         $columnName = $modelClass::propertyNameToColumnName($propertyName);
 
@@ -1259,6 +1350,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
     public function decrement($propertyName, $howMuch): static
     {
+        /** @var Model $modelClass */
         $modelClass = $this->getModelClass();
         $columnName = $modelClass::propertyNameToColumnName($propertyName);
 
@@ -1282,7 +1374,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return $this->addOperation(new FirstOperation('first'), $args);
     }
 
-    private static function ensureJoinRelatedOperation(self $iBuilder, string $joinOperation): ModelQueryBuilderOperation
+    private static function ensureJoinRelatedOperation(self $iBuilder, string $joinOperation): JoinRelatedOperation
     {
         $operationName = $joinOperation.'Related';
 
@@ -1404,7 +1496,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return $this->addOperation(new FromOperation('table'), $args);
     }
 
-    public function for($relatedQueryFor=null): static
+    public function for($relatedQueryFor=null)
     {
         if($relatedQueryFor === null) return $this->relatedQueryFor;
         

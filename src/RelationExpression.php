@@ -23,13 +23,13 @@ class RelationExpression
      * @param string|RelationExpression|null $expression
      * @return RelationExpression
      */
-    public static function create($expression=null): self
+    public static function create($expression=null, array $options=[]): self
     {
         if($expression === null) return new static();
 
         if($expression instanceof RelationExpression) return $expression;
 
-        if(is_string($expression)) return new static(self::parse($expression));
+        if(is_string($expression)) return new static(self::parse($expression, $options));
 
         throw new \InvalidArgumentException('Invalid expression: '.$expression);
     }
@@ -167,7 +167,7 @@ class RelationExpression
         return $node;
     }
 
-    public static function parse(string $expression): RelationNode
+    public static function parse(string $expression, array $options=[]): RelationNode
     {
         static $expressionCache = [];
 
@@ -175,7 +175,7 @@ class RelationExpression
 
         $parentNode = self::newNode();
 
-        $iChildNodes = self::parseRelationQuery($expression, $parentNode);
+        $iChildNodes = self::parseRelationQuery($expression, $options);
 
         $parentNode->iChildNodes = $iChildNodes;
 
@@ -186,11 +186,23 @@ class RelationExpression
      * 2023-06-19
      * @return array|null
      */
-    public static function parseRelationQuery(string $case): ?array
+    public static function parseRelationQuery(string $case, array $options=[]): ?array
     {
         // $regex = '/(\w+)\.?(?<R>\[(?:[^\[\]]+|(?&R))*\])?/';
         $regex = '/(\w+)\.?(\[(?:[^\[\]]+|(?R))*\]|(?R))?/';
-        
+
+        $getAlias = function(string $relationName) use ($options)
+        {
+            $aliases = $options['alias'] ?? [];
+
+            if(is_array($aliases))
+            {
+                return $aliases[$relationName] ?? null;
+            }
+
+            return $aliases;
+        };
+
         preg_match_all($regex, $case, $m);
         
         $topLevelGroups = array_shift($m);
@@ -209,7 +221,9 @@ class RelationExpression
         foreach(array_combine($topLevelNames, $groupsToProcess) as $name=>$caseToProcess)
         {
             $node = new RelationNode();
-            $node->name = $name;
+            $node->relationName = $name;
+            $node->name = $getAlias($name) ?? $node->relationName;
+
 
             $node->iChildNodes = self::parseRelationQuery($caseToProcess);
 
@@ -312,7 +326,7 @@ class RelationExpression
             else if($iChildNode->recursiveDepth < $RELATION_RECURSION_LIMIT - 1)
             {
                 // $relation = $modelClass::getRelationUnsafe($iChildNode->relationName);
-                $relation = $modelClass::getRelationUnsafe($iChildNode->name);
+                $relation = $modelClass::getRelationUnsafe($iChildNode->relationName);
                 $iChildExpression = new RelationExpression($iChildNode, $iChildNode->recursiveDepth + 1);
 
                 $callback($iChildExpression, $relation);

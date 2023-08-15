@@ -11,6 +11,7 @@ namespace Sharksmedia\Objection\Operations;
 
 use Sharksmedia\Objection\JoinBuilder;
 use Sharksmedia\Objection\ModelQueryBuilder;
+use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
 
 class WhereCompositeOperation extends ObjectionToQueryBuilderConvertingOperation
 {

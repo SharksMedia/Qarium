@@ -18,6 +18,7 @@ class UpdateOperation extends ModelQueryBuilderOperation
 {
 
     protected ?Model $iModel = null;
+    protected array $updateData = [];
     protected $modelOptions = [];
 
     public function __construct($name, $options=[])
@@ -30,6 +31,22 @@ class UpdateOperation extends ModelQueryBuilderOperation
     public function onAdd(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
     {
         $data = $arguments[0];
+
+        if(is_array($data))
+        {
+            $this->updateData = $data;
+        }
+        else if($data instanceof Model)
+        {
+            $this->updateData = [];
+        }
+        else
+        {
+            throw new \Exception("Invalid data type for update operation.");
+        }
+
+
+        /** @var \Model $modelClass */
         $modelClass = $iBuilder->getModelClass();
 
         $this->iModel = $modelClass::ensureModel($data, $this->modelOptions);
@@ -44,8 +61,15 @@ class UpdateOperation extends ModelQueryBuilderOperation
         return true;
     }
 
+    /**
+     * @param ModelQueryBuilderOperationSupport|ModelQueryBuilder $iBuilder
+     * @param mixed ...$arguments
+     * @return bool
+     */
     public function onBefore3(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
     {
+        if($this->iModel === null) return true;
+        
         $row = $this->iModel->toDatabaseArray($iBuilder);
 
         if(count($row) === 0)
@@ -61,9 +85,11 @@ class UpdateOperation extends ModelQueryBuilderOperation
     {
         $json = $this->iModel->toDatabaseArray($iBuilder);
 
+        // codecept_debug($iBuilder);
+
         $convertedJson = $this->convertFieldExpressionsToRaw($iBuilder, $this->iModel, $json);
 
-        return $iQueryBuilder->update($convertedJson);
+        return $iQueryBuilder->update(array_merge($convertedJson, $this->updateData));
     }
 
     public function onAfter2(ModelQueryBuilderOperationSupport $iBuilder, &$result)
@@ -76,28 +102,31 @@ class UpdateOperation extends ModelQueryBuilderOperation
         return null;
     }
 
-    private function callBeforeUpdate(ModelQueryBuilder $iBuilder, $iModel, $modelOptions)
+    private function callBeforeUpdate(ModelQueryBuilder $iBuilder, ?Model $iModel, $modelOptions)
     {
         $this->callInstanceBeforeUpdate($iBuilder, $iModel, $modelOptions);
+
         return $this->callStaticBeforeUpdate($iBuilder);
     }
 
-    private function callInstanceBeforeUpdate(ModelQueryBuilder $iBuilder, $iModel, $modelOptions)
+    private function callInstanceBeforeUpdate(ModelQueryBuilder $iBuilder, ?Model $iModel, $modelOptions)
     {
-        return $iModel->beforeUpdate($modelOptions, $iBuilder->getContext());
+        if($iModel === null) return null;
+
+        return $iModel->lbeforeUpdate($iBuilder->getContext());
     }
 
     private function callStaticBeforeUpdate(ModelQueryBuilder $iBuilder)
     {
         $args = StaticHookArguments::create($iBuilder);
 
-        /** @var class-string<Model> $modelClass */
+        /** @var \Model $modelClass */
         $modelClass = $iBuilder->getModelClass();
 
         return $modelClass::beforeUpdate($args);
     }
 
-    private function callAfterUpdate(ModelQueryBuilder $iBuilder, $iModel, $modelOptions, $result)
+    private function callAfterUpdate(ModelQueryBuilder $iBuilder, ?Model $iModel, $modelOptions, $result)
     {
         $this->callInstanceAfterUpdate($iBuilder, $iModel, $modelOptions);
         return $this->callStaticAfterUpdate($iBuilder, $result);
@@ -105,14 +134,14 @@ class UpdateOperation extends ModelQueryBuilderOperation
 
     private function callInstanceAfterUpdate(ModelQueryBuilder $iBuilder, $iModel, $modelOptions)
     {
-        return $iModel->afterUpdate($modelOptions, $iBuilder->getContext());
+        return $iModel->lafterUpdate($iBuilder->getContext());
     }
 
     private function callStaticAfterUpdate(ModelQueryBuilder $iBuilder, $result)
     {
         $args = StaticHookArguments::create($iBuilder, $result);
 
-        /** @var class-string<Model> $modelClass */
+        /** @var \Model $modelClass */
         $modelClass = $iBuilder->getModelClass();
 
         $maybeResult = $modelClass::afterUpdate($args);
@@ -120,7 +149,7 @@ class UpdateOperation extends ModelQueryBuilderOperation
         return $maybeResult !== null ? $maybeResult : $result;
     }
 
-    private function convertFieldExpressionsToRaw(ModelQueryBuilder $iBuilder, $iModel, array $json)
+    private function convertFieldExpressionsToRaw(ModelQueryBuilder $iBuilder, ?Model $iModel, array $json): array
     {
         // You need to implement or find a suitable library for ref() function or its equivalent in PHP.
         // Similar changes will be required for isKnexQueryBuilder() and isKnexRaw() functions.

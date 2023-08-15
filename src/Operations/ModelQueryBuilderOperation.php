@@ -49,6 +49,8 @@ abstract class ModelQueryBuilderOperation
      */
     protected array $childOperations;
 
+    public string $_identifier;
+
     /**
      * 2023-07-04
      * @param string $name
@@ -59,9 +61,11 @@ abstract class ModelQueryBuilderOperation
         $this->name = $name;
         $this->options = $options;
 
-        $this->adderHookName = null;
-        $this->parentOperation = null;
+        $this->setAdderHookName(null);
+        $this->setParentOperation(null);
         $this->childOperations = [];
+
+        $this->_identifier = spl_object_hash($this);
     }
 
     public function getName(): string
@@ -88,6 +92,16 @@ abstract class ModelQueryBuilderOperation
         return $this->parentOperation;
     }
 
+    public function setParentOperation(?ModelQueryBuilderOperation $parentOperation): void
+    {
+        $this->parentOperation = $parentOperation;
+    }
+
+    public function setAdderHookName(?string $adderHookName): void
+    {
+        $this->adderHookName = $adderHookName;
+    }
+
     /**
      * 2023-07-04
      * @param class-string<ModelQueryBuilderOperation> $className
@@ -96,6 +110,11 @@ abstract class ModelQueryBuilderOperation
     public function isOperation(string $className): bool
     {
         return $className instanceof $this;
+    }
+
+    public function is(string $className): bool
+    {
+        return $this->isOperation($className);
     }
 
     public function hasHook(string $hookName): bool
@@ -288,15 +307,22 @@ abstract class ModelQueryBuilderOperation
      */
     public function isAncestorInSet(array $ancestorsSet): bool
     {
-        $ancestor = $this->parentOperation;
+        $ancestor = $this->getParentOperation();
+
+        if($ancestor === null) return false;
+
+        $ancestorsSetHash = array_map(function(ModelQueryBuilderOperation $operation) { return $operation->_identifier; }, $ancestorsSet);
 
         while($ancestor !== null)
         {
-            if(in_array($ancestor, $ancestorsSet)) return true;
+            $ancestorName = (new \ReflectionClass($ancestor))->getShortName();
+            $isAncestorInSet = in_array($ancestor->_identifier, $ancestorsSetHash, true);
 
-            $ancestor = $ancestor->parentOperation;
+            if(in_array($ancestor->_identifier, $ancestorsSetHash, true)) return true;
+
+            $ancestor = $ancestor->getParentOperation();
         }
-
+        
         return false;
     }
 
@@ -309,8 +335,8 @@ abstract class ModelQueryBuilderOperation
      */
     public function addChildOperation(string $hookName, ModelQueryBuilderOperation $operation): void
     {
-        $operation->adderHookName = $hookName;
-        $operation->parentOperation = $this;
+        $operation->setAdderHookName($hookName);
+        $operation->setParentOperation($this);
 
         $this->childOperations[] = $operation;
     }
@@ -327,7 +353,7 @@ abstract class ModelQueryBuilderOperation
             return $childOperation !== $operation;
         });
 
-        $operation->parentOperation = null;
+        $operation->setParentOperation(null);
     }
 
     /**
@@ -344,8 +370,8 @@ abstract class ModelQueryBuilderOperation
             return $childOperation;
         }, $this->childOperations);
 
-        $oldOperation->parentOperation = null;
-        $newOperation->parentOperation = $this;
+        $oldOperation->setParentOperation(null);
+        $newOperation->setParentOperation($this);
     }
 
     public function removeChildOperationByHookName(string $hookName): void

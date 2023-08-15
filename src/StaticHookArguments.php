@@ -17,17 +17,17 @@ class StaticHookArguments
     private ModelQueryBuilder $iBuilder;
 
     /**
-     * @var array
+     * @var mixed
      */
-    private ?array $result;
+    private $result;
 
-    public function __construct(ModelQueryBuilder $iBuilder, ?array $result=null)
+    public function __construct(ModelQueryBuilder $iBuilder, $result=null)
     {
         $this->iBuilder = $iBuilder;
         $this->result = $result;
     }
 
-    public static function create(ModelQueryBuilder $iBuilder, ?array $result=null): StaticHookArguments
+    public static function create(ModelQueryBuilder $iBuilder, $result=null): StaticHookArguments
     {
         return new StaticHookArguments($iBuilder, $result);
     }
@@ -110,7 +110,7 @@ class StaticHookArguments
 
     private static function _getItems($operation)
     {
-        return $operation->getInstance() ?? $operation->parentOperation;
+        return $operation->getInstance() ?? $operation->getParentOperation();
     }
 
     private static function _hasItems($operation)

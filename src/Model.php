@@ -11,16 +11,25 @@ namespace Sharksmedia\Objection;
 
 use Sharksmedia\Objection\ModelQueryBuilder;
 
+use Sharksmedia\Objection\Relations\RelationProperty;
 use Sharksmedia\QueryBuilder\Client;
-use Sharksmedia\QueryBuilder\Query;
 use Sharksmedia\QueryBuilder\QueryBuilder;
+use Sharksmedia\QueryBuilder\Statement\Raw;
 use Sharksmedia\QueryBuilder\Transaction;
+
+use Sharksmedia\Objection\Relations\Relation;
+use Sharksmedia\Objection\Relations\RelationOwner;
+
+use Sharksmedia\Objection\Operations\InstanceFindOperation;
+use Sharksmedia\Objection\Operations\InstanceInsertOperation;
+use Sharksmedia\Objection\Operations\InstanceUpdateOperation;
+use Sharksmedia\Objection\Operations\InstanceDeleteOperation;
 
 use Sharksmedia\Objection\Exceptions\ModifierNotFoundError;
 
 abstract class Model
 {
-    public const USE_LIMIT_IN_FIRST = true;
+    public const USE_LIMIT_IN_FIRST = false;
 
     /**
      * 2023-06-12
@@ -70,8 +79,10 @@ abstract class Model
     public static array $idColumn = [];
     public static $concurrency = null;
 
-    /** array<int, string> $omitPropsFromDatabaseArray */
-    private array $omitPropsFromDatabaseArray = [];
+    public static function getRelatedFindQueryMutates(): bool
+    {
+        return false;
+    }
 
     /**
      * 2023-06-12
@@ -86,6 +97,40 @@ abstract class Model
      */
     static function getTableIDs(): array { return static::$idColumn; }
     // abstract static function getTableIDs(): array;
+    
+    public function lhasIDs(): bool
+    {
+        foreach(static::getTableIDs() as $idColumn) if(!isset($this->$idColumn)) return false;
+
+        return true;
+    }
+
+    public function lset(object $iModel): static
+    {
+        $props = get_object_vars($iModel);
+        foreach($props as $prop => $value) $this->$prop = $value;
+
+        return $this;
+    }
+
+    private function hasCompositeId(): bool
+    {
+        return count(static::getTableIDs()) > 1;
+    }
+
+    public function getID()
+    {
+        if(!$this->lhasIDs())
+        {
+            $idColumn = $this->getTableIDs()[0];
+            return $this->$idColumn;
+        }
+
+        $ids = [];
+        foreach($this->getTableIDs() as $idColumn) $ids[] = $this->$idColumn;
+
+        return $ids;
+    }
 
     /**
      * 2023-06-12
@@ -107,7 +152,7 @@ abstract class Model
         return static::getTableIDs();
     }
 
-    public static function fetchTableMetadata(?Client $iClient=null): array
+    public static function fetchTableMetadata(?Client $iClient=null, ?string $schema=null): array
     {
         $iClient = $iClient ?? Objection::getClient();
         // TODO: Create a function on the compiler to do this
@@ -116,16 +161,15 @@ abstract class Model
 
         if(isset(self::$metadataCache[$tableName])) return self::$metadataCache[$tableName];
 
-        $method = '';
-        $options = [];
-        $timeout = 0;
-        $cancelOnTimeout = false;
-        $bindings = [];
-        $UUID = 'describe_' . $tableName;
-        $iQuery = new Query($method, $options, $timeout, $cancelOnTimeout, $bindings, $UUID);
+        $iQB = (new QueryBuilder($iClient, $schema))
+            ->select('*')
+            ->from('information_schema.columns')
+            ->where('table_name', '=', $tableName)
+        ->andWhere('table_catalog', '=', new Raw('current_schema()'));
 
-        // WARN: This is not safe, becuase we are not escaping the table name
-        $iQuery->setSQL('SHOW COLUMNS FROM ' . $tableName);
+        if($schema !== null) $iQB->andWhere('table_schema', '=', $schema);
+
+        $iQuery = $iQB->toQuery();
 
         if(!$iClient->isInitialized()) $iClient->initializeDriver();
 
@@ -136,14 +180,9 @@ abstract class Model
         return self::$metadataCache[$tableName];
     }
 
-    public function getOmitPropsFromDatabaseArray(): array
+    public static function getOmitPropsFromDatabaseArray(): array
     {
-        return $this->omitPropsFromDatabaseArray ?? [];
-    }
-
-    public function setOmitPropsFromDatabaseArray(array $props): void
-    {
-        $this->omitPropsFromDatabaseArray = array_merge($this->omitPropsFromDatabaseArray, $props);
+        return [];
     }
 
     public static function getTableMetadata(array $options=[]): ?array
@@ -153,17 +192,17 @@ abstract class Model
         return static::$metadataCache[$tableName] ?? null;
     }
 
-    private static function getIdRelationProperty(string $modelClass)
+    public static function getIdRelationProperty()
     {
-        $idColumn = $modelClass::getTableIDs();
+        $idColumn = static::getTableIDs();
         if(!is_array($idColumn)) $idColumn = [$idColumn];
 
         $idColumns = array_map(function($column)
         {
-            return $modelClass::getTableName() . '.' . $column;
+            return static::getTableName() . '.' . $column;
         }, $idColumn);
 
-        return new RelationProperty($idColumns, function(){ return $modelClass; });
+        return new RelationProperty($idColumns, function(){ return static::class; });
     }
 
     public static function columnNameToPropertyName(string $columnName)
@@ -211,6 +250,12 @@ abstract class Model
         return array_keys(static::getRelationMappings());
     }
 
+    /**
+     * @deprecated use getRelationNames instead
+     * 2023-06-12
+     * @param string $relationName
+     * @return Relations\Relation
+     */
     public static function getRelationUnsafe(string $relationName): Relations\Relation
     {
         $rawRelationsMap = static::getRelationMappings();
@@ -228,6 +273,15 @@ abstract class Model
         }
 
         return $relationsCache[$relationName];
+    }
+
+    public static function getRelation(string $relationName): Relations\Relation
+    {
+        $iRelation = static::getRelationUnsafe($relationName);
+
+        // get unsafe relation checks for errors
+
+        return $iRelation;
     }
 
     /**
@@ -266,26 +320,158 @@ abstract class Model
 
     /**
      * 2023-06-12
+     * @param self $instance
+     * @param Client|Transaction|null $iTransactionOrClient
+     * @return ModelQueryBuilder
+     */
+    private static function instanceQuery(self $instance, $iTransactionOrClient=null): ModelQueryBuilder
+    {
+        /** @var \Model $modelClass */
+        $modelClass = $instance::class;
+
+        return $modelClass::query($iTransactionOrClient)
+            ->findOperationFactory(function() use($instance)
+                {
+                    return new InstanceFindOperation('find', ['instance'=>$instance]);
+                })
+            ->insertOperationFactory(function() use($instance)
+                {
+                    return new InstanceInsertOperation('insert', ['instance'=>$instance]);
+                })
+            ->updateOperationFactory(function() use($instance)
+                {
+                    return new InstanceUpdateOperation('update', ['instance'=>$instance]);
+                })
+            ->patchOperationFactory(function() use($instance)
+                {
+                    return new InstanceUpdateOperation('patch', ['instance'=>$instance, modelOptions=>['patch'=>true]]);
+                })
+            ->deleteOperationFactory(function() use($instance)
+                {
+                    return new InstanceDeleteOperation('delete', ['instance'=>$instance]);
+                })
+            ->relateOperationFactory(function() use($instance)
+                {
+                    throw new \Exception("relate makes no sense in this context");
+                })
+            ->unrelateOperationFactory(function() use($instance)
+                {
+                    throw new \Exception("unrelate makes no sense in this context");
+                });
+    }
+
+    /**
+     * 2023-06-12
      * @param Transaction|Client|null $iTransaction
      * @return ModelQueryBuilder
      */
     public static function query($iTransactionOrClient=null): ModelQueryBuilder
     {
-        $iBuilder = ModelQueryBuilder::forClass(static::class)
+        $query = ModelQueryBuilder::forClass(static::class)
             ->transacting($iTransactionOrClient);
 
-        static::onCreateQuery($iBuilder);
+        static::onCreateQuery($query);
+
+        return $query;
+    }
+
+    public function lquery($iTransactionOrClient=null): ModelQueryBuilder
+    {
+        return self::instanceQuery($this, $iTransactionOrClient);
+    }
+
+    public static function relatedQuery(string $relationsName, ?Transaction $iTransaction=null): ModelQueryBuilder
+    {
+        return static::__relatedQuery(static::class, $relationsName, $iTransaction);
+    }
+
+    /**
+     * 2023-06-12
+     * @param class-string<Model> $modelClass
+     * @param string $relationName
+     * @param Transaction|Client|null $iTransaction
+     * @param bool $alwaysReturnArray
+     * @return ModelQueryBuilder
+     */
+    private static function __relatedQuery(string $modelClass, string $relationName, ?Transaction $iTransaction, bool $alwaysReturnArray=false): ModelQueryBuilder
+    {
+        /** @var Relation $iRelation */
+        $iRelation = call_user_func([$modelClass, 'getRelation'], $relationName);
+
+        /** @var Model $relatedModelClass */
+        $relatedModelClass = $iRelation->getRelatedModelClass();
+
+        /** @var ModelQueryBuilder $query */
+        $query = call_user_func([$relatedModelClass, 'query']);
+
+        return $query->findOperationFactory(function($iBuilder) use($iRelation, $alwaysReturnArray, $modelClass)
+            {
+                $isSubquery = $iBuilder->for() === null;
+                $iRelationOwner = $isSubquery
+                    ? RelationOwner::createParentReference($iBuilder, $iRelation)
+                    : RelationOwner::create($iBuilder->for());
+
+                $iOperation = $iRelation->find($iBuilder, $iRelationOwner);
+
+                $iOperation->setAssignResultToOwner($modelClass::getRelatedFindQueryMutates());
+                $iOperation->setAlwaysReturnArray($alwaysReturnArray);
+                $iOperation->setAlias($isSubquery ? $iRelation->getName() : null);
+
+                return $iOperation;
+            })
+            ->insertOperationFactory(function($iBuilder) use($iRelation, $modelClass)
+            {
+                $iRelationOwner = RelationOwner::create($iBuilder->for());
+                $iOperation = $iRelation->insert($iBuilder, $iRelationOwner);
+
+                $iOperation->assignResultToOwner = call_user_func([$modelClass, 'getRelatedInsertQueryMutates']);
+
+                return $iOperation;
+            })
+            ->updateOperationFactory(function($iBuilder) use($iRelation)
+            {
+                $iRelationOwner = RelationOwner::create($iBuilder->for());
+
+                return $iRelation->update($iBuilder, $iRelationOwner);
+            })
+            ->patchOperationFactory(function($iBuilder) use($iRelation)
+            {
+                $iRelationOwner = RelationOwner::create($iBuilder->for());
+
+                return $iRelation->patch($iBuilder, $iRelationOwner);
+            })
+            ->deleteOperationFactory(function($iBuilder) use($iRelation)
+            {
+                $iRelationOwner = RelationOwner::create($iBuilder->for());
+
+                return $iRelation->delete($iBuilder, $iRelationOwner);
+            })
+            ->relateOperationFactory(function($iBuilder) use($iRelation)
+            {
+                /** @var ModelQueryBuilder $iBuilder */
+                /** @var Relations\HasMany|Relations\ManyToMany $iRelation */
+
+                $iRelationOwner = RelationOwner::create($iBuilder->for());
+
+                return $iRelation->relate($iBuilder, $iRelationOwner);
+            })
+            ->unrelateOperationFactory(function($iBuilder) use($iRelation)
+            {
+                /** @var ModelQueryBuilder $iBuilder */
+                /** @var Relations\HasMany|Relations\ManyToMany $iRelation */
+
+                $iRelationOwner = RelationOwner::create($iBuilder->for());
+
+                return $iRelation->unrelate($iBuilder, $iRelationOwner);
+            });
+    }
+
+    public function lrelatedQuery(string $relationsName, $iTransactionOrClient=null): ModelQueryBuilder
+    {
+        $iBuilder = static::__relatedQuery(static::class, $relationsName, $iTransactionOrClient, false)
+            ->for($this::class);
 
         return $iBuilder;
-    }
-
-    public static function relatedQuery(string $relationName): ModelQueryBuilder
-    {
-    }
-
-    public function _relatedQuery(): void
-    {
-
     }
 
     public function isAnonymous(): bool
@@ -312,6 +498,17 @@ abstract class Model
      */
     public static function onCreateQuery(): void { /* Do nothing by default. */ }
 
+    public function lbeforeFind($context): void { /* Do nothing by default. */ }
+    public function lafterFind($context) { return $context; }
+    public function lbeforeInsert($context): void { /* Do nothing by default. */ }
+    public function lafterInsert($arguments) { return $arguments; }
+    public function lbeforeUpdate($context): void { /* Do nothing by default. */ }
+    public function lafterUpdate($arguments) { return $arguments; }
+    public function lbeforePatch($context): void { /* Do nothing by default. */ }
+    public function lafterPatch($arguments) { return $arguments; }
+    public function lbeforeDelete($context): void { /* Do nothing by default. */ }
+    public function lafterDelete($arguments) { return $arguments; }
+
     /**
      * 2023-06-12
      * @return void
@@ -322,7 +519,7 @@ abstract class Model
      * 2023-06-12
      * @return void
      */
-    public static function afterFind(StaticHookArguments $arguments): void { /* Do nothing by default. */ }
+    public static function afterFind($arguments) { return null; }
 
     /**
      * 2023-06-12
@@ -336,7 +533,7 @@ abstract class Model
      * Runs after the insert query is executed.
      * @return void
      */
-    public static function afterInsert(): void { /* Do nothing by default. */ }
+    public static function afterInsert($arguments) { return $arguments; }
 
     /**
      * 2023-06-12
@@ -378,7 +575,18 @@ abstract class Model
 
     public static function getQueryBuilder(): ?QueryBuilder
     {
-        return static::$iQueryBuilder;
+        $iQueryBuilder = static::$iQueryBuilder ?? self::$iQueryBuilder ?? null;
+
+        if($iQueryBuilder === null)
+        {
+            $iClient = Objection::getClient();
+
+            if($iClient === null) return null;
+
+            $iQueryBuilder = new QueryBuilder($iClient);
+        }
+
+        return $iQueryBuilder;
     }
 
     public static function getQueryBuilderQuery(): ?QueryBuilder
@@ -397,11 +605,13 @@ abstract class Model
 
         foreach($result as $columnName=>$columnValue)
         {
-            if(!property_exists($iModel, $columnName))
+            if(!is_string($columnName) || !property_exists($iModel, $columnName))
             {
-                debug_print_backtrace();
                 throw new \Exception("Column \"$columnName\" does not exist on model " . static::class);
             }
+
+            // 2023-08-15 hack
+            if($columnValue instanceof Raw) continue;
 
             $iModel->{$columnName} = $columnValue;
         }
@@ -542,7 +752,7 @@ abstract class Model
             'shallow'=>true,
             'omit'=>static::getRelationNames(),
             'pick'=>null,
-            'omitFromArray'=>$this->getOmitPropsFromDatabaseArray(),
+            'omitFromArray'=>self::getOmitPropsFromDatabaseArray(),
             'cloneObjects'=>static::$shouldCloneObjectAttributes,
         ];
 
@@ -557,7 +767,7 @@ abstract class Model
      * @param array|Model $arrayOrModel
      * @param array $options
      */
-    function parseRelationsIntoModelInstances(Model $iModel, $arrayOrModel, $options=[])
+    public static function parseRelationsIntoModelInstances(Model $iModel, $arrayOrModel, $options=[])
     {
         static $cache = [];
 
@@ -603,7 +813,7 @@ abstract class Model
 
         if($arrayOrModel instanceof $modelClass)
         {
-            return parseRelationsIntoModelInstances($arrayOrModel, $arrayOrModel, $options);
+            return self::parseRelationsIntoModelInstances($arrayOrModel, $arrayOrModel, $options);
         }
 
         $modelClass::fromArray($arrayOrModel, $options);
@@ -631,9 +841,16 @@ abstract class Model
     {
         $iModels = [];
 
-        if(!isset($models[0])) $models = [$models];
+        if(!is_array($models) || !isset($models[0])) $models = [$models];
 
-        foreach($models as $model) $iModels[] = self::ensureModel($model, $options);
+        foreach($models as $model)
+        {
+            $iModel = self::ensureModel($model, $options);
+                
+            if(!$iModel) continue;
+
+            $iModels[] = $iModel;
+        }
 
         return $iModels;
     }
@@ -709,5 +926,16 @@ abstract class Model
         }
 
         return $value;
+    }
+
+    public static function omitImpl(object &$model, string $prop): void
+    {
+        unset($model->{$prop});
+    }
+
+    public static function propertyNameToColumnName($propertyName)
+    {
+        // Not supported yet
+        return $propertyName;
     }
 }

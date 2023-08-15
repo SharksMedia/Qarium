@@ -86,7 +86,7 @@ class Selection
 
             if($iSelectionToTest->getColumn() === '*') return $iSelectionInBuilder->getTable() === $iSelectionToTest->getTable();
 
-            return $selectionToTest->getTable() === null || $iSelectionInBuilder->getTable() === $iSelectionToTest->getTable();
+            return $iSelectionToTest->getTable() === null || $iSelectionInBuilder->getTable() === $iSelectionToTest->getTable();
         }
 
         if($selectionToTest->getColumn() === '*') return false;
@@ -105,9 +105,9 @@ class Selection
             );
     }
 
-    private static function createSelectionFromReference($reference): self
+    private static function createSelectionFromReference(ReferenceBuilder $iReference): self
     {
-        return new Selection($reference->table, $reference->column, $reference->alias);
+        return new Selection($iReference->getTableName(), $iReference->getColumn(), $iReference->getAlias());
     }
 
     private static function createSelectionFromRaw($raw): ?self
@@ -125,7 +125,7 @@ class Selection
 
         if(preg_match(self::ALIAS_REGEX, $selection) === 1)
         {
-            $parts = explode(' AS ', $selection);
+            $parts = preg_split(self::ALIAS_REGEX, $selection);
             $selection = trim($parts[0]);
             $alias = trim($parts[1]);
         }

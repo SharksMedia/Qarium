@@ -42,7 +42,7 @@ class InsertOperation extends ModelQueryBuilderOperation
 
     public function onBefore2(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
     {
-        if(count($this->iModels) === 0) throw new \Exception('Batch insert only works with Postgresql and SQL Server');
+        if(count($this->iModels) > 1) throw new \Exception('Batch insert only works with Postgresql and SQL Server');
 
         self::callBeforeInsert($iBuilder, $this->iModels);
 
@@ -101,24 +101,30 @@ class InsertOperation extends ModelQueryBuilderOperation
         return null;
     }
 
+    /**
+     * @param ModelQueryBuilder $iBuilder
+     * @param Model[] $iModels
+     */
     private static function callBeforeInsert(ModelQueryBuilder $iBuilder, array $iModels)
     {
         foreach($iModels as $iModel)
         {
-            $iModel->beforeInsert($iBuilder->getContext());
+            $iModel->lbeforeInsert($iBuilder->getContext());
         }
 
         $modelClass = $iBuilder->getModelClass();
 
         $arguments = StaticHookArguments::create($iBuilder);
-        $modelClass::beforeInsert($arguments);
+        $result = $modelClass::beforeInsert($arguments);
+
+        return $result;
     }
 
     private static function callAfterInsert(ModelQueryBuilder $iBuilder, array $iModels, $iResult)
     {
         foreach($iModels as $iModel)
         {
-            $iModel->afterInsert($iBuilder->getContext());
+            $iModel->lafterInsert($iBuilder->getContext()->userContext);
         }
 
         $modelClass = $iBuilder->getModelClass();

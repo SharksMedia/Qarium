@@ -43,7 +43,7 @@ class ExampleTest extends \Codeception\Test\Unit
 
         $iQueryCompiler = new QueryCompiler($iClient, $iPersonQuery, []);
 
-        $iQuery = $iQueryCompiler->toSQL();
+        $iQuery = $iQueryCompiler->toQuery();
 
         $iPerson = $iPersonQuery->run();
     }

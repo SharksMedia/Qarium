@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace Sharksmedia\Objection\Operations;
 
 use Sharksmedia\Objection\ModelQueryBuilder;
+use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
 use Sharksmedia\QueryBuilder\QueryBuilder;
 use Sharksmedia\QueryBuilder\Statement\Raw;
 
@@ -31,8 +32,6 @@ class WhereInCompositeOperation extends ObjectionToQueryBuilderConvertingOperati
      */
     public function onBuildQueryBuilder(ModelQueryBuilderOperationSupport $iBuilder, $iQueryBuilder)
     {
-        $argus = $this->getArguments($iBuilder);
-
         $whereInArgs = self::buildWhereInArgs($iBuilder->getQueryBuilder(), ...$this->getArguments($iBuilder));
 
         if($this->prefix === 'not') return $iQueryBuilder->whereNotIn(...$whereInArgs);

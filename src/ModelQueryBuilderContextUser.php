@@ -44,6 +44,18 @@ class ModelQueryBuilderContextUser
      */
     private $tableMap;
 
+    private array $internalData = [];
+
+    public function __get($name)
+    {
+        return $this->internalData[$name] ?? null;
+    }
+
+    public function __set($name, $value)
+    {
+        $this->internalData[$name] = $value;
+    }
+
     public function __construct(ModelQueryBuilderOperationSupport $iBuilder)
     {
         $this->iBuilder = $iBuilder;
@@ -66,7 +78,7 @@ class ModelQueryBuilderContextUser
         return $context;
     }
 
-    public function newMerge(ModelQueryBuilderOperationSupport $iBuilder, object $obj)
+    public function newMerge(ModelQueryBuilderOperationSupport $iBuilder, $obj)
     {
         $context = new static($iBuilder);
 

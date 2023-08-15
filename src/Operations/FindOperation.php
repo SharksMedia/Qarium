@@ -25,47 +25,51 @@ class FindOperation extends ModelQueryBuilderOperation
      * @param array|Model|null $result
      * @return array|Model|null
      */
-    public function onAfter3(ModelQueryBuilderOperationSupport $builder, &$result)
+    public function onAfter3(ModelQueryBuilderOperationSupport $iBuilder, &$result)
     {
-
-        $options = $builder->getFindOptions();
+        $options = $iBuilder->getFindOptions();
 
         if($options['dontCallFindHooks'] ?? false) return $result;
 
-        return $this->callAfterFind($builder, $result);
+        return $this->callAfterFind($iBuilder, $result);
     }
 
-    public function callStaticBeforeFind(ModelQueryBuilderOperationSupport $builder)
+    public function callStaticBeforeFind(ModelQueryBuilderOperationSupport $iBuilder)
     {
+        $arguments = StaticHookArguments::create($iBuilder);
 
-        $arguments = StaticHookArguments::create($builder);
+        /** @var \Model $modelClass */
+        $modelClass = $iBuilder->getModelClass();
 
-        return $builder->getModelClass()::beforeFind($arguments);
-    }
-
-    /**
-     * @param array|Model|null $result
-     * @return array|Model|null
-     */
-    public function callAfterFind(ModelQueryBuilderOperationSupport $builder, $result)
-    {
-        $options = $builder->getFindOptions();
-        $this->callInstanceAfterFind($builder->getContext(), $result, $options['callAfterFindDeeply'] ?? null);
-
-        return $this->callStaticAfterFind($builder, $result);
+        return $modelClass::beforeFind($arguments);
     }
 
     /**
      * @param array|Model|null $result
      * @return array|Model|null
      */
-    public function callStaticAfterFind(ModelQueryBuilderOperationSupport $builder, $result)
+    public function callAfterFind(ModelQueryBuilderOperationSupport $iBuilder, &$result)
     {
-        $arguments = StaticHookArguments::create($builder, $result);
+        $options = $iBuilder->getFindOptions();
+        $this->callInstanceAfterFind($iBuilder->getContext(), $result, $options['callAfterFindDeeply'] ?? null);
 
-        $builder->getModelClass()::afterFind($arguments);
+        $results = $this->callStaticAfterFind($iBuilder, $result);
 
-        return $result;
+        return $results;
+    }
+
+    /**
+     * @param array|Model|null $result
+     * @return array|Model|null
+     */
+    public function callStaticAfterFind(ModelQueryBuilderOperationSupport $iBuilder, &$result)
+    {
+        $arguments = StaticHookArguments::create($iBuilder, $result);
+
+        /** @var \Model $modelClass */
+        $modelClass = $iBuilder->getModelClass();
+
+        return $modelClass::afterFind($arguments) ?? $result;
     }
 
     /**
@@ -76,11 +80,12 @@ class FindOperation extends ModelQueryBuilderOperation
     {
         $results = $results ?? [];
 
-        $firstResult = reset($results);
+        // $firstResult = reset($results);
+        $firstResult = &$results[0] ?? null;
 
         if(is_bool($firstResult)) $firstResult = null;
 
-        if(is_array($firstResult))
+        if(is_array($results))
         {
             if(count($results) === 1) return $this->callAfterFindForOne($context, $firstResult, $results, $deep);
 
@@ -90,7 +95,7 @@ class FindOperation extends ModelQueryBuilderOperation
         return $this->callAfterFindForOne($context, $firstResult, $results, $deep);
     }
 
-    public function callAfterFindArray($context, array $results, $deep)
+    public function callAfterFindArray($context, array &$results, $deep)
     {
         if(count($results) === 0) return $results;
 
@@ -106,10 +111,8 @@ class FindOperation extends ModelQueryBuilderOperation
     /**
      * @return array|Model|null
      */
-    public function callAfterFindForOne($context, ?Model $model, $results, $deep)
+    public function callAfterFindForOne($context, ?Model &$model, $results, $deep)
     {
-        if(!is_array($model)) return $model;
-
         if($deep)
         {
             $this->callAfterFindForRelations($context, $model, $results);
@@ -119,8 +122,10 @@ class FindOperation extends ModelQueryBuilderOperation
         return $this->doCallAfterFind($context, $model, $results);
     }
 
-    public function callAfterFindForRelations($context, array $model, array $results)
+    public function callAfterFindForRelations($context, ?array &$model, array &$results)
     {
+        if($model === null) return false;
+
         $results = [];
         foreach($model as $key=>$value)
         {
@@ -139,19 +144,19 @@ class FindOperation extends ModelQueryBuilderOperation
         return is_object($value) && $value instanceof Model;
     }
 
-    public function doCallAfterFind($context, Model $model, array $result)
+    public function doCallAfterFind($context, ?Model &$model, array &$result)
     {
-        $afterFindHook = $this->getAfterFindHook($model);
+        if($model === null) return $result;
 
-        if($afterFindHook === null) return $result;
+        $model->lafterFind($context->userContext);
 
-        return $afterFindHook($model);
+        return $result;
     }
 
-    public function getAfterFindHook(Model $model)
+    public function getAfterFindHook(Model &$model)
     {
-        if($model->hasAfterFind)  return $model->afterFind;
-        if($model->hasAfterGet)  return $model->afterGet;
+        if($model->hasAfterFind()) return [$model, 'lafterFind'];
+        if($model->hasAfterGet()) return [$model, 'lafterGet'];
 
         return null;
     }

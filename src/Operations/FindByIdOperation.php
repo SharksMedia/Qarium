@@ -31,7 +31,7 @@ class FindByIdOperation extends ModelQueryBuilderOperation
 
     public function onBuild(ModelQueryBuilderOperationSupport $iBuilder): void
     {
-        $iBuilder->whereComposite($iBuilder->fullIdColumn(), $this->id);
+        $iBuilder->whereComposite($iBuilder->getFullIdColumn(), $this->id);
     }
 
 }

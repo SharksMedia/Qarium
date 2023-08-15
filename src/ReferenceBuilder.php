@@ -111,7 +111,7 @@ class ReferenceBuilder
 
     public function isPlainColumnRef(): bool
     {
-        return ($this->parsedExpr !== null || count($this->parsedExpr->access) === 0) && $this->cast !== null && !$this->toJson;
+        return ($this->parsedExpr === null || count($this->parsedExpr->access) === 0) && $this->cast === null && !$this->toJson;
     }
 
     public function fullColumn(ModelQueryBuilderOperationSupport $iBuilder)

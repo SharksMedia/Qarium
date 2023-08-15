@@ -17,15 +17,17 @@ use Sharksmedia\QueryBuilder\Statement\Join;
 
 abstract class ModelQueryBuilderOperationSupport
 {
-    public const ALL_SELECTOR = true;
     public const QUERY_BUILDER_CONTEXT = ModelQueryBuilderContextBase::class;
     public const QUERY_BUILDER_USER_CONTEXT = ModelQueryBuilderContextBase::class;
+
+    public const ALL_SELECTOR = true;
     public const SELECT_SELECTOR = '/^(select|columns|column|distinct|count|countDistinct|min|max|sum|sumDistinct|avg|avgDistinct)$/';
     public const WHERE_SELECTOR = '/^(where|orWhere|andWhere|find\w+)/';
     public const ON_SELECTOR = '/^(on|orOn|andOn)/';
-    public const ORDER_BY_SELECTOR = '/orderBy/';
-    public const JOIN_SELECTOR = '/(join|joinRaw|joinRelated)$/i';
+    public const ORDER_BY_SELECTOR = '/^orderBy/';
+    public const JOIN_SELECTOR = '/(join|joinRaw|joinRelated)$/';
     public const FROM_SELECTOR = '/^(from|into|table)$/';
+    public const LIMIT_SELECTOR = '/^(limit|offset)$/';
 
     /**
      * @var class-string<Model>
@@ -131,14 +133,18 @@ abstract class ModelQueryBuilderOperationSupport
 
     /**
      * 2023-07-07
-     * @return ModelQueryBuilderContextBase $context
      * @param mixed $context
      */
-    public function setContext($context): ModelQueryBuilderOperationSupport
+    public function setContext($context): self
     {
         $this->context->userContext = $this->context->userContext->newMerge($this, $context);
 
         return $this;
+    }
+
+    public function context($obj): self
+    {
+        return $this->setContext($obj);
     }
 
     public function clearContext(): static
@@ -241,17 +247,18 @@ abstract class ModelQueryBuilderOperationSupport
 
         if($isFork) $queryContext = clone $queryContext;
 
-        if($isInternalQuery) $queryContext->options['isInternalQuery'] = true;
+        if($isInternalQuery)
+        {
+            $options = $this->getInternalOptions();
+
+            $options['isInternalQuery'] = true;
+
+            $this->setInternalOptions($options);
+        }
 
         $this->parentQuery = $query;
         $this->setInternalContext($queryContext);
         $this->setContext($currentContext);
-
-        // FIXME: FIgure what should be done about unsafe knex queries
-        // Use the parent's shark-query if there was no shark-query in `context`.
-        // if($this->getUnsafeQuery() === null) {
-        //     $this->setUnsafeQuery($query->getUnsafeQuery());
-        // }
         
         return $this;
     }
@@ -300,7 +307,11 @@ abstract class ModelQueryBuilderOperationSupport
 
     public function getUnsafeQueryBuilder(): ?QueryBuilder
     {
-        return $this->context->iQueryBuilder ?? clone $this->modelClass::getQueryBuilder() ?? null;
+        $iQueryBuilder = $this->context->iQueryBuilder ?? $this->modelClass::getQueryBuilder() ?? null;
+
+        if($iQueryBuilder === null) return null;
+
+        return clone $iQueryBuilder;
     }
     /**
      * @param mixed $operationSelector
@@ -310,9 +321,9 @@ abstract class ModelQueryBuilderOperationSupport
     {
         $operationsToRemove = [];
 
-        $callback = function(ModelQueryBuilderOperation $operation) use(&$operationsToRemove)
+        $callback = function(ModelQueryBuilderOperation $operation, $selectorResult) use(&$operationsToRemove, $operationSelector)
         {
-            if(!$operation->isAncestorInSet($operationsToRemove)) $operationsToRemove[] = $operation;
+            if($selectorResult && !$operation->isAncestorInSet($operationsToRemove)) $operationsToRemove[] = $operation;
 
             return null;
         };
@@ -375,15 +386,14 @@ abstract class ModelQueryBuilderOperationSupport
      * @param Closure(): void $operationSelector
      * @return ModelQueryBuilderOperationSupport
      */
-    public function copyFrom(ModelQueryBuilderOperationSupport $iBuilder, \Closure $operationSelector): static
+    public function copyFrom(ModelQueryBuilderOperationSupport $iBuilder, $operationSelector, bool $debug=false): static
     {
         $operationsToAdd = [];
 
-        $callback = function($operation) use(&$operationsToAdd)
+        $callback = function(ModelQueryBuilderOperation $operation, $selectorResult) use(&$operationsToAdd, $debug)
         {
             // If an ancestor operation has already been added, there is no need to add
-            // FIXME: Set the key in operationsToAdd array
-            if(!$operation->isAncestorInSet($operationsToAdd)) $operationsToAdd[] = $operation;
+            if($selectorResult && $operation->isAncestorInSet($operationsToAdd) === false) $operationsToAdd[] = $operation;
 
             return null;
         };
@@ -395,8 +405,8 @@ abstract class ModelQueryBuilderOperationSupport
             $operationClone = clone $operation;
 
             // We may be moving nested operations to the root. Clear any links to the parent operations.
-            $operationClone->parentOperation = null;
-            $operationClone->adderHookName = null;
+            $operationClone->setParentOperation(null);
+            $operationClone->setAdderHookName(null);
 
             // We don't use `addOperation` here because we don't what to call `onAdd` or add these operations as child operations.
             $this->operations[] = $operationClone;
@@ -479,9 +489,10 @@ abstract class ModelQueryBuilderOperationSupport
     {
         $every = true;
 
-        $this->forEachOperations($operationSelector, function($operation) use(&$every)
+        $this->forEachOperations($operationSelector, function($operation, $selectorResult) use(&$every)
         {
-            $every = false;
+            if($selectorResult) $every = false;
+
             return false;
         }, false);
 
@@ -644,7 +655,7 @@ abstract class ModelQueryBuilderOperationSupport
 
     public function toQuery(): Query
     {
-        return $this->toQueryBuilder()->toSQL();
+        return $this->toQueryBuilder()->toQuery();
     }
 
     public function toSQL(): string
@@ -667,12 +678,16 @@ abstract class ModelQueryBuilderOperationSupport
                 return preg_match($operationSelector, $operation->getName()) === 1;
             };
         }
-        else if(is_string($operationSelector))
+        else if(is_string($operationSelector) && preg_match('/\\\\/', $operationSelector) === 1)
         {
             return function($operation) use(&$operationSelector)
             {
                 return $operation instanceof $operationSelector;
             };
+        }
+        else if(is_string($operationSelector))
+        {
+            return self::buildFunctionForOperationSelector('/^'.$operationSelector.'$/');
         }
         else if(is_array($operationSelector))
         {
