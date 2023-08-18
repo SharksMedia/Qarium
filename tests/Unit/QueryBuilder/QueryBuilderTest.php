@@ -4166,4 +4166,106 @@ class SharQTest extends Unit
         
         $this->assertEquals('SELECT `person`.* FROM `person` WHERE `person`.`id` IN(?) AND `name` LIKE ?', $sql);
     }
+
+    public function testRelatedQueryFor(): void
+    {
+        $Person = new class extends Model
+        {
+            public static $Petclass;
+
+            protected int $personID;
+            protected array $iPets;
+
+            protected static array $metadataCache =
+            [
+                'Persons'=>
+                [
+                    ['Field'=>'personID']
+                ]
+            ];
+
+            public static function getTableName(): string { return 'Persons'; }
+            public static function getTableIDs(): array { return ['personID']; }
+
+            public static function getRelationMappings(): array
+            {
+                $relationsMap =
+                [
+                    'iPets'=>
+                    [
+                        'relation'=>Model::HAS_MANY_RELATION,
+                        'modelClass'=>self::$Petclass,
+                        'join'=>
+                        [
+                            'from'=>'Persons.personID',
+                            'to'=>'Pets.ownerID'
+                        ]
+                    ]
+                ];
+
+                return $relationsMap;
+            }
+        };
+
+        $Pet = new class extends Model
+        {
+            protected int $petID;
+            protected int $ownerID;
+            protected string $name;
+            protected string $species;
+
+            protected static array $metadataCache =
+            [
+                'Pets'=>
+                [
+                    ['Field'=>'petID'],
+                    ['Field'=>'ownerID'],
+                    ['Field'=>'name'],
+                    ['Field'=>'species'],
+                ]
+            ];
+
+            public static function getTableName(): string { return 'Pets'; }
+            public static function getTableIDs(): array { return ['petID']; }
+        };
+
+        $Person::$Petclass = $Pet::class;
+
+        // Should be instance of Model at RelationOwner constructor
+
+        $iDogsQuery = $Person::relatedQuery('iPets')
+            ->for(1)
+            ->where('species', 'Dog')
+            ->orderBy('name', 'ASC');
+
+        
+        $iQuery = $iDogsQuery->toQuery();
+        
+        $this->assertEquals([
+            'sql'=>'SELECT `Pets`.* FROM `Pets` WHERE `Pets`.`ownerID` IN(?) AND `species` = ? ORDER BY `name` ASC',
+            'bindings'=>[1, 'Dog']
+        ],
+        [
+            'sql'=>$iQuery->getSQL(),
+            'bindings'=>$iQuery->getBindings()
+        ]);
+
+        $iPerson = $Person::createFromDatabaseArray(['personID'=>1]);
+
+        $iCatsQuery = $iPerson->lrelatedQuery('iPets')
+            ->where('species', 'Cat')
+            ->orderBy('name', 'ASC');
+        
+        $iQuery = $iCatsQuery->toQuery();
+
+        $this->assertEquals([
+            'sql'=>'SELECT `Pets`.* FROM `Pets` WHERE `Pets`.`ownerID` IN(?) AND `species` = ? ORDER BY `name` ASC',
+            'bindings'=>[1, 'Cat']
+        ],
+        [
+            'sql'=>$iQuery->getSQL(),
+            'bindings'=>$iQuery->getBindings()
+        ]);
+
+    }
 }

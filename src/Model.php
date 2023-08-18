@@ -418,6 +418,7 @@ abstract class Model
         return $query->findOperationFactory(function($iBuilder) use($iRelation, $alwaysReturnArray, $modelClass)
             {
                 $isSubquery = $iBuilder->for() === null;
+
                 $iRelationOwner = $isSubquery
                     ? RelationOwner::createParentReference($iBuilder, $iRelation)
                     : RelationOwner::create($iBuilder->for());
