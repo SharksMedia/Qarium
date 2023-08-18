@@ -260,7 +260,7 @@ abstract class Model
     /**
      * 2023-06-12
      * @param string $relationName
-     * @return Relations\Relation
+     * @return array<string, mixed>|null
      */
     public static function getRelationUnsafe(string $relationName): ?array
     {

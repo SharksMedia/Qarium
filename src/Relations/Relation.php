@@ -134,7 +134,7 @@ class Relation
     {
         $relationType = $rawRelation['relation'] ?? null;
 
-        if($relationType === null) throw new \Exception("Relation \"$relationName\" is not defined");
+        if($relationType === null) throw new \Exception("\"relation\" is not defined on \"$relationName\" in model $modelClass");
 
         switch($relationType)
         {
