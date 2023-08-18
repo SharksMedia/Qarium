@@ -210,6 +210,16 @@ abstract class Model
         return new RelationProperty($idColumns, function(){ return static::class; });
     }
 
+    public static function getColumnsNames(): array
+    {
+        $metadata = static::getTableMetadata() ?? static::fetchTableMetadata();
+
+        return array_map(function($column)
+        {
+            return $column['Field'];
+        }, $metadata);
+    }
+
     public static function columnNameToPropertyName(string $columnName)
     {
         // static $cache = [];
@@ -221,14 +231,14 @@ abstract class Model
         $model = new static();
         $addedProps = $model->isAnonymous()
             ? [$columnName]
-            : array_keys((array)$model->createFromDatabaseArray([])); // NOTE: possible to use get_class_vars
+            : static::getColumnsNames();
 
         $row = [];
         $row[$columnName] = null;
 
         $props = $model->isAnonymous()
             ? [$columnName]
-            : array_keys((array)$model->createFromDatabaseArray($row));
+            : static::getColumnsNames();
 
         $propertyName = array_diff($props, $addedProps)[0] ?? null;
 
