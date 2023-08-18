@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 // 2023-07-10
 
-namespace Sharksmedia\Objection\Relations;
+namespace Sharksmedia\Qarium\Relations;
 
-use Sharksmedia\Objection\Operations\HasManyInsertOperation;
-use Sharksmedia\Objection\Operations\HasManyRelateOperation;
-use Sharksmedia\Objection\Operations\HasManyUnrelateOperation;
+use Sharksmedia\Qarium\Operations\HasManyInsertOperation;
+use Sharksmedia\Qarium\Operations\HasManyRelateOperation;
+use Sharksmedia\Qarium\Operations\HasManyUnrelateOperation;
 
 class HasMany extends Relation
 {

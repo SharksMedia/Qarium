@@ -7,14 +7,14 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-use Sharksmedia\Objection\ModelQueryBuilder;
-use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
-use Sharksmedia\Objection\RelationExpression;
-use Sharksmedia\Objection\RelationJoiner;
+use Sharksmedia\Qarium\ModelSharQ;
+use Sharksmedia\Qarium\ModelSharQOperationSupport;
+use Sharksmedia\Qarium\RelationExpression;
+use Sharksmedia\Qarium\RelationJoiner;
 
-class JoinRelatedOperation extends ModelQueryBuilderOperation
+class JoinRelatedOperation extends ModelSharQOperation
 {
     /**
      * 2023-07-11
@@ -32,7 +32,7 @@ class JoinRelatedOperation extends ModelQueryBuilderOperation
         $this->calls[] = $call;
     }
 
-    public function onBuild(ModelQueryBuilderOperationSupport $iBuilder): void
+    public function onBuild(ModelSharQOperationSupport $iBuilder): void
     {
         /** @var class-string<Model> $modelClass */
         $modelClass = $iBuilder->getModelClass();
@@ -60,11 +60,11 @@ class JoinRelatedOperation extends ModelQueryBuilderOperation
         $joiner->build($iBuilder, false);
     }
 
-    private static function applyAlias(RelationExpression $expression, string $modelClass, ModelQueryBuilder $iBuilder, array $options)
+    private static function applyAlias(RelationExpression $expression, string $modelClass, ModelSharQ $iBuilder, array $options)
     {
         $children = $expression->getNode()->iChildNodes;
 
-        /** @var \Sharksmedia\Objection\RelationNode $child */
+        /** @var \Sharksmedia\Qarium\RelationNode $child */
         $child = array_shift($children);
 
         /** @var \Model $modelClass */

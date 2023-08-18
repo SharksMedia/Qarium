@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 // 2023-08-14
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-use Sharksmedia\Objection\Model;
-use Sharksmedia\Objection\ModelQueryBuilder;
-use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
+use Sharksmedia\Qarium\Model;
+use Sharksmedia\Qarium\ModelSharQ;
+use Sharksmedia\Qarium\ModelSharQOperationSupport;
 
 class InstanceFindOperation extends FindOperation
 {
@@ -22,11 +22,11 @@ class InstanceFindOperation extends FindOperation
     }
 
     /**
-     * @param ModelQueryBuilderOperationSupport|ModelQueryBuilder $iBuilder
+     * @param ModelSharQOperationSupport|ModelSharQ $iBuilder
      * @return bool
      * @throws \Exception
      */
-    public function onBuild(ModelQueryBuilderOperationSupport $iBuilder): void
+    public function onBuild(ModelSharQOperationSupport $iBuilder): void
     {
         if(!$this->instance->lhasIDs())
         {

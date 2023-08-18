@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 // 2023-08-14
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-use Sharksmedia\Objection\Model;
-use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
+use Sharksmedia\Qarium\Model;
+use Sharksmedia\Qarium\ModelSharQOperationSupport;
 
 class InstanceInsertOperation extends InsertOperation
 {
@@ -20,7 +20,7 @@ class InstanceInsertOperation extends InsertOperation
         $this->instance = $options['instance'];
     }
 
-    public function onAdd(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
+    public function onAdd(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
         $arguments[0] = $this->instance;
 

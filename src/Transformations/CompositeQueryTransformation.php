@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection\Transformations;
+namespace Sharksmedia\Qarium\Transformations;
 
-use Sharksmedia\Objection\ModelQueryBuilder;
+use Sharksmedia\Qarium\ModelSharQ;
 
 class CompositeQueryTransformation extends QueryTransformation
 {
@@ -21,11 +21,11 @@ class CompositeQueryTransformation extends QueryTransformation
         $this->iTransformations = $iTransformations;
     }
 
-    public function onConvertQueryBuilderBase(ModelQueryBuilder $iQuery, ModelQueryBuilder $iBuilder): ModelQueryBuilder
+    public function onConvertSharQBase(ModelSharQ $iQuery, ModelSharQ $iBuilder): ModelSharQ
     {
         foreach($this->iTransformations as $iTransformation)
         {
-            $iQuery = $iTransformation->onConvertQueryBuilderBase($iQuery, $iBuilder);
+            $iQuery = $iTransformation->onConvertSharQBase($iQuery, $iBuilder);
         }
 
         return $iQuery;

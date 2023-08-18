@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\QueryBuilder;
+namespace Tests\Unit\SharQ;
 
-use Sharksmedia\Objection\ModelQueryBuilder;
+use Sharksmedia\Qarium\ModelSharQ;
 use Tests\Support\Person;
 
 class MainTest extends \Codeception\Test\Unit
 {
     public function testModelClassShouldReturnTheModelClass()
     {
-        $iBuilder = ModelQueryBuilder::forClass(Person::class);
+        $iBuilder = ModelSharQ::forClass(Person::class);
 
         $this->assertEquals(Person::class, $iBuilder->getModelClass());
     }
@@ -32,7 +32,7 @@ class MainTest extends \Codeception\Test\Unit
     public function caseProvider(): array
     {
         // Providers are run before anything else, so we are initalizing the client here.
-        Objection::setClient(self::getClient());
+        Qarium::setClient(static::getClient());
 
         $cases = [];
 

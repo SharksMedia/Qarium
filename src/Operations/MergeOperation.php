@@ -7,9 +7,9 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-class MergeOperation extends ModelQueryBuilderOperation
+class MergeOperation extends ModelSharQOperation
 {
     // FIXME: Implement me !!!
 }

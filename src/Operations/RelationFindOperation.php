@@ -4,17 +4,19 @@ declare(strict_types=1);
 
 // 2023-08-14
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-use Sharksmedia\Objection\Model;
-use Sharksmedia\Objection\ModelQueryBuilder;
-use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
-use Sharksmedia\Objection\Relations\BelongsToOne;
+use Sharksmedia\Qarium\Model;
+use Sharksmedia\Qarium\ModelSharQ;
+use Sharksmedia\Qarium\ModelSharQOperationSupport;
+use Sharksmedia\Qarium\Relations\BelongsToOne;
+use Sharksmedia\Qarium\Relations\Relation;
+use Sharksmedia\Qarium\Relations\RelationOwner;
 
 class RelationFindOperation extends FindOperation
 {
-    private $iRelation;
-    private $iOwner;
+    private Relation $iRelation;
+    private RelationOwner $iOwner;
     private bool $alwaysReturnArray;
     private bool $assignResultToOwner;
     private $iRelationProperty;
@@ -25,7 +27,7 @@ class RelationFindOperation extends FindOperation
     {
         parent::__construct($name, $options);
 
-        $this->iRelation = $options['relation'];
+        $this->iRelation = $options['iRelation'] ?? $options['relation'];
         $this->iOwner = $options['iOwner'];
         $this->alwaysReturnArray = false;
         $this->assignResultToOwner = false;
@@ -52,7 +54,7 @@ class RelationFindOperation extends FindOperation
         return $this;
     }
 
-    public function onBuild(ModelQueryBuilderOperationSupport $iBuilder): void
+    public function onBuild(ModelSharQOperationSupport $iBuilder): void
     {
         $this->maybeApplyAlias($iBuilder, $this->iOwner);
         $this->iRelation->findQuery($iBuilder, $this->iOwner);
@@ -63,7 +65,7 @@ class RelationFindOperation extends FindOperation
         }
     }
 
-    public function onAfter2(ModelQueryBuilderOperationSupport $iBuilder, &$related)
+    public function onAfter2(ModelSharQOperationSupport $iBuilder, &$related)
     {
         $isOneToOne = $this->iRelation instanceof BelongsToOne;
 
@@ -94,7 +96,7 @@ class RelationFindOperation extends FindOperation
         return $related;
     }
 
-    public function onAfter3(ModelQueryBuilderOperationSupport $iBuilder, &$related)
+    public function onAfter3(ModelSharQOperationSupport $iBuilder, &$related)
     {
         $isOneToOne = $this->iRelation instanceof BelongsToOne;
         $internalOptions = $iBuilder->getInternalOptions();
@@ -112,7 +114,7 @@ class RelationFindOperation extends FindOperation
         return parent::onAfter3($iBuilder, $related);
     }
 
-    private function selectMissingJoinColumns(ModelQueryBuilder $iBuilder)
+    private function selectMissingJoinColumns(ModelSharQ $iBuilder)
     {
         $iRelatedProp = $this->iRelation->getRelatedProp();
         $addedSelects = [];
@@ -136,7 +138,7 @@ class RelationFindOperation extends FindOperation
         }
     }
 
-    private function maybeApplyAlias(ModelQueryBuilder $iBuilder): void
+    private function maybeApplyAlias(ModelSharQ $iBuilder): void
     {
         if($iBuilder->getAlias() === null && $this->alias !== null)
         {

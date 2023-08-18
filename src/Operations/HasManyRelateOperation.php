@@ -1,17 +1,17 @@
 <?php
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-use Sharksmedia\Objection\ModelQueryBuilder;
-use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
-use Sharksmedia\Objection\Relations\Relation;
-use Sharksmedia\Objection\Relations\RelationOwner;
-use Sharksmedia\Objection\Utilities;
-use Sharksmedia\Objection\Model;
+use Sharksmedia\Qarium\ModelSharQ;
+use Sharksmedia\Qarium\ModelSharQOperationSupport;
+use Sharksmedia\Qarium\Relations\Relation;
+use Sharksmedia\Qarium\Relations\RelationOwner;
+use Sharksmedia\Qarium\Utilities;
+use Sharksmedia\Qarium\Model;
 
 class HasManyRelateOperation extends RelateOperation
 {
-    public function onAdd(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
+    public function onAdd(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
         $this->input = $arguments[0];
 
@@ -27,7 +27,7 @@ class HasManyRelateOperation extends RelateOperation
         return true;
     }
 
-    public function queryExecutor(ModelQueryBuilderOperationSupport $iBuilder): ?ModelQueryBuilderOperationSupport
+    public function queryExecutor(ModelSharQOperationSupport $iBuilder): ?ModelSharQOperationSupport
     {
         $patch = [];
         $iRelatedProp = $this->iRelation->getRelatedProp();
@@ -44,8 +44,8 @@ class HasManyRelateOperation extends RelateOperation
         return $relatedModelClass::query()
             ->childQueryOf($iBuilder)
             ->patch($patch)
-            ->copyFrom($iBuilder, ModelQueryBuilderOperationSupport::JOIN_SELECTOR)
-            ->copyFrom($iBuilder, ModelQueryBuilderOperationSupport::WHERE_SELECTOR)
+            ->copyFrom($iBuilder, ModelSharQOperationSupport::JOIN_SELECTOR)
+            ->copyFrom($iBuilder, ModelSharQOperationSupport::WHERE_SELECTOR)
             ->findByIds($this->ids)
             ->modify($this->iRelation->getModify());
     }
@@ -60,9 +60,9 @@ class HasManyRelateOperation extends RelateOperation
 
         $isSingleID = $iOwner->getType() === RelationOwner::TYPE_IDENTIFIERS && count($normalizedIDs) ===  1;
 
-        $isQueryBuilder = $iOwner->getType() === RelationOwner::TYPE_QUERY_BUILDER;
+        $isSharQ = $iOwner->getType() === RelationOwner::TYPE_QUERY_BUILDER;
 
-        if(!$isSingleModel && !$isSingleID && !$isQueryBuilder) {
+        if(!$isSingleModel && !$isSingleID && !$isSharQ) {
             throw new \Exception(
                 'Can only relate items for one parent at a time in case of HasManyRelation. ' .
                 'Otherwise multiple update queries would need to be created. ' .

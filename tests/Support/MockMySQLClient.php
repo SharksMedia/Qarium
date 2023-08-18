@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Support;
 
-use Sharksmedia\QueryBuilder\Client\MySQL;
-use Sharksmedia\QueryBuilder\Config;
-use Sharksmedia\QueryBuilder\Query;
+use Sharksmedia\SharQ\Client\MySQL;
+use Sharksmedia\SharQ\Config;
+use Sharksmedia\SharQ\Query;
 
 class MockMySQLClient extends MySQL
 {

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 // 2023-07-10
 
-namespace Sharksmedia\Objection\Relations;
+namespace Sharksmedia\Qarium\Relations;
 
-use Sharksmedia\Objection\ReferenceBuilder;
-use Sharksmedia\Objection\Exceptions\InvalidReferenceError;
-use Sharksmedia\Objection\Exceptions\ModelNotFoundError;
-use Sharksmedia\Objection\ModelQueryBuilder;
-use Sharksmedia\Objection\Utilities;
+use Sharksmedia\Qarium\ReferenceBuilder;
+use Sharksmedia\Qarium\Exceptions\InvalidReferenceError;
+use Sharksmedia\Qarium\Exceptions\ModelNotFoundError;
+use Sharksmedia\Qarium\ModelSharQ;
+use Sharksmedia\Qarium\Utilities;
 
 /**
  * A pair of these define how two tables are related to each other.
@@ -176,7 +176,7 @@ class RelationProperty
             };
         }
 
-        // Objection `patch`, `update` etc. methods understand field expressions.
+        // Qarium `patch`, `update` etc. methods understand field expressions.
         return function(&$patch, $value) use ($ref)
         {
             $patch[$ref->getExpression()] = $value;
@@ -321,7 +321,7 @@ class RelationProperty
     /**
      * Returns an instance of ReferenceBuilder that points to the index:th value of a row.
      */
-    public function ref(ModelQueryBuilder $iBuilder, int $index): ReferenceBuilder
+    public function ref(ModelSharQ $iBuilder, int $index): ReferenceBuilder
     {
         $table = $iBuilder->getTableRefFor($this->modelClass);
 
@@ -330,7 +330,7 @@ class RelationProperty
         return $ref->table($table);
     }
 
-    public function refs(ModelQueryBuilder $iBuilder): array
+    public function refs(ModelSharQ $iBuilder): array
     {
         $refs = [];
 

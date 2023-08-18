@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection;
+namespace Sharksmedia\Qarium;
 
-use Sharksmedia\Objection\Relations\RelationProperty;
+use Sharksmedia\Qarium\Relations\RelationProperty;
 
 class Utilities
 {
@@ -50,11 +50,11 @@ class Utilities
 
     public static function parseFieldExpression($expr)
     {
-        static $cache = [];
+        // static $cache = [];
 
-        $parsedExpression = $cache[$expr] ?? null;
+        // $parsedExpression = $cache[$expr] ?? null;
 
-        if($parsedExpression !== null) return $parsedExpression;
+        // if($parsedExpression !== null) return $parsedExpression;
 
         // 2023-07-12 We don't support field expressions yet
         $parsedExpression = (object)
@@ -66,7 +66,7 @@ class Utilities
 
         $parsedExpression = self::preprocessParsedExpression($parsedExpression);
 
-        $cache[$expr] = $parsedExpression;
+        // $cache[$expr] = $parsedExpression;
 
         return $parsedExpression;
     }
@@ -127,24 +127,24 @@ class Utilities
         });
     }
 
-    public static function isQueryBuilder($value): bool
+    public static function isSharQ($value): bool
     {
-        return $value instanceof \Sharksmedia\QueryBuilder\QueryBuilder;
+        return $value instanceof \Sharksmedia\SharQ\SharQ;
     }
 
-    public static function isQueryBuilderRaw($value): bool
+    public static function isSharQRaw($value): bool
     {
-        return $value instanceof \Sharksmedia\QueryBuilder\Statement\Raw;
+        return $value instanceof \Sharksmedia\SharQ\Statement\Raw;
     }
 
-    public static function isQueryBuilderRawConvertable($value): bool
+    public static function isSharQRawConvertable($value): bool
     {
         return false;
     }
 
-    public static function isModelQueryBuilderBase($value): bool
+    public static function isModelSharQBase($value): bool
     {
-        return $value instanceof \Sharksmedia\Objection\ModelQueryBuilderBase;
+        return $value instanceof \Sharksmedia\Qarium\ModelSharQBase;
     }
 
     public static function normalizeIds($ids, RelationProperty $prop, $opt = [])

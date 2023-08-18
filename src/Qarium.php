@@ -7,32 +7,32 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection;
+namespace Sharksmedia\Qarium;
 
-use Sharksmedia\QueryBuilder\Client;
-use Sharksmedia\QueryBuilder\QueryBuilder;
+use Sharksmedia\SharQ\Client;
+use Sharksmedia\SharQ\SharQ;
 
-class Objection
+class Qarium
 {
     private const DEFAULT_CLIENT_ID = 'DEFAULT';
 
     private static array $iClients = [];
 
-    public static function setClient(Client $iClient): void
+    public static function setClient(Client $iClient, ?string $clientID=null): void
     {// 2023-06-12
         // FIXME: Use an identifier from the database config instead of the object itself.
-        self::$iClients[self::getDefaultClientID()] = $iClient;
+        static::$iClients[$clientID ?? static::getDefaultClientID()] = $iClient;
     }
 
     public static function getClient(?string $clientID=null): Client
     {// 2023-06-12
         // FIXME: Use an identifier from the database config instead of the object itself.
 
-        $clientID = $clientID ?? self::getDefaultClientID();
+        $clientID = $clientID ?? static::getDefaultClientID();
 
-        if(!isset(self::$iClients[$clientID])) throw new \Exception('Database with ID "'.$clientID.'" does not exist');
+        if(!isset(static::$iClients[$clientID])) throw new \Exception('Database with ID "'.$clientID.'" does not exist');
 
-        return self::$iClients[$clientID];
+        return static::$iClients[$clientID];
     }
 
     public static function getDefaultClientID(): string
@@ -42,9 +42,9 @@ class Objection
 
     /**
      * 2023-06-12
-     * @param QueryBuilder $iQueryBuilder
+     * @param SharQ $iSharQ
      * @param class-string<Model> $modelClass
-     * @return ModelQueryBuilder
+     * @return ModelSharQ
      */
     public static function initalize(Client $iClient, array $modelClasses): void
     {// 2023-06-12

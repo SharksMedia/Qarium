@@ -7,20 +7,20 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-use Sharksmedia\Objection\JoinBuilder;
-use Sharksmedia\Objection\ModelQueryBuilder;
-use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
+use Sharksmedia\Qarium\JoinBuilder;
+use Sharksmedia\Qarium\ModelSharQ;
+use Sharksmedia\Qarium\ModelSharQOperationSupport;
 
-class WhereCompositeOperation extends ObjectionToQueryBuilderConvertingOperation
+class WhereCompositeOperation extends QariumToSharQConvertingOperation
 {
     /**
-     * @param ModelQueryBuilder|ModelQueryBuilderOperationSupport $iBuilder
-     * @param QueryBuilder|Join|null $iQueryBuilder
-     * @return QueryBuilder|Join|null
+     * @param ModelSharQ|ModelSharQOperationSupport $iBuilder
+     * @param SharQ|Join|null $iSharQ
+     * @return SharQ|Join|null
      */
-    public function onBuildQueryBuilder(ModelQueryBuilderOperationSupport $iBuilder, $iQueryBuilder)
+    public function onBuildSharQ(ModelSharQOperationSupport $iBuilder, $iSharQ)
     {
         $arguments = $this->getArguments($iBuilder);
 
@@ -35,7 +35,7 @@ class WhereCompositeOperation extends ObjectionToQueryBuilderConvertingOperation
 
         $whereArgs = $this->buildWhereArgs(...$arguments);
 
-        return $iQueryBuilder->where(...$whereArgs);
+        return $iSharQ->where(...$whereArgs);
     }
 
     private function buildWhereArgs($cols, string $op, $values): array

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Support;
 
 use ReflectionClass;
-use Sharksmedia\Objection\Model;
+use Sharksmedia\Qarium\Model;
 use stdClass;
 
 class ModelTester

@@ -3,10 +3,10 @@
 
 namespace Tests\Integration;
 
-use Sharksmedia\Objection\Objection;
-use Sharksmedia\QueryBuilder\QueryCompiler;
-use Sharksmedia\QueryBuilder\Client;
-use Sharksmedia\QueryBuilder\Config;
+use Sharksmedia\Qarium\Qarium;
+use Sharksmedia\SharQ\QueryCompiler;
+use Sharksmedia\SharQ\Client;
+use Sharksmedia\SharQ\Config;
 use Tests\Support\IntegrationTester;
 use Tests\Support\Person;
 
@@ -29,13 +29,13 @@ class ExampleTest extends \Codeception\Test\Unit
             ->port('5060')
             ->user('bluemedico_admin')
             ->password('926689c103aeb7b7')
-            ->database('ObjectionTest')
+            ->database('QariumTest')
             ->charset('utf8mb4');
 
         $iClient = Client::create($iConfig); // MySQL client
         $iClient->initializeDriver();
 
-        Objection::setClient($iClient);
+        Qarium::setClient($iClient);
 
 
         $iPersonQuery = Person::query()

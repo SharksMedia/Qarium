@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 // 2023-08-14
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-use Sharksmedia\Objection\Model;
-use Sharksmedia\Objection\ModelQueryBuilder;
-use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
+use Sharksmedia\Qarium\Model;
+use Sharksmedia\Qarium\ModelSharQ;
+use Sharksmedia\Qarium\ModelSharQOperationSupport;
 
 class InstanceDeleteOperation extends DeleteOperation
 {
@@ -21,7 +21,7 @@ class InstanceDeleteOperation extends DeleteOperation
         $this->instance = $options['instance'];
     }
 
-    public function onBefore2(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
+    public function onBefore2(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
         $this->instance->lbeforeDelete($iBuilder->getContext());
 
@@ -29,11 +29,11 @@ class InstanceDeleteOperation extends DeleteOperation
     }
 
     /**
-     * @param ModelQueryBuilderOperationSupport|ModelQueryBuilder $iBuilder
+     * @param ModelSharQOperationSupport|ModelSharQ $iBuilder
      * @return bool
      * @throws \Exception
      */
-    public function onBuild(ModelQueryBuilderOperationSupport $iBuilder): void
+    public function onBuild(ModelSharQOperationSupport $iBuilder): void
     {
         parent::onBuild($iBuilder);
 
@@ -47,7 +47,7 @@ class InstanceDeleteOperation extends DeleteOperation
         $iBuilder->findByIds($this->instance->getID());
     }
 
-    public function onAfter2(ModelQueryBuilderOperationSupport $iBuilder, &$result)
+    public function onAfter2(ModelSharQOperationSupport $iBuilder, &$result)
     {
         if(is_array($result)) $result = $result[0];
 
@@ -56,7 +56,7 @@ class InstanceDeleteOperation extends DeleteOperation
         return parent::onAfter2($iBuilder, $result);
     }
 
-    public function toFindOperation(ModelQueryBuilderOperationSupport $iBuilder): ?ModelQueryBuilderOperation
+    public function toFindOperation(ModelSharQOperationSupport $iBuilder): ?ModelSharQOperation
     {
         return new InstanceFindOperation('find', ['instance' => $this->instance]);
     }

@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace Tests\Support;
 
-use Sharksmedia\QueryBuilder\QueryBuilder;
+use Sharksmedia\SharQ\SharQ;
 
 class MockQUeryBuilder
 {
-    private QueryBuilder $iQueryBuilder;
+    private SharQ $iSharQ;
     private \Closure $mockExecutor;
     private $mock;
     private $queryBuilderMethods = []; // Initialize this array with required method names.
 
-    public function __construct(QueryBuilder $iQueryBuilder, \Closure $mockExecutor)
+    public function __construct(SharQ $iSharQ, \Closure $mockExecutor)
     {
-        $this->iQueryBuilder = $iQueryBuilder;
+        $this->iSharQ = $iSharQ;
         $this->mockExecutor = $mockExecutor;
 
         $this->mock = new \stdClass();
@@ -24,9 +24,9 @@ class MockQUeryBuilder
         $this->initMockProperties();
     }
 
-    public function _mock($table): QueryBuilder
+    public function _mock($table): SharQ
     {
-        return $this->mock->getQueryBuilder()->table($table);
+        return $this->mock->getSharQ()->table($table);
     }
 
     private function initMockMethods(): void
@@ -35,18 +35,18 @@ class MockQUeryBuilder
         {
             $this->mock[$methodName] = function(...$args) use ($methodName)
             {
-                return $this->wrapBuilder(call_user_func_array([$this->iQueryBuilder, $methodName], $args));
+                return $this->wrapBuilder(call_user_func_array([$this->iSharQ, $methodName], $args));
             };
         }
     }
 
     private function initMockProperties()
     {
-        $keys = array_unique(array_merge(array_keys(get_object_vars($this->iQueryBuilder)), ['client']));
+        $keys = array_unique(array_merge(array_keys(get_object_vars($this->iSharQ)), ['client']));
         
         foreach ($keys as $key)
         {
-            $value = $this->iQueryBuilder->$key;
+            $value = $this->iSharQ->$key;
 
             if(in_array($key, $this->queryBuilderMethods)) continue;
 

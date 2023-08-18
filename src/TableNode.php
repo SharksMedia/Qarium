@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection;
+namespace Sharksmedia\Qarium;
 
-use Sharksmedia\Objection\ModelQueryBuilder;
-use Sharksmedia\Objection\Relations\Relation;
-use Sharksmedia\Objection\RelationExpression;
-use Sharksmedia\Objection\Relations\ManyToMany;
-use Sharksmedia\Objection\Utilities;
+use Sharksmedia\Qarium\ModelSharQ;
+use Sharksmedia\Qarium\Relations\Relation;
+use Sharksmedia\Qarium\RelationExpression;
+use Sharksmedia\Qarium\Relations\ManyToMany;
+use Sharksmedia\Qarium\Utilities;
 
 // 2023-07-12
 
@@ -178,7 +178,7 @@ class TableNode
         return $idGetterFunc($flatRow);
     }
 
-    public function getJoinTableAlias(ModelQueryBuilder $iBuilder): ?string
+    public function getJoinTableAlias(ModelSharQ $iBuilder): ?string
     {
         if($this->iRelation instanceof ManyToMany)
         {

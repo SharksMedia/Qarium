@@ -7,62 +7,62 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-use Sharksmedia\Objection\ModelQueryBuilder;
-use Sharksmedia\Objection\StaticHookArguments;
+use Sharksmedia\Qarium\ModelSharQ;
+use Sharksmedia\Qarium\StaticHookArguments;
 
-use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
+use Sharksmedia\Qarium\ModelSharQOperationSupport;
 
-class DeleteOperation extends ModelQueryBuilderOperation
+class DeleteOperation extends ModelSharQOperation
 {
-    public function onBefore2(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
+    public function onBefore2(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
         $this->callBeforeDelete($iBuilder);
 
         return true;
     }
 
-    public function onBuildQueryBuilder(ModelQueryBuilderOperationSupport $iBuilder, $iQueryBuilder)
+    public function onBuildSharQ(ModelSharQOperationSupport $iBuilder, $iSharQ)
     {
-        return $iQueryBuilder->delete();
+        return $iSharQ->delete();
     }
 
-    public function onAfter2(ModelQueryBuilderOperationSupport $iBuilder, &$result)
+    public function onAfter2(ModelSharQOperationSupport $iBuilder, &$result)
     {
         return $this->callAfterDelete($iBuilder, $result);
     }
 
-    public function toFindOperation(ModelQueryBuilderOperationSupport $iBuilder): ?ModelQueryBuilderOperation
+    public function toFindOperation(ModelSharQOperationSupport $iBuilder): ?ModelSharQOperation
     {
         return null;
     }
 
-    private function callBeforeDelete(ModelQueryBuilder $iBuilder)
+    private function callBeforeDelete(ModelSharQ $iBuilder)
     {
         return $this->callStaticBeforeDelete($iBuilder);
     }
 
-    private function callStaticBeforeDelete(ModelQueryBuilder $iBuilder)
+    private function callStaticBeforeDelete(ModelSharQ $iBuilder)
     {
         $args = StaticHookArguments::create($iBuilder);
 
-        /** @var class-string<\Sharksmedia\Objection\Model> $modelClass */
+        /** @var class-string<\Sharksmedia\Qarium\Model> $modelClass */
         $modelClass = $iBuilder->getModelClass();
 
         return $modelClass::beforeDelete($args);
     }
 
-    private function callAfterDelete(ModelQueryBuilder $builder, $result)
+    private function callAfterDelete(ModelSharQ $builder, $result)
     {
         return $this->callStaticAfterDelete($builder, $result);
     }
 
-    private function callStaticAfterDelete(ModelQueryBuilder $iBuilder, $result)
+    private function callStaticAfterDelete(ModelSharQ $iBuilder, $result)
     {
         $args = StaticHookArguments::create($iBuilder, $result);
 
-        /** @var class-string<\Sharksmedia\Objection\Model> $modelClass */
+        /** @var class-string<\Sharksmedia\Qarium\Model> $modelClass */
         $modelClass = $iBuilder->getModelClass();
 
         $maybeResult = $modelClass::afterDelete($args);

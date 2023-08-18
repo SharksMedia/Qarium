@@ -7,16 +7,16 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-use Sharksmedia\Objection\Model;
-use Sharksmedia\Objection\ModelQueryBuilder;
-use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
-use Sharksmedia\Objection\StaticHookArguments;
+use Sharksmedia\Qarium\Model;
+use Sharksmedia\Qarium\ModelSharQ;
+use Sharksmedia\Qarium\ModelSharQOperationSupport;
+use Sharksmedia\Qarium\StaticHookArguments;
 
-class FindOperation extends ModelQueryBuilderOperation
+class FindOperation extends ModelSharQOperation
 {
-    public function onBefore2(ModelQueryBuilderOperationSupport $builder, ...$arguments): bool
+    public function onBefore2(ModelSharQOperationSupport $builder, ...$arguments): bool
     {
         return $this->callStaticBeforeFind($builder) ?? true;
     }
@@ -25,7 +25,7 @@ class FindOperation extends ModelQueryBuilderOperation
      * @param array|Model|null $result
      * @return array|Model|null
      */
-    public function onAfter3(ModelQueryBuilderOperationSupport $iBuilder, &$result)
+    public function onAfter3(ModelSharQOperationSupport $iBuilder, &$result)
     {
         $options = $iBuilder->getFindOptions();
 
@@ -34,7 +34,7 @@ class FindOperation extends ModelQueryBuilderOperation
         return $this->callAfterFind($iBuilder, $result);
     }
 
-    public function callStaticBeforeFind(ModelQueryBuilderOperationSupport $iBuilder)
+    public function callStaticBeforeFind(ModelSharQOperationSupport $iBuilder)
     {
         $arguments = StaticHookArguments::create($iBuilder);
 
@@ -48,7 +48,7 @@ class FindOperation extends ModelQueryBuilderOperation
      * @param array|Model|null $result
      * @return array|Model|null
      */
-    public function callAfterFind(ModelQueryBuilderOperationSupport $iBuilder, &$result)
+    public function callAfterFind(ModelSharQOperationSupport $iBuilder, &$result)
     {
         $options = $iBuilder->getFindOptions();
         $this->callInstanceAfterFind($iBuilder->getContext(), $result, $options['callAfterFindDeeply'] ?? null);
@@ -62,7 +62,7 @@ class FindOperation extends ModelQueryBuilderOperation
      * @param array|Model|null $result
      * @return array|Model|null
      */
-    public function callStaticAfterFind(ModelQueryBuilderOperationSupport $iBuilder, &$result)
+    public function callStaticAfterFind(ModelSharQOperationSupport $iBuilder, &$result)
     {
         $arguments = StaticHookArguments::create($iBuilder, $result);
 
@@ -122,7 +122,7 @@ class FindOperation extends ModelQueryBuilderOperation
         return $this->doCallAfterFind($context, $model, $results);
     }
 
-    public function callAfterFindForRelations($context, ?array &$model, array &$results)
+    public function callAfterFindForRelations($context, ?Model &$model, array &$results)
     {
         if($model === null) return false;
 
@@ -130,10 +130,12 @@ class FindOperation extends ModelQueryBuilderOperation
         foreach($model as $key=>$value)
         {
             if($this->isRelation($value))
+            {
+                $result = $this->callInstanceAfterFind($context, $value, true);
 
-            $result = $this->callInstanceAfterFind($context, $value, true);
+                $results[] = $result;
+            }
 
-            $results[] = $result;
         }
 
         return false;

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection;
+namespace Sharksmedia\Qarium;
 
 // 2023-07-10
 
-class ModelQueryBuilderContext extends ModelQueryBuilderContextBase
+class ModelSharQContext extends ModelSharQContextBase
 {
     /**
      * 2023-07-10
@@ -26,6 +26,8 @@ class ModelQueryBuilderContext extends ModelQueryBuilderContextBase
      */
     private array $onBuild = [];
 
+    public $transaction;
+
     public function addOnBuildCallback(\Closure $callback)
     {
         $this->onBuild[] = $callback;
@@ -33,7 +35,7 @@ class ModelQueryBuilderContext extends ModelQueryBuilderContextBase
 
     public function getRunBeforeCallback(): callable
     {
-        return function(ModelQueryBuilder $iBuilder)
+        return function(ModelSharQ $iBuilder)
         {
             foreach($this->runBefore as $callback) $callback($iBuilder);
         };
@@ -41,7 +43,7 @@ class ModelQueryBuilderContext extends ModelQueryBuilderContextBase
 
     public function getRunAfterCallback(): callable
     {
-        return function(ModelQueryBuilder $iBuilder)
+        return function(ModelSharQ $iBuilder)
         {
             foreach($this->runAfter as $callback) $callback($iBuilder);
         };
@@ -49,7 +51,7 @@ class ModelQueryBuilderContext extends ModelQueryBuilderContextBase
 
     public function getOnBuildCallback(): callable
     {
-        return function(ModelQueryBuilder $iBuilder)
+        return function(ModelSharQ $iBuilder)
         {
             foreach($this->onBuild as $callback) $callback($iBuilder);
         };

@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
 class WhereInEagerOperation extends EagerOperation
 {

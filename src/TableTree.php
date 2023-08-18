@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection;
+namespace Sharksmedia\Qarium;
 
-use Sharksmedia\Objection\RelationExpression;
-use Sharksmedia\Objection\RelationNode;
+use Sharksmedia\Qarium\RelationExpression;
+use Sharksmedia\Qarium\RelationNode;
 
 // 2023-07-12
 

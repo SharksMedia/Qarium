@@ -7,14 +7,14 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-use Sharksmedia\Objection\Model;
-use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
-use Sharksmedia\Objection\StaticHookArguments;
-use Sharksmedia\Objection\ModelQueryBuilder;
+use Sharksmedia\Qarium\Model;
+use Sharksmedia\Qarium\ModelSharQOperationSupport;
+use Sharksmedia\Qarium\StaticHookArguments;
+use Sharksmedia\Qarium\ModelSharQ;
 
-class UpdateOperation extends ModelQueryBuilderOperation
+class UpdateOperation extends ModelSharQOperation
 {
 
     protected ?Model $iModel = null;
@@ -28,7 +28,7 @@ class UpdateOperation extends ModelQueryBuilderOperation
         $this->modelOptions = array_merge([], $this->options['modelOptions'] ?? []);
     }
 
-    public function onAdd(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
+    public function onAdd(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
         $data = $arguments[0];
 
@@ -54,7 +54,7 @@ class UpdateOperation extends ModelQueryBuilderOperation
         return true;
     }
 
-    public function onBefore2(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
+    public function onBefore2(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
         $this->callBeforeUpdate($iBuilder, $this->iModel, $this->modelOptions);
 
@@ -62,11 +62,11 @@ class UpdateOperation extends ModelQueryBuilderOperation
     }
 
     /**
-     * @param ModelQueryBuilderOperationSupport|ModelQueryBuilder $iBuilder
+     * @param ModelSharQOperationSupport|ModelSharQ $iBuilder
      * @param mixed ...$arguments
      * @return bool
      */
-    public function onBefore3(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
+    public function onBefore3(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
         if($this->iModel === null) return true;
         
@@ -81,42 +81,40 @@ class UpdateOperation extends ModelQueryBuilderOperation
         return true;
     }
 
-    public function onBuildQueryBuilder(ModelQueryBuilderOperationSupport $iBuilder, $iQueryBuilder)
+    public function onBuildSharQ(ModelSharQOperationSupport $iBuilder, $iSharQ)
     {
         $json = $this->iModel->toDatabaseArray($iBuilder);
 
-        // codecept_debug($iBuilder);
-
         $convertedJson = $this->convertFieldExpressionsToRaw($iBuilder, $this->iModel, $json);
 
-        return $iQueryBuilder->update(array_merge($convertedJson, $this->updateData));
+        return $iSharQ->update(array_merge($convertedJson, $this->updateData));
     }
 
-    public function onAfter2(ModelQueryBuilderOperationSupport $iBuilder, &$result)
+    public function onAfter2(ModelSharQOperationSupport $iBuilder, &$result)
     {
         return $this->callAfterUpdate($iBuilder, $this->iModel, $this->modelOptions, $result);
     }
 
-    public function toFindOperation(ModelQueryBuilderOperationSupport $iBuilder): ?ModelQueryBuilderOperation
+    public function toFindOperation(ModelSharQOperationSupport $iBuilder): ?ModelSharQOperation
     {
         return null;
     }
 
-    private function callBeforeUpdate(ModelQueryBuilder $iBuilder, ?Model $iModel, $modelOptions)
+    private function callBeforeUpdate(ModelSharQ $iBuilder, ?Model $iModel, $modelOptions)
     {
         $this->callInstanceBeforeUpdate($iBuilder, $iModel, $modelOptions);
 
         return $this->callStaticBeforeUpdate($iBuilder);
     }
 
-    private function callInstanceBeforeUpdate(ModelQueryBuilder $iBuilder, ?Model $iModel, $modelOptions)
+    private function callInstanceBeforeUpdate(ModelSharQ $iBuilder, ?Model $iModel, $modelOptions)
     {
         if($iModel === null) return null;
 
         return $iModel->lbeforeUpdate($iBuilder->getContext());
     }
 
-    private function callStaticBeforeUpdate(ModelQueryBuilder $iBuilder)
+    private function callStaticBeforeUpdate(ModelSharQ $iBuilder)
     {
         $args = StaticHookArguments::create($iBuilder);
 
@@ -126,18 +124,18 @@ class UpdateOperation extends ModelQueryBuilderOperation
         return $modelClass::beforeUpdate($args);
     }
 
-    private function callAfterUpdate(ModelQueryBuilder $iBuilder, ?Model $iModel, $modelOptions, $result)
+    private function callAfterUpdate(ModelSharQ $iBuilder, ?Model $iModel, $modelOptions, $result)
     {
         $this->callInstanceAfterUpdate($iBuilder, $iModel, $modelOptions);
         return $this->callStaticAfterUpdate($iBuilder, $result);
     }
 
-    private function callInstanceAfterUpdate(ModelQueryBuilder $iBuilder, $iModel, $modelOptions)
+    private function callInstanceAfterUpdate(ModelSharQ $iBuilder, $iModel, $modelOptions)
     {
         return $iModel->lafterUpdate($iBuilder->getContext());
     }
 
-    private function callStaticAfterUpdate(ModelQueryBuilder $iBuilder, $result)
+    private function callStaticAfterUpdate(ModelSharQ $iBuilder, $result)
     {
         $args = StaticHookArguments::create($iBuilder, $result);
 
@@ -149,12 +147,12 @@ class UpdateOperation extends ModelQueryBuilderOperation
         return $maybeResult !== null ? $maybeResult : $result;
     }
 
-    private function convertFieldExpressionsToRaw(ModelQueryBuilder $iBuilder, ?Model $iModel, array $json): array
+    private function convertFieldExpressionsToRaw(ModelSharQ $iBuilder, ?Model $iModel, array $json): array
     {
         // You need to implement or find a suitable library for ref() function or its equivalent in PHP.
-        // Similar changes will be required for isKnexQueryBuilder() and isKnexRaw() functions.
+        // Similar changes will be required for isKnexSharQ() and isKnexRaw() functions.
 
-        $iQueryBuilder = $iBuilder->getQueryBuilder();
+        $iSharQ = $iBuilder->getSharQ();
         $convertedJson = [];
 
         foreach ($json as $key => $val) {
@@ -164,13 +162,13 @@ class UpdateOperation extends ModelQueryBuilderOperation
                 // $jsonRefs = '{' . join(',', $parsed['parsedExpr']['access']) . '}';
                 // $valuePlaceholder = '?';
 
-                // if (isKnexQueryBuilder($val) || isKnexRaw($val)) {
+                // if (isKnexSharQ($val) || isKnexRaw($val)) {
                 //     $valuePlaceholder = 'to_jsonb(?)';
                 // } else {
                 //     $val = json_encode($val);
                 // }
 
-                // $convertedJson[$parsed['column']] = $iQueryBuilder->raw(
+                // $convertedJson[$parsed['column']] = $iSharQ->raw(
                 //     `jsonb_set(??, '${jsonRefs}', ${valuePlaceholder}, true)`,
                 //     [$convertedJson[$parsed['column']] ?? $parsed['column'], $val]
                 // );

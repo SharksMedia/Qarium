@@ -7,12 +7,12 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-use Sharksmedia\Objection\Relations\Relation;
-use Sharksmedia\Objection\Relations\RelationOwner;
+use Sharksmedia\Qarium\Relations\Relation;
+use Sharksmedia\Qarium\Relations\RelationOwner;
 
-class RelateOperation extends ModelQueryBuilderOperation
+class RelateOperation extends ModelSharQOperation
 {
     protected Relation $iRelation;
     protected RelationOwner $iOwner;

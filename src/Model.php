@@ -7,25 +7,25 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection;
+namespace Sharksmedia\Qarium;
 
-use Sharksmedia\Objection\ModelQueryBuilder;
+use Sharksmedia\Qarium\ModelSharQ;
 
-use Sharksmedia\Objection\Relations\RelationProperty;
-use Sharksmedia\QueryBuilder\Client;
-use Sharksmedia\QueryBuilder\QueryBuilder;
-use Sharksmedia\QueryBuilder\Statement\Raw;
-use Sharksmedia\QueryBuilder\Transaction;
+use Sharksmedia\Qarium\Relations\RelationProperty;
+use Sharksmedia\SharQ\Client;
+use Sharksmedia\SharQ\SharQ;
+use Sharksmedia\SharQ\Statement\Raw;
+use Sharksmedia\SharQ\Transaction;
 
-use Sharksmedia\Objection\Relations\Relation;
-use Sharksmedia\Objection\Relations\RelationOwner;
+use Sharksmedia\Qarium\Relations\Relation;
+use Sharksmedia\Qarium\Relations\RelationOwner;
 
-use Sharksmedia\Objection\Operations\InstanceFindOperation;
-use Sharksmedia\Objection\Operations\InstanceInsertOperation;
-use Sharksmedia\Objection\Operations\InstanceUpdateOperation;
-use Sharksmedia\Objection\Operations\InstanceDeleteOperation;
+use Sharksmedia\Qarium\Operations\InstanceFindOperation;
+use Sharksmedia\Qarium\Operations\InstanceInsertOperation;
+use Sharksmedia\Qarium\Operations\InstanceUpdateOperation;
+use Sharksmedia\Qarium\Operations\InstanceDeleteOperation;
 
-use Sharksmedia\Objection\Exceptions\ModifierNotFoundError;
+use Sharksmedia\Qarium\Exceptions\ModifierNotFoundError;
 
 abstract class Model
 {
@@ -72,6 +72,9 @@ abstract class Model
      * @var array<string, array>
      */
     protected static array $metadataCache = [];
+
+    /** @var array<string, Relations\Relation> */
+    protected static array $iRelationCache = [];
 
     private static bool $shouldCloneObjectAttributes = true;
 
@@ -134,9 +137,9 @@ abstract class Model
 
     /**
      * 2023-06-12
-     * @var QueryBuilder
+     * @var SharQ
      */
-    private static ?QueryBuilder $iQueryBuilder = null;
+    private static ?SharQ $iSharQ = null;
 
     /**
      * 2023-06-12
@@ -154,14 +157,14 @@ abstract class Model
 
     public static function fetchTableMetadata(?Client $iClient=null, ?string $schema=null): array
     {
-        $iClient = $iClient ?? Objection::getClient();
+        $iClient = $iClient ?? Qarium::getClient();
         // TODO: Create a function on the compiler to do this
 
         $tableName = static::getTableName();
 
-        if(isset(self::$metadataCache[$tableName])) return self::$metadataCache[$tableName];
+        // if(isset(static::$metadataCache[$tableName])) return static::$metadataCache[$tableName];
 
-        $iQB = (new QueryBuilder($iClient, $schema))
+        $iQB = (new SharQ($iClient, $schema))
             ->select('*')
             ->from('information_schema.columns')
             ->where('table_name', '=', $tableName)
@@ -175,9 +178,11 @@ abstract class Model
 
         $statement = $iClient->query($iQuery);
 
-        self::$metadataCache[$tableName] = $statement->fetchAll(\PDO::FETCH_ASSOC);
+        // static::$metadataCache[$tableName] = $statement->fetchAll(\PDO::FETCH_ASSOC);
+        //
+        // return static::$metadataCache[$tableName];
 
-        return self::$metadataCache[$tableName];
+        return $statement->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     public static function getOmitPropsFromDatabaseArray(): array
@@ -207,11 +212,11 @@ abstract class Model
 
     public static function columnNameToPropertyName(string $columnName)
     {
-        static $cache = [];
-
-        $propertyName = $cache[$columnName] ?? null;
-
-        if($propertyName !== null) return $propertyName;
+        // static $cache = [];
+        //
+        // $propertyName = $cache[$columnName] ?? null;
+        //
+        // if($propertyName !== null) return $propertyName;
 
         $model = new static();
         $addedProps = $model->isAnonymous()
@@ -227,9 +232,11 @@ abstract class Model
 
         $propertyName = array_diff($props, $addedProps)[0] ?? null;
 
-        $cache[$columnName] = $propertyName ?? $columnName;
+        return $propertyName ?? $columnName;
 
-        return $cache[$columnName];
+        // $cache[$columnName] = $propertyName ?? $columnName;
+        //
+        // return $cache[$columnName];
     }
 
     /**
@@ -251,35 +258,29 @@ abstract class Model
     }
 
     /**
-     * @deprecated use getRelationNames instead
      * 2023-06-12
      * @param string $relationName
      * @return Relations\Relation
      */
-    public static function getRelationUnsafe(string $relationName): Relations\Relation
+    public static function getRelationUnsafe(string $relationName): ?array
     {
         $rawRelationsMap = static::getRelationMappings();
+
         $rawRelation = $rawRelationsMap[$relationName] ?? null;
 
-        if($rawRelation === null) throw new \Exception("Relation $relationName does not exist on model " . static::class);
-
-        /** @var array<string, Relations\Relation> */
-        static $relationsCache = [];
-
-        if(!isset($relationsCache[$relationName]))
-        {
-            $relationsCache[$relationName] = Relations\Relation::create($relationName, $rawRelation, static::class);
-            $relationsCache[$relationName]->setMapping($rawRelation);
-        }
-
-        return $relationsCache[$relationName];
+        return $rawRelation;
     }
 
     public static function getRelation(string $relationName): Relations\Relation
     {
-        $iRelation = static::getRelationUnsafe($relationName);
+        $rawRelation = static::getRelationUnsafe($relationName);
 
+        if($rawRelation === null) throw new RelationDoesNotExistError(static::class, $relationName);
         // get unsafe relation checks for errors
+
+        $iRelation = Relations\Relation::create($relationName, $rawRelation, static::class);
+
+        $iRelation->setMapping($rawRelation);
 
         return $iRelation;
     }
@@ -322,9 +323,9 @@ abstract class Model
      * 2023-06-12
      * @param self $instance
      * @param Client|Transaction|null $iTransactionOrClient
-     * @return ModelQueryBuilder
+     * @return ModelSharQ
      */
-    private static function instanceQuery(self $instance, $iTransactionOrClient=null): ModelQueryBuilder
+    private static function instanceQuery(self $instance, $iTransactionOrClient=null): ModelSharQ
     {
         /** @var \Model $modelClass */
         $modelClass = $instance::class;
@@ -363,11 +364,11 @@ abstract class Model
     /**
      * 2023-06-12
      * @param Transaction|Client|null $iTransaction
-     * @return ModelQueryBuilder
+     * @return ModelSharQ
      */
-    public static function query($iTransactionOrClient=null): ModelQueryBuilder
+    public static function query($iTransactionOrClient=null): ModelSharQ
     {
-        $query = ModelQueryBuilder::forClass(static::class)
+        $query = ModelSharQ::forClass(static::class)
             ->transacting($iTransactionOrClient);
 
         static::onCreateQuery($query);
@@ -375,12 +376,12 @@ abstract class Model
         return $query;
     }
 
-    public function lquery($iTransactionOrClient=null): ModelQueryBuilder
+    public function lquery($iTransactionOrClient=null): ModelSharQ
     {
         return self::instanceQuery($this, $iTransactionOrClient);
     }
 
-    public static function relatedQuery(string $relationsName, ?Transaction $iTransaction=null): ModelQueryBuilder
+    public static function relatedQuery(string $relationsName, ?Transaction $iTransaction=null): ModelSharQ
     {
         return static::__relatedQuery(static::class, $relationsName, $iTransaction);
     }
@@ -391,9 +392,9 @@ abstract class Model
      * @param string $relationName
      * @param Transaction|Client|null $iTransaction
      * @param bool $alwaysReturnArray
-     * @return ModelQueryBuilder
+     * @return ModelSharQ
      */
-    private static function __relatedQuery(string $modelClass, string $relationName, ?Transaction $iTransaction, bool $alwaysReturnArray=false): ModelQueryBuilder
+    private static function __relatedQuery(string $modelClass, string $relationName, ?Transaction $iTransaction, bool $alwaysReturnArray=false): ModelSharQ
     {
         /** @var Relation $iRelation */
         $iRelation = call_user_func([$modelClass, 'getRelation'], $relationName);
@@ -401,7 +402,7 @@ abstract class Model
         /** @var Model $relatedModelClass */
         $relatedModelClass = $iRelation->getRelatedModelClass();
 
-        /** @var ModelQueryBuilder $query */
+        /** @var ModelSharQ $query */
         $query = call_user_func([$relatedModelClass, 'query']);
 
         return $query->findOperationFactory(function($iBuilder) use($iRelation, $alwaysReturnArray, $modelClass)
@@ -448,7 +449,7 @@ abstract class Model
             })
             ->relateOperationFactory(function($iBuilder) use($iRelation)
             {
-                /** @var ModelQueryBuilder $iBuilder */
+                /** @var ModelSharQ $iBuilder */
                 /** @var Relations\HasMany|Relations\ManyToMany $iRelation */
 
                 $iRelationOwner = RelationOwner::create($iBuilder->for());
@@ -457,7 +458,7 @@ abstract class Model
             })
             ->unrelateOperationFactory(function($iBuilder) use($iRelation)
             {
-                /** @var ModelQueryBuilder $iBuilder */
+                /** @var ModelSharQ $iBuilder */
                 /** @var Relations\HasMany|Relations\ManyToMany $iRelation */
 
                 $iRelationOwner = RelationOwner::create($iBuilder->for());
@@ -466,10 +467,10 @@ abstract class Model
             });
     }
 
-    public function lrelatedQuery(string $relationsName, $iTransactionOrClient=null): ModelQueryBuilder
+    public function lrelatedQuery(string $relationsName, $iTransactionOrClient=null): ModelSharQ
     {
         $iBuilder = static::__relatedQuery(static::class, $relationsName, $iTransactionOrClient, false)
-            ->for($this::class);
+            ->for($this);
 
         return $iBuilder;
     }
@@ -484,7 +485,7 @@ abstract class Model
         
         // NOTE: A transaction should probably just be a wrapper around a client. Or a querybuilder with a transaction object.
 
-        if($iClient === null) $iClient = Objection::getClient();
+        if($iClient === null) $iClient = Qarium::getClient();
 
         $iTransaction = new Transaction($iClient);
 
@@ -568,30 +569,30 @@ abstract class Model
         return $relationPath.'_join';
     }
 
-    public static function setQueryBuilder(QueryBuilder $iQueryBuilder): void
+    public static function setSharQ(SharQ $iSharQ): void
     {
-        static::$iQueryBuilder = $iQueryBuilder;
+        static::$iSharQ = $iSharQ;
     }
 
-    public static function getQueryBuilder(): ?QueryBuilder
+    public static function getSharQ(): ?SharQ
     {
-        $iQueryBuilder = static::$iQueryBuilder ?? self::$iQueryBuilder ?? null;
+        $iSharQ = static::$iSharQ ?? null;
 
-        if($iQueryBuilder === null)
+        if($iSharQ === null)
         {
-            $iClient = Objection::getClient();
+            $iClient = Qarium::getClient();
 
             if($iClient === null) return null;
 
-            $iQueryBuilder = new QueryBuilder($iClient);
+            $iSharQ = new SharQ($iClient);
         }
 
-        return $iQueryBuilder;
+        return $iSharQ;
     }
 
-    public static function getQueryBuilderQuery(): ?QueryBuilder
+    public static function getSharQQuery(): ?SharQ
     {
-        return static::getQueryBuilder()->table(static::getTableName());
+        return static::getSharQ()->table(static::getTableName());
     }
 
     /**
@@ -624,13 +625,13 @@ abstract class Model
         return [];
     }
 
-    public static function modifierNotFound(ModelQueryBuilder $iBuilder, string $modifierName): void
+    public static function modifierNotFound(ModelSharQ $iBuilder, string $modifierName): void
     {// 2023-08-02
         throw new ModifierNotFoundError($modifierName);
     }
 
     // Merges and converts `model`'s query properties into array.
-    private static function mergeQueryProps(Model $iModel, array $array, array $omitFromArray, ModelQueryBuilder $iBuilder): array
+    private static function mergeQueryProps(Model $iModel, array $array, array $omitFromArray, ModelSharQ $iBuilder): array
     {
         $array = self::convertExistingQueryProps($array, $iBuilder);
         $array = self::convertAndMergeHiddenQueryProps($iModel, $array, $omitFromArray, $iBuilder);
@@ -641,7 +642,7 @@ abstract class Model
     // Converts the query properties in `json` to knex raw instances.
     // `json` may have query properties even though we removed them.
     // For example they may have been added in lifecycle hooks.
-    private static function convertExistingQueryProps(array $array, ModelQueryBuilder $iBuilder): array
+    private static function convertExistingQueryProps(array $array, ModelSharQ $iBuilder): array
     {
         $keys = array_keys($array);
 
@@ -652,7 +653,7 @@ abstract class Model
 
             if(self::isQueryProp($value))
             {
-                $array[$key] = self::queryPropToQueryBuilderRaw($value, $iBuilder);
+                $array[$key] = self::queryPropToSharQRaw($value, $iBuilder);
             }
         }
 
@@ -671,7 +672,7 @@ abstract class Model
 
     // Converts and merges the query props that were split from the model
     // and stored into QUERY_PROPS_PROPERTY.
-    private static function convertAndMergeHiddenQueryProps(Model $iModel, array $array, array $omitFromArray, ModelQueryBuilder $iBuilder)
+    private static function convertAndMergeHiddenQueryProps(Model $iModel, array $array, array $omitFromArray, ModelSharQ $iBuilder)
     {
         $queryProps = $iModel->getQueryProps();
 
@@ -685,7 +686,7 @@ abstract class Model
         {
             if(!$omitFromArray || !in_array($key, $omitFromArray))
             {
-                $queryProp = self::queryPropToQueryBuilderRaw($value, $iBuilder);
+                $queryProp = self::queryPropToSharQRaw($value, $iBuilder);
                 $array[$iModel->getPropertyNameToColumnName($key)] = $queryProp;
             }
         }
@@ -698,29 +699,29 @@ abstract class Model
         if(!is_object($value)) return false;
 
         return
-            Utilities::isQueryBuilder($value) ||
-            Utilities::isQueryBuilderRaw($value) ||
-            Utilities::isQueryBuilderRawConvertable($value) ||
-            Utilities::isModelQueryBuilderBase($value);
+            Utilities::isSharQ($value) ||
+            Utilities::isSharQRaw($value) ||
+            Utilities::isSharQRawConvertable($value) ||
+            Utilities::isModelSharQBase($value);
     }
 
     // Converts a query property into a knex `raw` instance.
-    private static function queryPropToQueryBuilderRaw($value, ModelQueryBuilder $iBuilder): \Sharksmedia\QueryBuilder\Statement\Raw
+    private static function queryPropToSharQRaw($value, ModelSharQ $iBuilder): \Sharksmedia\SharQ\Statement\Raw
     {
-        if(Utilities::isQueryBuilder($value))
+        if(Utilities::isSharQ($value))
         {
-            /** @var ModelQueryBuilder $value */
+            /** @var ModelSharQ $value */
             return $value->subQueryOf($value, $iBuilder);
         }
-        else if(Utilities::isQueryBuilderRaw($value))
+        else if(Utilities::isSharQRaw($value))
         {
             return $value;
         }
-        else if(Utilities::isQueryBuilderRawConvertable($value))
+        else if(Utilities::isSharQRawConvertable($value))
         {
             throw new \Exception("Not implemented.");
         }
-        else if(Utilities::isModelQueryBuilderBase($value))
+        else if(Utilities::isModelSharQBase($value))
         {
             throw new \Exception("Not implemented.");
         }
@@ -744,7 +745,7 @@ abstract class Model
         return $array;
     }
 
-    public function toDatabaseArray(ModelQueryBuilder $iBuilder): array
+    public function toDatabaseArray(ModelSharQ $iBuilder): array
     {
         $options =
         [

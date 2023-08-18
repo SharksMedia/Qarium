@@ -7,12 +7,12 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-use Sharksmedia\Objection\ModelQueryBuilder;
-use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
+use Sharksmedia\Qarium\ModelSharQ;
+use Sharksmedia\Qarium\ModelSharQOperationSupport;
 
-class FindByIdsOperation extends ModelQueryBuilderOperation
+class FindByIdsOperation extends ModelSharQOperation
 {
     private ?array $ids;
 
@@ -23,16 +23,16 @@ class FindByIdsOperation extends ModelQueryBuilderOperation
         $this->ids = null;
     }
 
-    public function onAdd(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
+    public function onAdd(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
         $this->ids = $arguments[0];
 
         return parent::onAdd($iBuilder, $arguments);
     }
 
-    public function onBuild(ModelQueryBuilderOperationSupport $iBuilder): void
+    public function onBuild(ModelSharQOperationSupport $iBuilder): void
     {
-        /** @var ModelQueryBuilder $iBuilder */
+        /** @var ModelSharQ $iBuilder */
         $iBuilder->whereInComposite($iBuilder->getFullIdColumn(), $this->ids);
     }
 

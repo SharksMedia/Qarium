@@ -1,12 +1,12 @@
 <?php
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
+use Sharksmedia\Qarium\ModelSharQOperationSupport;
 
 class HasManyUnrelateOperation extends UnrelateOperation
 {
-    public function queryExecutor(ModelQueryBuilderOperationSupport $iBuilder): ?ModelQueryBuilderOperationSupport
+    public function queryExecutor(ModelSharQOperationSupport $iBuilder): ?ModelSharQOperationSupport
     {
         $patch = [];
         $iRelatedProp = $this->iRelation->getRelatedProp();
@@ -26,9 +26,9 @@ class HasManyUnrelateOperation extends UnrelateOperation
 
         $query->patch($patch);
 
-        $query->copyFrom($iBuilder, ModelQueryBuilderOperationSupport::JOIN_SELECTOR);
+        $query->copyFrom($iBuilder, ModelSharQOperationSupport::JOIN_SELECTOR);
 
-        $query->copyFrom($iBuilder, ModelQueryBuilderOperationSupport::WHERE_SELECTOR);
+        $query->copyFrom($iBuilder, ModelSharQOperationSupport::WHERE_SELECTOR);
 
         $query->whereInComposite($relatedRefs, $ownerValues);
 
@@ -40,8 +40,8 @@ class HasManyUnrelateOperation extends UnrelateOperation
         return $relatedModelClass::query()
             ->childQueryOf($iBuilder)
             ->patch($patch)
-            ->copyFrom($iBuilder, ModelQueryBuilderOperationSupport::JOIN_SELECTOR)
-            ->copyFrom($iBuilder, ModelQueryBuilderOperationSupport::WHERE_SELECTOR)
+            ->copyFrom($iBuilder, ModelSharQOperationSupport::JOIN_SELECTOR)
+            ->copyFrom($iBuilder, ModelSharQOperationSupport::WHERE_SELECTOR)
             ->whereInComposite($relatedRefs, $ownerValues)
             ->modify($this->iRelation->getModify());
     }

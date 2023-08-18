@@ -7,23 +7,23 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-use Sharksmedia\Objection\ModelQueryBuilder;
-use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
+use Sharksmedia\Qarium\ModelSharQ;
+use Sharksmedia\Qarium\ModelSharQOperationSupport;
 
-class OnErrorOperation extends ModelQueryBuilderOperation
+class OnErrorOperation extends ModelSharQOperation
 {
     private ?\Closure $function = null;
     
-    public function onAdd(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
+    public function onAdd(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
         $this->function = $arguments[0] ?? null;
 
         return true;
     }
 
-    public function onError(ModelQueryBuilder $iBuilder, ...$arguments)
+    public function onError(ModelSharQ $iBuilder, ...$arguments)
     {
         if($this->function === null) return;
 

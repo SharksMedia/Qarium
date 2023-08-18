@@ -7,16 +7,16 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-use Sharksmedia\Objection\ModelQueryBuilder;
-use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
+use Sharksmedia\Qarium\ModelSharQ;
+use Sharksmedia\Qarium\ModelSharQOperationSupport;
 
-class RangeOperation extends ModelQueryBuilderOperation
+class RangeOperation extends ModelSharQOperation
 {
-    private ModelQueryBuilder $resultSizeBuilder;
+    private ModelSharQ $resultSizeBuilder;
      
-    public function onAdd(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
+    public function onAdd(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
         if(count($arguments) !== 2) return true;
 
@@ -30,14 +30,14 @@ class RangeOperation extends ModelQueryBuilderOperation
         return true;
     }
 
-    public function onBefore1(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
+    public function onBefore1(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
         $this->resultSizeBuilder = clone $iBuilder;
 
         return parent::onBefore1($iBuilder, ...$arguments);
     }
 
-    public function onAfter3(ModelQueryBuilderOperationSupport $iBuilder, &$result)
+    public function onAfter3(ModelSharQOperationSupport $iBuilder, &$result)
     {
         $resultSize = $this->resultSizeBuilder->resultSize();
 

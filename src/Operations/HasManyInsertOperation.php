@@ -1,6 +1,6 @@
 <?php
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
 class HasManyInsertOperation extends InsertOperation
 {

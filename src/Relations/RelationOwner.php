@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 // 2023-08-10
 
-namespace Sharksmedia\Objection\Relations;
+namespace Sharksmedia\Qarium\Relations;
 
-use Sharksmedia\Objection\Model;
-use Sharksmedia\Objection\ModelQueryBuilder;
-use Sharksmedia\Objection\ReferenceBuilder;
-use Sharksmedia\Objection\Utilities;
+use Sharksmedia\Qarium\Model;
+use Sharksmedia\Qarium\ModelSharQ;
+use Sharksmedia\Qarium\ReferenceBuilder;
+use Sharksmedia\Qarium\Utilities;
 
 /**
  * The owner of a relation is the table that the relation is defined on.
@@ -24,18 +24,19 @@ class RelationOwner
     public const TYPE_QUERY_BUILDER = 'QUERY_BUILDER';
     public const TYPE_IDENTIFIERS = 'IDENTIFIERS';
 
-    /** @var Model|Model[]|ReferenceBuilder|ReferenceBuilder[]|ModelQueryBuilder $iOwner */
+    /** @var Model|Model[]|ReferenceBuilder|ReferenceBuilder[]|ModelSharQ $iOwner */
     private $iOwner;
 
     /** @var string $type */
     private $type;
 
     /**
-     * @param Model|ReferenceBuilder|ModelQueryBuilder $iOwner
+     * @param Model|ReferenceBuilder|ModelSharQ $iOwner
      */
     public function __construct($iOwner=null)
     {
         $this->iOwner = $iOwner;
+
         $this->type = self::detectType($iOwner);
     }
 
@@ -49,7 +50,7 @@ class RelationOwner
         return $this->iOwner;
     }
 
-    public static function createParentReference(ModelQueryBuilder $iBuilder, Relation $iRelation): self
+    public static function createParentReference(ModelSharQ $iBuilder, Relation $iRelation): self
     {
         $iOwnerProperty = $iRelation->getOwnerProp();
         $iPartialQuery = self::findFirstNonPartialAncestorQuery($iBuilder);
@@ -67,7 +68,7 @@ class RelationOwner
         {
             return self::TYPE_REFERENCE;
         }
-        else if(self::isModelQueryBuilder($owner))
+        else if(self::isModelSharQ($owner))
         {
             return self::TYPE_QUERY_BUILDER;
         }
@@ -95,12 +96,12 @@ class RelationOwner
         return is_array($value) && self::isReference($value[0] ?? null);
     }
 
-    private static function isModelQueryBuilder($value): bool
+    private static function isModelSharQ($value): bool
     {
-        return $value instanceof ModelQueryBuilder;
+        return $value instanceof ModelSharQ;
     }
 
-    private static function findFirstNonPartialAncestorQuery(ModelQueryBuilder $iBuilder): ModelQueryBuilder
+    private static function findFirstNonPartialAncestorQuery(ModelSharQ $iBuilder): ModelSharQ
     {
         $iParentBuilder = $iBuilder->getParentQuery();
 
@@ -120,12 +121,12 @@ class RelationOwner
     }
 
     /**
-     * @param ModelQueryBuilder $iBuilder
+     * @param ModelSharQ $iBuilder
      * @param Relation $iRelation
      * @param array<int, ReferenceBuilder> $iRelatedReferences
-     * @return ModelQueryBuilder
+     * @return ModelSharQ
      */
-    public function buildFindQuery(ModelQueryBuilder $iBuilder, Relation $iRelation, array $iRelatedReferences)
+    public function buildFindQuery(ModelSharQ $iBuilder, Relation $iRelation, array $iRelatedReferences)
     {
         if($this->getType() === self::TYPE_REFERENCE)
         {
@@ -171,7 +172,7 @@ class RelationOwner
         return null;
     }
 
-    private function getPropertiesFromModels(RelationProperty $iOwnerProperty): array
+    private function getPropertiesFromModels(RelationProperty $iOwnerProperty): ?array
     {
         /** @var Model[] $iModels */
         $iModels = is_array($this->iOwner) ? $this->iOwner : [$this->iOwner];
@@ -181,14 +182,14 @@ class RelationOwner
             return $iOwnerProperty->getProperties($iModel);
         }, $iModels);
 
-        if(self::containsNonNull($iProperties)) return null;
+        if(!self::containsNonNull($iProperties)) return null;
 
         $mapped = [];
         foreach($iProperties as $iProperty)
         {
             $key = print_r($iProperty, true);
 
-            $iProperties[$key] = $iProperty;
+            $mapped[$key] = $iProperty;
         }
 
         return $mapped;
@@ -197,10 +198,10 @@ class RelationOwner
     private function getPropertiesFromIdentifiers(Relation $iRelation, RelationProperty $iOwnerProperty)
     {
         $ids = Utilities::normalizeIds($this->iOwner, $iOwnerProperty, ['arrayOutput'=>true]);
-        
+
         if(self::isIdProperty($iOwnerProperty)) return $ids;
 
-        /** @var ModelQueryBuilder $query */
+        /** @var ModelSharQ $query */
         $query = call_user_func([$iRelation->getOwnerModelClass(), 'query']);
 
         $query->select($iOwnerProperty->getReferences($query));
@@ -248,7 +249,7 @@ class RelationOwner
         return false;
     }
 
-    private static function isOwnerModelClassQuery(ModelQueryBuilder $iBuilder, Relation $iRelation): bool
+    private static function isOwnerModelClassQuery(ModelSharQ $iBuilder, Relation $iRelation): bool
     {
         $modelClass = call_user_func([$iBuilder->getModelClass(), 'class']);
         $ownerModelClass = call_user_func([$iRelation->getOwnerModelClass(), 'class']);
@@ -256,13 +257,13 @@ class RelationOwner
         return $modelClass === $ownerModelClass;
     }
 
-    public function getSplitProps(ModelQueryBuilder $iBuilder, Relation $iRelation, RelationProperty $iOwnerProperty=null): array
+    public function getSplitProps(ModelSharQ $iBuilder, Relation $iRelation, RelationProperty $iOwnerProperty=null): array
     {
         $iOwnerProperty = $iOwnerProperty ?? $iRelation->getOwnerProp();
 
         $values = $this->getProperties($iRelation, $iOwnerProperty);
 
-        if(!($values instanceof ModelQueryBuilder)) return $values;
+        if(!($values instanceof ModelSharQ)) return $values;
         
         if($iOwnerProperty->getSize() === 1) return [[$values]];
 

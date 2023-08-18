@@ -7,9 +7,9 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-class InsertAndFetchOperation extends ModelQueryBuilderOperation
+class InsertAndFetchOperation extends ModelSharQOperation
 {
 }
 

@@ -7,13 +7,13 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection;
+namespace Sharksmedia\Qarium;
 
-use Sharksmedia\QueryBuilder\Client;
+use Sharksmedia\SharQ\Client;
 
-// require '../vendor/sharksmedia/query-builder/src/QueryBuilder.php';
+// require '../vendor/sharksmedia/query-builder/src/SharQ.php';
 
-class ModelRelatedQueryBuilder extends ModelQueryBuilder
+class ModelRelatedSharQ extends ModelSharQ
 {
     /**
      * 2023-07-03

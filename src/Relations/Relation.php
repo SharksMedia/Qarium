@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 // 2023-07-10
 
-namespace Sharksmedia\Objection\Relations;
+namespace Sharksmedia\Qarium\Relations;
 
 use Exception;
-use Sharksmedia\Objection\Model;
-use Sharksmedia\Objection\ModelQueryBuilder;
+use Sharksmedia\Qarium\Model;
+use Sharksmedia\Qarium\ModelSharQ;
 
-use Sharksmedia\Objection\Exceptions\ModelNotFoundError;
-use Sharksmedia\Objection\Exceptions\InvalidReferenceError;
-use Sharksmedia\Objection\JoinBuilder;
+use Sharksmedia\Qarium\Exceptions\ModelNotFoundError;
+use Sharksmedia\Qarium\Exceptions\InvalidReferenceError;
+use Sharksmedia\Qarium\JoinBuilder;
 
-use Sharksmedia\Objection\Operations\RelationFindOperation;
-use Sharksmedia\Objection\Operations\RelationUpdateOperation;
-use Sharksmedia\Objection\Operations\RelationDeleteOperation;
-use Sharksmedia\Objection\Operations\RelationRelateOperation;
-use Sharksmedia\Objection\Operations\RelationUnrelateOperation;
+use Sharksmedia\Qarium\Operations\RelationFindOperation;
+use Sharksmedia\Qarium\Operations\RelationUpdateOperation;
+use Sharksmedia\Qarium\Operations\RelationDeleteOperation;
+use Sharksmedia\Qarium\Operations\RelationRelateOperation;
+use Sharksmedia\Qarium\Operations\RelationUnrelateOperation;
 
 class Relation
 {
@@ -116,7 +116,12 @@ class Relation
 
         $this->name = $relationName;
         $this->ownerModelClass = $ownerModelClass;
-        $this->relatedModelClass = $rawRelation['modelClass'] ?? null;
+
+        $relatedModelClass = $rawRelation['modelClass'] ?? null;
+
+        if($relatedModelClass === null) throw new \LogicException("Model class is not defined or is null");
+
+        $this->relatedModelClass = $relatedModelClass;
     }
 
     /**
@@ -243,7 +248,7 @@ class Relation
         return new RelationUnrelateOperation('unrelate', ['relation'=>$this, 'iOwner'=>$iOwner]);
     }
 
-    public function join(ModelQueryBuilder $iBuilder, ?string $joinOperation=null, ?string $relatedTableAlias=null, ?ModelQueryBuilder $relatedJoinSelectQuery=null, ?string $relatedTable=null, ?string $ownerTable=null): ModelQueryBuilder
+    public function join(ModelSharQ $iBuilder, ?string $joinOperation=null, ?string $relatedTableAlias=null, ?ModelSharQ $relatedJoinSelectQuery=null, ?string $relatedTable=null, ?string $ownerTable=null): ModelSharQ
     {
         $relatedModelClass = $this->getRelatedModelClass();
         $joinOperation = $joinOperation ?? 'join';
@@ -275,7 +280,7 @@ class Relation
             });
     }
 
-    protected function applyModify(ModelQueryBuilder $iBuilder): ModelQueryBuilder
+    protected function applyModify(ModelSharQ $iBuilder): ModelSharQ
     {// 2023-08-01
         return $iBuilder->modify($this->modify);
     }
@@ -569,7 +574,7 @@ class Relation
         }
     }
 
-    public function findQuery(ModelQueryBuilder $iBuilder, RelationOwner $iOwner)
+    public function findQuery(ModelSharQ $iBuilder, RelationOwner $iOwner)
     {
         $relatedRefs = $this->iRelatedProperty->refs($iBuilder);
         $iOwner->buildFindQuery($iBuilder, $this, $relatedRefs);

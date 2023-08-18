@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection\Transformations;
+namespace Sharksmedia\Qarium\Transformations;
 
-use Sharksmedia\Objection\ModelQueryBuilder;
+use Sharksmedia\Qarium\ModelSharQ;
 
 class QueryTransformation
 {
-    public function onConvertQueryBuilderBase(ModelQueryBuilder $iQuery, ModelQueryBuilder $iBuilder): ModelQueryBuilder
+    public function onConvertSharQBase(ModelSharQ $iQuery, ModelSharQ $iBuilder): ModelSharQ
     {
         return $iQuery;
     }

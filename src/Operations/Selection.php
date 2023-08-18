@@ -7,10 +7,10 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-use Sharksmedia\Objection\ReferenceBuilder;
-use Sharksmedia\QueryBuilder\Statement\Raw;
+use Sharksmedia\Qarium\ReferenceBuilder;
+use Sharksmedia\SharQ\Statement\Raw;
 
 class Selection
 {

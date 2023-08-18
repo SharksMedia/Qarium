@@ -7,9 +7,9 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-class FromOperation extends ModelQueryBuilderOperation
+class FromOperation extends ModelSharQOperation
 {
     public const ALIAS_REGEX = '/\s+as\s+/i';
 

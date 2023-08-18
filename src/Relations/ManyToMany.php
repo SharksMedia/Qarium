@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 // 2023-07-10
 
-namespace Sharksmedia\Objection\Relations;
+namespace Sharksmedia\Qarium\Relations;
 
-use Sharksmedia\Objection\Exceptions\ModelNotFoundError;
-use Sharksmedia\Objection\JoinBuilder;
-use Sharksmedia\Objection\ModelQueryBuilder;
-use Sharksmedia\Objection\Model;
-use Sharksmedia\Objection\ModelJoinBuilder;
+use Sharksmedia\Qarium\Exceptions\ModelNotFoundError;
+use Sharksmedia\Qarium\JoinBuilder;
+use Sharksmedia\Qarium\ModelSharQ;
+use Sharksmedia\Qarium\Model;
+use Sharksmedia\Qarium\ModelJoinBuilder;
 
 class ManyToMany extends Relation
 {
@@ -28,27 +28,27 @@ class ManyToMany extends Relation
         return 'join';
     }
 
-    private static function defaultRelatedTableAlias(self $iRelation, ModelQueryBuilder $iBuilder): string
+    private static function defaultRelatedTableAlias(self $iRelation, ModelSharQ $iBuilder): string
     {
         return $iBuilder->getTableRefFor($iRelation->relatedModelClass);
     }
 
-    private static function defaultRelatedJoinSelectQuery(self $iRelation, ModelQueryBuilder $iBuilder): ModelQueryBuilder
+    private static function defaultRelatedJoinSelectQuery(self $iRelation, ModelSharQ $iBuilder): ModelSharQ
     {
         return $iRelation->relatedModelClass::query()->childQueryOf($iBuilder);
     }
 
-    private static function defaultRelatedTable(self $iRelation, ModelQueryBuilder $iBuilder): string
+    private static function defaultRelatedTable(self $iRelation, ModelSharQ $iBuilder): string
     {
         return $iBuilder->getTableNameFor($iRelation->relatedModelClass);
     }
 
-    private static function defaultOwnerTable(self $iRelation, ModelQueryBuilder $iBuilder): string
+    private static function defaultOwnerTable(self $iRelation, ModelSharQ $iBuilder): string
     {
         return $iBuilder->getTableNameFor($iRelation->ownerModelClass);
     }
 
-    private static function defaultJoinTableAlias(self $iRelation, string $relatedTableAlias, ModelQueryBuilder $iBuilder): string
+    private static function defaultJoinTableAlias(self $iRelation, string $relatedTableAlias, ModelSharQ $iBuilder): string
     {
         $alias = null;
 
@@ -276,7 +276,7 @@ class ManyToMany extends Relation
         return $context;
     }
 
-    public function join(ModelQueryBuilder $iBuilder, ?string $joinOperation=null, ?string $relatedTableAlias=null, ?ModelQueryBuilder $relatedJoinSelectQuery=null, ?string $relatedTable=null, ?string $ownerTable=null): ModelQueryBuilder
+    public function join(ModelSharQ $iBuilder, ?string $joinOperation=null, ?string $relatedTableAlias=null, ?ModelSharQ $relatedJoinSelectQuery=null, ?string $relatedTable=null, ?string $ownerTable=null): ModelSharQ
     {
         $joinOperation = $joinOperation ?? self::defaultJoinOperation($this, $iBuilder);
         $relatedTableAlias = $relatedTableAlias ?? self::defaultRelatedTableAlias($this, $iBuilder);

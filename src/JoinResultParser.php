@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection;
+namespace Sharksmedia\Qarium;
 
 // 2023-07-31
 
@@ -81,6 +81,7 @@ class JoinResultParser
             $this->parseNode($this->iTableTree->getRootNode(), $flatRow);
         }
 
+
         return $this->iRootModels;
     }
 
@@ -114,13 +115,13 @@ class JoinResultParser
         }
     }
 
-    private function addToParent(TableNode $iTableNode, Model $iModel, Model &$iParentModel): void
+    private function addToParent(TableNode $iTableNode, Model $iModel, ?Model &$iParentModel): void
     {// 2023-07-31
         if($iTableNode->getParentNode())
         {
             $iTableNode->getRelation()->isOneToOne()
-                ? $iParentModel[$iTableNode->getRelationProperty()] = $iModel
-                : $iParentModel[$iTableNode->getRelationProperty()][] = $iModel;
+                ? $iParentModel->{$iTableNode->getRelationProperty()} = $iModel
+                : $iParentModel->{$iTableNode->getRelationProperty()}[] = $iModel;
             
             return;
         }
@@ -129,7 +130,7 @@ class JoinResultParser
         $this->iRootModels[] = $iModel;
     }
 
-    private function getKey(?string $parentKey, string $id, TableNode $iTableNode): string
+    private function getKey(?string $parentKey, $id, TableNode $iTableNode): string
     {
         if($parentKey !== null) return $parentKey . "/" . $iTableNode->getRelationProperty() . "/" . $id;
 

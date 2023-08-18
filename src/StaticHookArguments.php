@@ -2,32 +2,32 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection;
+namespace Sharksmedia\Qarium;
 
-use Sharksmedia\Objection\Operations\ModelQueryBuilderOperation;
-use Sharksmedia\Objection\Relations\Relation;
+use Sharksmedia\Qarium\Operations\ModelSharQOperation;
+use Sharksmedia\Qarium\Relations\Relation;
 
 // 2023-07-11
 
 class StaticHookArguments
 {
     /**
-     * @var ModelQueryBuilder|null
+     * @var ModelSharQ|null
      */
-    private ModelQueryBuilder $iBuilder;
+    private ModelSharQ $iBuilder;
 
     /**
      * @var mixed
      */
     private $result;
 
-    public function __construct(ModelQueryBuilder $iBuilder, $result=null)
+    public function __construct(ModelSharQ $iBuilder, $result=null)
     {
         $this->iBuilder = $iBuilder;
         $this->result = $result;
     }
 
-    public static function create(ModelQueryBuilder $iBuilder, $result=null): StaticHookArguments
+    public static function create(ModelSharQ $iBuilder, $result=null): StaticHookArguments
     {
         return new StaticHookArguments($iBuilder, $result);
     }
@@ -49,7 +49,7 @@ class StaticHookArguments
 
     public function getTransaction()
     {
-        return $this->iBuilder->getUnsafeQueryBuilder();
+        return $this->iBuilder->getUnsafeSharQ();
     }
 
     public function getRelation(): Relation

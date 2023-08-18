@@ -7,18 +7,18 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection;
+namespace Sharksmedia\Qarium;
 
 use Closure;
-use Sharksmedia\Objection\Operations\ModelQueryBuilderOperation;
-use Sharksmedia\QueryBuilder\Query;
-use Sharksmedia\QueryBuilder\QueryBuilder;
-use Sharksmedia\QueryBuilder\Statement\Join;
+use Sharksmedia\Qarium\Operations\ModelSharQOperation;
+use Sharksmedia\SharQ\Query;
+use Sharksmedia\SharQ\SharQ;
+use Sharksmedia\SharQ\Statement\Join;
 
-abstract class ModelQueryBuilderOperationSupport
+abstract class ModelSharQOperationSupport
 {
-    public const QUERY_BUILDER_CONTEXT = ModelQueryBuilderContextBase::class;
-    public const QUERY_BUILDER_USER_CONTEXT = ModelQueryBuilderContextBase::class;
+    public const QUERY_BUILDER_CONTEXT = ModelSharQContextBase::class;
+    public const QUERY_BUILDER_USER_CONTEXT = ModelSharQContextUser::class;
 
     public const ALL_SELECTOR = true;
     public const SELECT_SELECTOR = '/^(select|columns|column|distinct|count|countDistinct|min|max|sum|sumDistinct|avg|avgDistinct)$/';
@@ -35,17 +35,17 @@ abstract class ModelQueryBuilderOperationSupport
     protected $modelClass;
 
     /**
-     * @var ModelQueryBuilderOperation[]
+     * @var ModelSharQOperation[]
      */
     public $operations;
 
     /**
-     * @var ModelQueryBuilderContextBase|ModelQueryBuilderContextUser
+     * @var ModelSharQContextBase|ModelSharQContextUser
      */
     protected $context;
 
     /**
-     * @var ModelQueryBuilderOperationSupport
+     * @var ModelSharQOperationSupport
      */
     protected $parentQuery;
 
@@ -55,7 +55,7 @@ abstract class ModelQueryBuilderOperationSupport
     protected $isPartialQuery;
 
     /**
-     * @var ModelQueryBuilderOperation[]
+     * @var ModelSharQOperation[]
      */
     protected $activeOperations;
 
@@ -73,12 +73,12 @@ abstract class ModelQueryBuilderOperationSupport
      * 2023-07-07
      * @param class-string<Model> $modelClass
      */
-    private static function init(ModelQueryBuilderOperationSupport $instance, $modelClass): void
+    private static function init(ModelSharQOperationSupport $instance, $modelClass): void
     {
         $instance->modelClass = $modelClass;
         $instance->operations = [];
 
-        $queryBuilderContextClass = self::getModelQueryBuilderContextClass();
+        $queryBuilderContextClass = static::getModelSharQContextClass();
 
         $instance->context = new $queryBuilderContextClass($instance);
         $instance->parentQuery = null;
@@ -88,26 +88,26 @@ abstract class ModelQueryBuilderOperationSupport
 
     /**
      * 2023-07-07
-     * @return class-string<ModelQueryBuilderContextBase>
+     * @return class-string<ModelSharQContextBase>
      */
-    public static function getModelQueryBuilderContextClass(): string
+    public static function getModelSharQContextClass(): string
     {
-        return ModelQueryBuilderContext::class;
+        return ModelSharQContext::class;
     }
 
     /**
      * 2023-07-07
-     * @return class-string<ModelQueryBuilderContextBase>
+     * @return class-string<ModelSharQContextBase>
      */
-    public static function getModelQueryBuilderUserContextClass(): string
+    public static function getModelSharQUserContextClass(): string
     {
-        return ModelQueryBuilderContextUser::class;
+        return ModelSharQContextUser::class;
     }
 
     /**
      * 2023-07-07
      * @param class-string<Model> $modelClass
-     * @return ModelQueryBuilderOperationSupport|ModelQueryBuilder
+     * @return ModelSharQOperationSupport|ModelSharQ
      */
     public static function forClass(string $modelClass): static
     {
@@ -124,7 +124,7 @@ abstract class ModelQueryBuilderOperationSupport
     }
     /**
      * @param mixed $obj
-     * @return ModelQueryBuilderContextBase|ModelQueryBuilderContextUser
+     * @return ModelSharQContextBase|ModelSharQContextUser
      */
     public function getContext($obj=null)
     {
@@ -137,14 +137,34 @@ abstract class ModelQueryBuilderOperationSupport
      */
     public function setContext($context): self
     {
-        $this->context->userContext = $this->context->userContext->newMerge($this, $context);
+        $this->context = $context;
 
         return $this;
     }
 
-    public function context($obj): self
+    public function getUserContext(): ModelSharQContextUser
     {
-        return $this->setContext($obj);
+        return $this->getContext()->userContext;
+    }
+
+    /**
+     * 2023-07-07
+     * @param mixed $obj
+     */
+    public function setUserContext($obj): self
+    {
+        $this->context->userContext = $this->context->userContext->newMerge($this, $obj);
+
+        return $this;
+    }
+
+    public function context($obj=null)
+    {
+        if($obj === null) return $this->getUserContext();
+
+        $this->setUserContext($obj);
+
+        return $this;
     }
 
     public function clearContext(): static
@@ -156,14 +176,14 @@ abstract class ModelQueryBuilderOperationSupport
         return $this;
     }
 
-    public function getInternalContext(): ModelQueryBuilderContext
+    public function getInternalContext(): ModelSharQContext
     {
         return $this->context;
     }
     /**
      * @param mixed $context
      */
-    public function setInternalContext($context): ModelQueryBuilderOperationSupport
+    public function setInternalContext($context): ModelSharQOperationSupport
     {
         $this->context = $context;
 
@@ -177,7 +197,7 @@ abstract class ModelQueryBuilderOperationSupport
     /**
      * @param array<int,mixed> $options
      */
-    public function setInternalOptions(array $options): ModelQueryBuilderOperationSupport
+    public function setInternalOptions(array $options): ModelSharQOperationSupport
     {
         $this->context->options = array_merge($this->context->options ?? [], $options);
 
@@ -240,9 +260,9 @@ abstract class ModelQueryBuilderOperationSupport
         return $this->getAliasFor($tableName) ?? $this->getTableNameFor($tableName);
     }
 
-    public function childQueryOf(ModelQueryBuilderOperationSupport $query, bool $isFork=false, bool $isInternalQuery=false): static
+    public function childQueryOf(ModelSharQOperationSupport $query, bool $isFork=false, bool $isInternalQuery=false): static
     {
-        $currentContext = $this->getContext();
+        $currentContext = $this->context();
         $queryContext = $query->getContext();
 
         if($isFork) $queryContext = clone $queryContext;
@@ -257,13 +277,13 @@ abstract class ModelQueryBuilderOperationSupport
         }
 
         $this->parentQuery = $query;
-        $this->setInternalContext($queryContext);
-        $this->setContext($currentContext);
+        $this->setContext($queryContext);
+        $this->context($currentContext);
         
         return $this;
     }
 
-    public function subQueryOf(ModelQueryBuilderOperationSupport $query): static
+    public function subQueryOf(ModelSharQOperationSupport $query): static
     {
         if($this->isInternal())
         {
@@ -284,44 +304,44 @@ abstract class ModelQueryBuilderOperationSupport
         return $this;
     }
 
-    public function getParentQuery(): ?ModelQueryBuilderOperationSupport
+    public function getParentQuery(): ?ModelSharQOperationSupport
     {
         return $this->parentQuery;
     }
 
-    public function getQueryBuilder(): QueryBuilder
+    public function getSharQ(): SharQ
     {
-        $iQueryBuilder = $this->getUnsafeQueryBuilder();
+        $iSharQ = $this->getUnsafeSharQ();
 
-        if($iQueryBuilder === null) throw new \Exception("no database connection available for a query. You need to bind the model class or the query to a shark builder instance.");
+        if($iSharQ === null) throw new \Exception("no database connection available for a query. You need to bind the model class or the query to a shark builder instance.");
 
-        return $iQueryBuilder;
+        return $iSharQ;
     }
 
-    public function setQueryBuilder(QueryBuilder $iQueryBuilder): static
+    public function setSharQ(SharQ $iSharQ): static
     {
-        $this->context->iQueryBuilder = $iQueryBuilder;
+        $this->context->iSharQ = $iSharQ;
 
         return $this;
     }
 
-    public function getUnsafeQueryBuilder(): ?QueryBuilder
+    public function getUnsafeSharQ(): ?SharQ
     {
-        $iQueryBuilder = $this->context->iQueryBuilder ?? $this->modelClass::getQueryBuilder() ?? null;
+        $iSharQ = $this->context->iSharQ ?? $this->modelClass::getSharQ() ?? null;
 
-        if($iQueryBuilder === null) return null;
+        if($iSharQ === null) return null;
 
-        return clone $iQueryBuilder;
+        return clone $iSharQ;
     }
     /**
      * @param mixed $operationSelector
-     * @return ModelQueryBuilderOperationSupport
+     * @return ModelSharQOperationSupport
      */
     public function clear($operationSelector): static
     {
         $operationsToRemove = [];
 
-        $callback = function(ModelQueryBuilderOperation $operation, $selectorResult) use(&$operationsToRemove, $operationSelector)
+        $callback = function(ModelSharQOperation $operation, $selectorResult) use(&$operationsToRemove, $operationSelector)
         {
             if($selectorResult && !$operation->isAncestorInSet($operationsToRemove)) $operationsToRemove[] = $operation;
 
@@ -336,7 +356,7 @@ abstract class ModelQueryBuilderOperationSupport
 
     }
     /**
-     * @return ModelQueryBuilderOperationSupport
+     * @return ModelSharQOperationSupport
      */
     public function toFindQuery(): static
     {
@@ -384,13 +404,13 @@ abstract class ModelQueryBuilderOperationSupport
     }
     /**
      * @param Closure(): void $operationSelector
-     * @return ModelQueryBuilderOperationSupport
+     * @return ModelSharQOperationSupport
      */
-    public function copyFrom(ModelQueryBuilderOperationSupport $iBuilder, $operationSelector, bool $debug=false): static
+    public function copyFrom(ModelSharQOperationSupport $iBuilder, $operationSelector, bool $debug=false): static
     {
         $operationsToAdd = [];
 
-        $callback = function(ModelQueryBuilderOperation $operation, $selectorResult) use(&$operationsToAdd, $debug)
+        $callback = function(ModelSharQOperation $operation, $selectorResult) use(&$operationsToAdd, $debug)
         {
             // If an ancestor operation has already been added, there is no need to add
             if($selectorResult && $operation->isAncestorInSet($operationsToAdd) === false) $operationsToAdd[] = $operation;
@@ -425,7 +445,7 @@ abstract class ModelQueryBuilderOperationSupport
      * @param mixed $operationSelector
      * @param Closure(): void|string $callback
      */
-    public function forEachOperations($operationSelector, \Closure $callback, bool $match=true): ModelQueryBuilderOperationSupport
+    public function forEachOperations($operationSelector, \Closure $callback, bool $match=true): ModelSharQOperationSupport
     {
         $selector = self::buildFunctionForOperationSelector($operationSelector);
 
@@ -453,7 +473,7 @@ abstract class ModelQueryBuilderOperationSupport
     /**
      * @param Closure(): void|string $operationSelector
      */
-    public function findOperation($operationSelector): ?ModelQueryBuilderOperation
+    public function findOperation($operationSelector): ?ModelSharQOperation
     {
         $operation = null;
 
@@ -469,7 +489,7 @@ abstract class ModelQueryBuilderOperationSupport
     /**
      * @param Closure(): void $operationSelector
      */
-    public function findLastOperation($operationSelector): ?ModelQueryBuilderOperation
+    public function findLastOperation($operationSelector): ?ModelSharQOperation
     {
         $operation = null;
 
@@ -525,21 +545,21 @@ abstract class ModelQueryBuilderOperationSupport
     /**
      * @param mixed $args
      */
-    public function addOperation(ModelQueryBuilderOperation $operation, $args): static
+    public function addOperation(ModelSharQOperation $operation, $args): static
     {
         return $this->addOperationUsingMethod('push', $operation, $args);
     }
     /**
      * @param mixed $args
      */
-    public function addOperationToFront(ModelQueryBuilderOperation $operation, $args): ModelQueryBuilderOperationSupport
+    public function addOperationToFront(ModelSharQOperation $operation, $args): ModelSharQOperationSupport
     {
         return $this->addOperationUsingMethod('unshift', $operation, $args);
     }
     /**
      * @param array<int,mixed> $args
      */
-    public function addOperationUsingMethod(string $method, ModelQueryBuilderOperation $operation, array $args): ModelQueryBuilderOperationSupport
+    public function addOperationUsingMethod(string $method, ModelSharQOperation $operation, array $args): ModelSharQOperationSupport
     {
         $shouldAdd = $this->callOperationMethod($operation, 'onAdd', $args);
 
@@ -547,10 +567,10 @@ abstract class ModelQueryBuilderOperationSupport
 
         if(count($this->activeOperations) !== 0)
         {
-            /** @var ModelQueryBuilderOperation $lastActiveOperation */
+            /** @var ModelSharQOperation $lastActiveOperation */
             $lastActiveOperation = end($this->activeOperations);
 
-            /** @var ModelQueryBuilderOperation $parentOperation */
+            /** @var ModelSharQOperation $parentOperation */
             $parentOperation = $lastActiveOperation['operation'];
 
             /** @var string $hookName */
@@ -568,7 +588,7 @@ abstract class ModelQueryBuilderOperationSupport
         return $this;
     }
 
-    public function removeOperation(ModelQueryBuilderOperation $operation): static
+    public function removeOperation(ModelSharQOperation $operation): static
     {
         if($operation->getParentOperation() !== null)
         {
@@ -585,7 +605,7 @@ abstract class ModelQueryBuilderOperationSupport
         return $this;
     }
 
-    public function replaceOperation(ModelQueryBuilderOperation $operation, ModelQueryBuilderOperation $newOperation): static
+    public function replaceOperation(ModelSharQOperation $operation, ModelSharQOperation $newOperation): static
     {
         if($operation->getParentOperation() !== null)
         {
@@ -603,18 +623,18 @@ abstract class ModelQueryBuilderOperationSupport
     }
 
     /**
-     * @param QueryBuilder|Join|null $iQueryBuilder
-     * @return QueryBuilder|Join|null
+     * @param SharQ|Join|null $iSharQ
+     * @return SharQ|Join|null
      */
-    public function toQueryBuilder($iQueryBuilder=null)
+    public function toSharQ($iSharQ=null)
     {
         $iClonedBuilder = clone $this;
 
-        $iQueryBuilder = $iQueryBuilder ?? $iClonedBuilder->getQueryBuilder();
+        $iSharQ = $iSharQ ?? $iClonedBuilder->getSharQ();
 
         $iClonedBuilder->executeOnBuild();
 
-        return $iClonedBuilder->executeOnBuildQueryBuilder($iQueryBuilder);
+        return $iClonedBuilder->executeOnBuildSharQ($iSharQ);
     }
 
     public function executeOnBuild(): void
@@ -628,24 +648,24 @@ abstract class ModelQueryBuilderOperationSupport
     }
 
     /**
-     * @param QueryBuilder|Join|null $iQueryBuilder
-     * @return QueryBuilder|Join|null
+     * @param SharQ|Join|null $iSharQ
+     * @return SharQ|Join|null
      */
-    public function executeOnBuildQueryBuilder($iQueryBuilder)
+    public function executeOnBuildSharQ($iSharQ)
     {
-        $this->forEachOperations(self::ALL_SELECTOR, function($operation) use(&$iQueryBuilder)
+        $this->forEachOperations(self::ALL_SELECTOR, function($operation) use(&$iSharQ)
         {
-            if($operation->hasOnBuildQueryBuilder())
+            if($operation->hasOnBuildSharQ())
             {
-                $iNewQueryBuilder = $this->callOperationMethod($operation, 'onBuildQueryBuilder', [$iQueryBuilder]);
+                $iNewSharQ = $this->callOperationMethod($operation, 'onBuildSharQ', [$iSharQ]);
 
-                $iQueryBuilder = $iNewQueryBuilder ?? $iQueryBuilder;
+                $iSharQ = $iNewSharQ ?? $iSharQ;
             }
 
             return null;
         });
 
-        return $iQueryBuilder;
+        return $iSharQ;
     }
 
     public function toString(): string
@@ -655,7 +675,7 @@ abstract class ModelQueryBuilderOperationSupport
 
     public function toQuery(): Query
     {
-        return $this->toQueryBuilder()->toQuery();
+        return $this->toSharQ()->toQuery();
     }
 
     public function toSQL(): string

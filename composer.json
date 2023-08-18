@@ -1,5 +1,5 @@
 {
-    "name": "sharksmedia/objection",
+    "name": "sharksmedia/qarium",
     "description": "A objectionjs inspired ORM",
     "type": "library",
     "license": "MIT",
@@ -19,7 +19,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Sharksmedia\\Objection\\": "src/"
+            "Sharksmedia\\Qarium\\": "src/"
         }
     },
     "authors": [
@@ -28,18 +28,22 @@
             "email": "magnus@sharksmedia.dk"
         }
     ],
-    "require": {
-        "sharksmedia/query-builder": "master"
-    },
     "repositories": {
+        "sharksmedia/sharq": {
+            "type": "vcs",
+            "url": "git@github.com:SharkMagnus/SharQ.git"
+        },
         "sharksmedia/query-builder": {
             "type": "vcs",
-            "url": "git@github.com:SharkMagnus/QueryBuilder.git"
+            "url": "git@github.com:SharkMagnus/Qarium.git"
         }
     },
     "require-dev": {
         "codeception/codeception": "^5.0",
         "codeception/module-asserts": "*",
         "codeception/module-db": "^3.1"
+    },
+    "require": {
+        "sharksmedia/sharq": "master"
     }
 }

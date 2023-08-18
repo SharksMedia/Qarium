@@ -1,7 +1,7 @@
 <?php
 
 /**
- * 2023-07-11
+ * 2023-07-07
  * @author Magnus Schmidt Rasmussen <magnus@sharksmedia.dk>
  */
 
@@ -9,12 +9,13 @@ declare(strict_types=1);
 
 namespace Sharksmedia\Qarium\Operations;
 
+use Sharksmedia\Qarium\JoinBuilder;
 use Sharksmedia\Qarium\ModelSharQ;
 use Sharksmedia\Qarium\ModelSharQOperationSupport;
 use Sharksmedia\SharQ\SharQ;
 use Sharksmedia\SharQ\Statement\Join;
 
-class FirstOperation extends ModelSharQOperation
+class SharQOperation extends QariumToSharQConvertingOperation
 {
     /**
      * @param ModelSharQ|ModelSharQOperationSupport $iBuilder
@@ -25,23 +26,8 @@ class FirstOperation extends ModelSharQOperation
     {
         if($iSharQ !== null && !($iSharQ instanceof SharQ) && !($iSharQ instanceof Join))  throw new \Exception('Invalid SharQ type: '.get_class($iSharQ));
 
-        $modelClass = $iBuilder->getModelClass();
+        $functionName = $this->getName();
 
-        if($iBuilder->isFind() && $modelClass::USE_LIMIT_IN_FIRST) $iSharQ->limit(1);
-
-        return $iSharQ;
-    }
-
-    /**
-     * @param array|Model|null $result
-     * @return array|Model|null
-     */
-    public function onAfter3(ModelSharQOperationSupport $iBuilder, &$result)
-    {
-        if(is_array($result)) return reset($result);
-
-        return $result;
+        return $iSharQ->{$functionName}(...$this->getArguments($iBuilder));
     }
 }
-
-

@@ -7,58 +7,58 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection;
+namespace Sharksmedia\Qarium;
 
 use Closure;
-use Sharksmedia\Objection\Operations\RunBeforeOperation;
-use Sharksmedia\Objection\Operations\RunAfterOperation;
+use Sharksmedia\Qarium\Operations\RunBeforeOperation;
+use Sharksmedia\Qarium\Operations\RunAfterOperation;
 
-use Sharksmedia\Objection\Operations\OnBuildOperation;
-use Sharksmedia\Objection\Operations\OnBuildQueryBuilderOperation;
+use Sharksmedia\Qarium\Operations\OnBuildOperation;
+use Sharksmedia\Qarium\Operations\OnBuildSharQOperation;
 
-use Sharksmedia\Objection\Operations\ModelQueryBuilderOperation;
-use Sharksmedia\Objection\Operations\InsertOperation;
-use Sharksmedia\Objection\Operations\InsertAndFetchOperation;
-use Sharksmedia\Objection\Operations\InsertGraphOperation;
-use Sharksmedia\Objection\Operations\InsertGraphAndFetchOperation;
+use Sharksmedia\Qarium\Operations\ModelSharQOperation;
+use Sharksmedia\Qarium\Operations\InsertOperation;
+use Sharksmedia\Qarium\Operations\InsertAndFetchOperation;
+use Sharksmedia\Qarium\Operations\InsertGraphOperation;
+use Sharksmedia\Qarium\Operations\InsertGraphAndFetchOperation;
 
-use Sharksmedia\Objection\Operations\UpdateOperation;
-use Sharksmedia\Objection\Operations\UpdateAndFetchOperation;
+use Sharksmedia\Qarium\Operations\UpdateOperation;
+use Sharksmedia\Qarium\Operations\UpdateAndFetchOperation;
 
-use Sharksmedia\Objection\Operations\UpsertGraphOperation;
-use Sharksmedia\Objection\Operations\UpsertGraphAndFetchOperation;
+use Sharksmedia\Qarium\Operations\UpsertGraphOperation;
+use Sharksmedia\Qarium\Operations\UpsertGraphAndFetchOperation;
 
-use Sharksmedia\Objection\Operations\RangeOperation;
-use Sharksmedia\Objection\Operations\FirstOperation;
+use Sharksmedia\Qarium\Operations\RangeOperation;
+use Sharksmedia\Qarium\Operations\FirstOperation;
 
-use Sharksmedia\Objection\Operations\DeleteOperation;
+use Sharksmedia\Qarium\Operations\DeleteOperation;
 
-use Sharksmedia\Objection\Operations\SelectOperation;
-use Sharksmedia\Objection\Operations\Selection;
-use Sharksmedia\Objection\Operations\FindOperation;
-use Sharksmedia\Objection\Operations\FindByIdOperation;
-use Sharksmedia\Objection\Operations\FindByIdsOperation;
+use Sharksmedia\Qarium\Operations\SelectOperation;
+use Sharksmedia\Qarium\Operations\Selection;
+use Sharksmedia\Qarium\Operations\FindOperation;
+use Sharksmedia\Qarium\Operations\FindByIdOperation;
+use Sharksmedia\Qarium\Operations\FindByIdsOperation;
 
-use Sharksmedia\Objection\Operations\RelateOperation;
-use Sharksmedia\Objection\Operations\UnrelateOperation;
-use Sharksmedia\Objection\Operations\EagerOperation;
+use Sharksmedia\Qarium\Operations\RelateOperation;
+use Sharksmedia\Qarium\Operations\UnrelateOperation;
+use Sharksmedia\Qarium\Operations\EagerOperation;
 
-use Sharksmedia\Objection\Operations\JoinEagerOperation;
-use Sharksmedia\Objection\Operations\JoinRelatedOperation;
+use Sharksmedia\Qarium\Operations\JoinEagerOperation;
+use Sharksmedia\Qarium\Operations\JoinRelatedOperation;
 
-use Sharksmedia\Objection\Operations\NaiveEagerOperation;
-use Sharksmedia\Objection\Operations\FromOperation;
-use Sharksmedia\Objection\Operations\OnErrorOperation;
-use Sharksmedia\Objection\Operations\QueryBuilderOperation;
+use Sharksmedia\Qarium\Operations\NaiveEagerOperation;
+use Sharksmedia\Qarium\Operations\FromOperation;
+use Sharksmedia\Qarium\Operations\OnErrorOperation;
+use Sharksmedia\Qarium\Operations\SharQOperation;
 
-use Sharksmedia\Objection\Operations\ResultSizeOperation;
+use Sharksmedia\Qarium\Operations\ResultSizeOperation;
 
-use Sharksmedia\Objection\Operations\WhereInEagerOperation;
-use Sharksmedia\Objection\Relations\RelationOwner;
-use Sharksmedia\QueryBuilder\QueryBuilder;
-use Sharksmedia\QueryBuilder\Statement\Raw;
+use Sharksmedia\Qarium\Operations\WhereInEagerOperation;
+use Sharksmedia\Qarium\Relations\RelationOwner;
+use Sharksmedia\SharQ\SharQ;
+use Sharksmedia\SharQ\Statement\Raw;
 
-class ModelQueryBuilder extends ModelQueryBuilderBase
+class ModelSharQ extends ModelSharQBase
 {
     public const JOIN_EAGER_ALGORITHM = 'JOIN_EAGER_ALGORITHM';
     public const NAIVE_EAGER_ALGORITHM = 'NAIVE_EAGER_ALGORITHM';
@@ -97,7 +97,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     /**
      * @var string|null
      */
-    protected ?string $relatedQueryFor = null;
+    protected $relatedQueryFor = null;
 
     /**
      * @var \Closure|null
@@ -148,11 +148,11 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     }
 
     /**
-     * @return ModelQueryBuilderContextBase|ModelQueryBuilderContextUser
+     * @return ModelSharQContextBase|ModelSharQContextUser
      */
-    protected static function getQueryBuilderContext()
+    protected static function getSharQContext()
     {
-        return new ModelQueryBuilderContextBase();
+        return new ModelSharQContextBase();
     }
 
     public static function parseRelationExpression(string $expression): RelationExpression
@@ -160,7 +160,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return RelationExpression::create($expression);
     }
 
-    private static function checkEager(ModelQueryBuilder $iBuilder): void
+    private static function checkEager(ModelSharQ $iBuilder): void
     {
         /** @var EagerOperation|null $eagerOperation */
         $eagerOperation = $iBuilder->findOperation(EagerOperation::class);
@@ -170,9 +170,9 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         $expression = $eagerOperation->getExpression();
         $allowedExpression = $iBuilder->allowedGraphExpression();
 
-        if(!$expression->isEmpty() && $allowedExpression !== null && $allowedExpression->isSubExpression($expression))
+        if(!$expression->isEmpty() && $allowedExpression !== null && !$allowedExpression->isSubExpression($expression))
         {
-            throw new \InvalidArgumentException('Eager expression not allowed: '.$expression);
+            throw new \InvalidArgumentException('Eager expression not allowed: '.$expression->getExpressionString());
         }
     }
 
@@ -321,7 +321,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
     /**
      * @param string|RelationExpression $expression
-     * @return ModelQueryBuilder
+     * @return ModelSharQ
      */
     public function allowGraph($expression): static
     {
@@ -355,8 +355,8 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
     /**
      * @param string $path
-     * @param \Closure(QueryBuilder|string|string[]) $modifier
-     * @return ModelQueryBuilder
+     * @param \Closure(SharQ|string|string[]) $modifier
+     * @return ModelSharQ
      */
     public function modifyGraph(string $path, \Closure $modifier): static
     {
@@ -420,12 +420,12 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
         $prebuildQuery = self::prebuildQuery($queryWithoutGraph);
 
-        return $prebuildQuery->has(ModelQueryBuilderBase::WHERE_SELECTOR);
+        return $prebuildQuery->has(ModelSharQBase::WHERE_SELECTOR);
     }
 
     public function hasSelects(): bool
     {
-        return $this->has(ModelQueryBuilderBase::SELECT_SELECTOR);
+        return $this->has(ModelSharQBase::SELECT_SELECTOR);
     }
 
     public function hasWithGraph(): bool
@@ -509,9 +509,23 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return $this->modifiers;
     }
 
+    public function serModifiers(array $modifiers): static
+    {
+        $this->modifiers = $modifiers;
+
+        return $this;
+    }
+
+    public function modifiers(?array $modifiers=null): static
+    {
+        if($modifiers !== null) $this->modifiers = $modifiers;
+
+        return $this;
+    }
+
     /**
      * @param class-string<Model> $modelClass
-     * @return ModelQueryBuilder
+     * @return ModelSharQ
      */
     public function castTo(?string $modelClass): static
     {
@@ -522,15 +536,15 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
     public function resultSize(...$args): int
     {
-        $iQueryBuilder = $this->getQueryBuilder();
+        $iSharQ = $this->getSharQ();
         $iBuilder = clone $this;
 
         $iBuilder->clear(self::LIMIT_SELECTOR);
         $iBuilder->clear(self::ORDER_BY_SELECTOR);
 
-        $countQuery = $iQueryBuilder->count('* AS count')->from(function($q) use($iBuilder)
+        $countQuery = $iSharQ->count('* AS count')->from(function($q) use($iBuilder)
         {
-            $iBuilder->toQueryBuilder($q)->as('temp');
+            $iBuilder->toSharQ($q)->as('temp');
         });
 
         $result = $countQuery->run(...$args);
@@ -539,18 +553,18 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     }
 
     /**
-     * @param QueryBuilder|Join|null $iQueryBuilder
+     * @param SharQ|Join|null $iSharQ
      */
-    public function toQueryBuilder($iQueryBuilder=null): QueryBuilder
+    public function toSharQ($iSharQ=null): SharQ
     {
         $iClonedBuilder = clone $this;
 
         $prebuildQuery = self::prebuildQuery($iClonedBuilder);
 
-        return self::buildQueryBuilderQuery($prebuildQuery, $iQueryBuilder);
+        return self::buildSharQQuery($prebuildQuery, $iSharQ);
     }
 
-    private function prebuildQuery(ModelQueryBuilder $iBuilder): ModelQueryBuilder
+    private function prebuildQuery(ModelSharQ $iBuilder): ModelSharQ
     {
         $iBuilder = self::addImplicitOperations($iBuilder);
         $iBuilder = self::callOnBuildHooks($iBuilder);
@@ -599,9 +613,9 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         $iBuilder->addOperation($iEagerOperation, []);
     }
 
-    private static function chainOperationHooks($results, ModelQueryBuilder $iBuilder, string $hookName)
+    private static function chainOperationHooks($results, ModelSharQ $iBuilder, string $hookName)
     {
-        $iBuilder->forEachOperations(true, function(ModelQueryBuilderOperation $iOperation) use ($iBuilder, $hookName, &$results)
+        $iBuilder->forEachOperations(true, function(ModelSharQOperation $iOperation) use ($iBuilder, $hookName, &$results)
         {
             if(!$iOperation->hasHook($hookName)) return;
 
@@ -613,7 +627,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return $results;
     }
 
-    private static function chainHooks(ModelQueryBuilder $iBuilder, $func)
+    private static function chainHooks(ModelSharQ $iBuilder, $func)
     {
         if($func instanceof \Closure) return $func($iBuilder);
 
@@ -694,7 +708,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
     public static function findQueryExecutorOperation(self $iBuilder)
     {
-        return $iBuilder->findOperation(function(ModelQueryBuilderOperation $iOperation)
+        return $iBuilder->findOperation(function(ModelSharQOperation $iOperation)
         {
             $hasQueryExecutor = $iOperation->hasQueryExecutor();
 
@@ -751,43 +765,43 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return !$this->isExplicitlyResolvedOrRejected() && $this->findQueryExecutorOperation($this) === null;
     }
 
-    private static function setDefaultTable(self $iBuilder, QueryBuilder $iQueryBuilder): QueryBuilder
+    private static function setDefaultTable(self $iBuilder, SharQ $iSharQ): SharQ
     {
         $table = $iBuilder->getTableName();
         $tableRef = $iBuilder->getTableRef();
 
-        if($table === $tableRef) return $iQueryBuilder->table($table);
+        if($table === $tableRef) return $iSharQ->table($table);
 
-        return $iQueryBuilder->table([$tableRef=>$table]);
+        return $iSharQ->table([$tableRef=>$table]);
     }
 
-    private static function setDefaultSelect(self $iBuilder, QueryBuilder $iQueryBuilder): QueryBuilder
+    private static function setDefaultSelect(self $iBuilder, SharQ $iSharQ): SharQ
     {
         $tableRef = $iBuilder->getTableRef();
 
-        return $iQueryBuilder->select($tableRef.'.*');
+        return $iSharQ->select($tableRef.'.*');
     }
 
-    private static function buildQueryBuilderQuery(self $iBuilder, ?QueryBuilder $iQueryBuilder=null): QueryBuilder
+    private static function buildSharQQuery(self $iBuilder, ?SharQ $iSharQ=null): SharQ
     {
-        $iQueryBuilder = $iQueryBuilder ?? $iBuilder->getQueryBuilder();
-        $iBuilder->executeOnBuildQueryBuilder($iQueryBuilder);
+        $iSharQ = $iSharQ ?? $iBuilder->getSharQ();
+        $iBuilder->executeOnBuildSharQ($iSharQ);
 
         /** @var FromOperation|null $fromOperation */
-        $fromOperation = $iBuilder->findLastOperation(ModelQueryBuilderBase::FROM_SELECTOR);
+        $fromOperation = $iBuilder->findLastOperation(ModelSharQBase::FROM_SELECTOR);
 
-        if($iBuilder->getIsPartial()) return $iQueryBuilder;
+        if($iBuilder->getIsPartial()) return $iSharQ;
 
         // Set the table only if it hasn't been explicitly set yet.
-        if($fromOperation === null) $iQueryBuilder = self::setDefaultTable($iBuilder, $iQueryBuilder);
+        if($fromOperation === null) $iSharQ = self::setDefaultTable($iBuilder, $iSharQ);
 
         $hasFromTable = $fromOperation !== null && $fromOperation->getTable() === null;
         $hasSelects = $iBuilder->hasSelects();
 
         // Only add `table.*` select if there are no explicit selects and `from` is a table name and not a subquery.
-        if(!$hasSelects && !$hasFromTable) $iQueryBuilder = self::setDefaultSelect($iBuilder, $iQueryBuilder);
+        if(!$hasSelects && !$hasFromTable) $iSharQ = self::setDefaultSelect($iBuilder, $iSharQ);
 
-        return $iQueryBuilder;
+        return $iSharQ;
     }
 
     private static function doExecute(self $iBuilder)
@@ -805,13 +819,13 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
             return $query;
         }
 
-        $iQueryBuilder = self::buildQueryBuilderQuery($iBuilder);
+        $iSharQ = self::buildSharQQuery($iBuilder);
 
-        $results = $iQueryBuilder->run();
+        $results = $iSharQ->run();
 
         $results = Utilities::arrayRemoveFalsey($results);
 
-        self::chainOperationHooks($results, $iBuilder, 'onRawResult');
+        $results = self::chainOperationHooks($results, $iBuilder, 'onRawResult');
 
         $iModels = self::createModels($results, $iBuilder);
 
@@ -847,7 +861,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return $result;
     }
 
-    private static function shouldBeConvertedToModel(?array $result, string $modelClass): bool
+    private static function shouldBeConvertedToModel($result, string $modelClass): bool
     {
         return is_array($result) && count($result) > 0 && !(reset($result) instanceof $modelClass);
     }
@@ -856,7 +870,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     {
         $result = null;
 
-        $iBuilder->forEachOperations(self::ALL_SELECTOR, function(ModelQueryBuilderOperation $iOperation) use ($iBuilder, $exceptions, &$result)
+        $iBuilder->forEachOperations(self::ALL_SELECTOR, function(ModelSharQOperation $iOperation) use ($iBuilder, $exceptions, &$result)
         {
             if(!$iOperation->hasOnError()) return;
 
@@ -901,7 +915,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
     // /**
     //  * @param mixed $data
-    //  * @return ModelQueryBuilder
+    //  * @return ModelSharQ
     //  */
     // private function throwIfNotFound($data): static
     // {
@@ -1028,14 +1042,14 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     {
         $table = $args[0]['table'] ?? $this->getTableName();
 
-        $iQueryBuilder = $this->getQueryBuilder();
+        $iSharQ = $this->getSharQ();
 
         $tableParts = explode('.', $table);
 
         $internalOptions = $this->getInternalOptions();
 
         // TODO: Implement columnInfo
-        $columnInfoQuery = $iQueryBuilder->table(end($tableParts))->columnInfo();
+        $columnInfoQuery = $iSharQ->table(end($tableParts))->columnInfo();
         $schema = $internalOptions['schema'] ?? null;
 
         if($schema === null && count($tableParts) > 1) $schema = $tableParts[0];
@@ -1059,7 +1073,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
             {
                 if(!$iBuilder->has('/^withSchema$/'))
                 {
-                    $iBuilder->addOperationToFront(new QueryBuilderOperation('withSchema'), [$schema]);
+                    $iBuilder->addOperationToFront(new SharQOperation('withSchema'), [$schema]);
                 }
             });
 
@@ -1076,7 +1090,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
         $context->addOnBuildCallback(function($iBuilder) use($doIt)
         {
-            $iBuilder->addOperation(new QueryBuilderOperation('debug'), [$doIt]);
+            $iBuilder->addOperation(new SharQOperation('debug'), [$doIt]);
         });
 
         return $this;
@@ -1091,7 +1105,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return $this;
     }
 
-    private static function writeOperation(ModelQueryBuilder $iBuilder, \Closure $callback): static
+    private static function writeOperation(ModelSharQ $iBuilder, \Closure $callback): static
     {
         if(!$iBuilder->isFind())
         {
@@ -1105,7 +1119,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
     /**
      * @param array<int, Model>|array<int, array> $modelsOrObjects
-     * @return ModelQueryBuilder
+     * @return ModelSharQ
      */
     public function insert($modelsOrObjects): static
     {
@@ -1121,7 +1135,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
     /**
      * @param array<int, Model>|array<int, array> $modelsOrObjects
-     * @return ModelQueryBuilder
+     * @return ModelSharQ
      */
     public function insertAndFetch($modelsOrObjects): static
     {
@@ -1140,7 +1154,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     /**
      * @param array<int, Model>|array<int, array> $modelsOrObjects
      * @param array $opt
-     * @return ModelQueryBuilder
+     * @return ModelSharQ
      */
     public function insertGraph($modelsOrObjects, $opt): static
     {
@@ -1159,7 +1173,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     /**
      * @param array<int, Model>|array<int, array> $modelsOrObjects
      * @param array $opt
-     * @return ModelQueryBuilder
+     * @return ModelSharQ
      */
     public function insertGraphAndFetch($modelsOrObjects, $opt): self
     {
@@ -1256,7 +1270,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
 
     /**
      * @param Model|object $modelOrObject
-     * @return ModelQueryBuilder
+     * @return ModelSharQ
      */
     public function patchAndFetch($modelOrObject): static
     {
@@ -1471,9 +1485,9 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
         return $this->addOperation(new OnBuildOperation('onBuild'), $args);
     }
 
-    public function onBuildQueryBuilder(...$args): static
+    public function onBuildSharQ(...$args): static
     {
-        return $this->addOperation(new OnBuildQueryBuilderOperation('onBuildQueryBuilder'), $args);
+        return $this->addOperation(new OnBuildSharQOperation('onBuildSharQ'), $args);
     }
 
     public function runAfter(...$args): static
@@ -1508,7 +1522,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     /**
      * 2023-07-10
      * @param \Closure $factory
-     * @return ModelQueryBuilder
+     * @return ModelSharQ
      */
     public function findOperationFactory(\Closure $factory): self
     {
@@ -1520,7 +1534,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     /**
      * 2023-07-10
      * @param \Closure $factory
-     * @return ModelQueryBuilder
+     * @return ModelSharQ
      */
     public function insertOperationFactory(\Closure $factory): self
     {
@@ -1532,7 +1546,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     /**
      * 2023-07-10
      * @param \Closure $factory
-     * @return ModelQueryBuilder
+     * @return ModelSharQ
      */
     public function updateOperationFactory(\Closure $factory): self
     {
@@ -1544,7 +1558,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     /**
      * 2023-07-10
      * @param \Closure $factory
-     * @return ModelQueryBuilder
+     * @return ModelSharQ
      */
     public function patchOperationFactory(\Closure $factory): self
     {
@@ -1556,7 +1570,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     /**
      * 2023-07-10
      * @param \Closure $factory
-     * @return ModelQueryBuilder
+     * @return ModelSharQ
      */
     public function relateOperationFactory(\Closure $factory): self
     {
@@ -1568,7 +1582,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     /**
      * 2023-07-10
      * @param \Closure $factory
-     * @return ModelQueryBuilder
+     * @return ModelSharQ
      */
     public function unrelateOperationFactory(\Closure $factory): self
     {
@@ -1580,7 +1594,7 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     /**
      * 2023-07-10
      * @param \Closure $factory
-     * @return ModelQueryBuilder
+     * @return ModelSharQ
      */
     public function deleteOperationFactory(\Closure $factory): self
     {
@@ -1622,5 +1636,13 @@ class ModelQueryBuilder extends ModelQueryBuilderBase
     public function getUnrelateOperationFactory(): ?\Closure
     {
         return $this->unrelateOperationFactory;
+    }
+
+    public function __clone(): void
+    {
+        foreach(get_object_vars($this) as $name => $value)
+        {
+            if(is_object($value)) $this->{$name} = clone $value;
+        }
     }
 }

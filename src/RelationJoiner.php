@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection;
+namespace Sharksmedia\Qarium;
 
-use Sharksmedia\Objection\Operations\Selection;
-use Sharksmedia\Objection\Relations\ManyToMany;
+use Sharksmedia\Qarium\Operations\Selection;
+use Sharksmedia\Qarium\Relations\ManyToMany;
 
 // 2023-07-11
 
@@ -98,7 +98,7 @@ class RelationJoiner
      * This must be called before calling `build(builder, true)`. `build(builder, false)`
      * can be called without this since it doesn't build selects.
      */
-    public function fetchColumnInfo(ModelQueryBuilder $iBuilder): array
+    public function fetchColumnInfo(ModelSharQ $iBuilder): array
     {
         $iTableTree = $this->getTableTree($iBuilder);
         $allModelClasses = array_map(function($iNode) { return $iNode->getModelClass(); }, $iTableTree->getNodes());
@@ -115,7 +115,7 @@ class RelationJoiner
         return $columnInfos;
     }
     
-    private function getTableTree(ModelQueryBuilder $iBuilder): TableTree
+    private function getTableTree(ModelSharQ $iBuilder): TableTree
     {
         if($this->iTableTree === null)
         {
@@ -125,7 +125,7 @@ class RelationJoiner
         return $this->iTableTree;
     }
 
-    public function build(ModelQueryBuilder &$iBuilder, bool $buildSelects=true): void
+    public function build(ModelSharQ &$iBuilder, bool $buildSelects=true): void
     {
         $iTableTree = $this->getTableTree($iBuilder);
         $rootTableNode = $iTableTree->getRootNode();
@@ -143,7 +143,7 @@ class RelationJoiner
         }
     }
 
-    public function parseResult(ModelQueryBuilder $iBuilder, array $flatRows)
+    public function parseResult(ModelSharQ $iBuilder, array $flatRows)
     {
         $parser = JoinResultParser::create($this->getTableTree($iBuilder), array_column($this->internalSelections, 'alias'));
 
@@ -152,7 +152,7 @@ class RelationJoiner
         return $parsed;
     }
 
-    private function buildSelects(ModelQueryBuilder &$iBuilder, TableNode $iTableNode, array &$userSelectQueries): ModelQueryBuilder
+    private function buildSelects(ModelSharQ &$iBuilder, TableNode $iTableNode, array &$userSelectQueries): ModelSharQ
     {
         $selectionsForNode = $this->getSelectionsForNode($iBuilder, $iTableNode, $userSelectQueries);
 
@@ -175,7 +175,7 @@ class RelationJoiner
     }
 
 
-    private function getSelectionsForNode(ModelQueryBuilder $iBuilder, TableNode $iTableNode, array &$userSelectQueries)
+    private function getSelectionsForNode(ModelSharQ $iBuilder, TableNode $iTableNode, array &$userSelectQueries)
     {
         $userSelectQuery = $userSelectQueries[$iTableNode->getUUID()];
         $userSelections = $userSelectQuery->findAllSelections();
@@ -285,7 +285,7 @@ class RelationJoiner
         return $mapped;
     }
 
-    private function getJoinTableExtraSelectionsForNode(ModelQueryBuilder $iBuilder, TableNode $iTableNode): array
+    private function getJoinTableExtraSelectionsForNode(ModelSharQ $iBuilder, TableNode $iTableNode): array
     {// 2023-07-31
         $mapped = array_map(function(object $extra) use($iBuilder, $iTableNode)
         {
@@ -299,7 +299,7 @@ class RelationJoiner
         return $mapped;
     }
 
-    private function getAllColumnSelectionsForNode(ModelQueryBuilder $iBuilder, TableNode $iTableNode): array
+    private function getAllColumnSelectionsForNode(ModelSharQ $iBuilder, TableNode $iTableNode): array
     {// 2023-07-31
         $modelClass = $iTableNode->getModelClass();
 
@@ -308,7 +308,7 @@ class RelationJoiner
 
         $tableMeta = $modelClass::getTableMetadata(['table'=>$table]);
 
-        if(!$tableMeta) throw new \Exception("table metadata has not been fetched for table '$table'. Are you trying to call toQueryBuilderQuery? To make sure the table metadata is fetched see the Objection::initialize function.");
+        if(!$tableMeta) throw new \Exception("table metadata has not been fetched for table '$table'. Are you trying to call toSharQQuery? To make sure the table metadata is fetched see the Qarium::initialize function.");
 
         $columnNames = array_column($tableMeta, 'Field');
 
@@ -335,7 +335,7 @@ class RelationJoiner
         return $selections;
     }
 
-    private function buildJoinsForNode(ModelQueryBuilder $iBuilder, TableNode $iTableNode, array &$userSelectQueries)
+    private function buildJoinsForNode(ModelSharQ $iBuilder, TableNode $iTableNode, array &$userSelectQueries)
     {// 2023-08-01
         $subQueryToJoin = $this->createSubqueryToJoin($iBuilder, $iTableNode, $this->modifiers);
 
@@ -361,7 +361,7 @@ class RelationJoiner
         }
     }
 
-    private function createSubqueryToJoin(ModelQueryBuilder $iBuilder, TableNode $iTableNode, array $modifiers): ModelQueryBuilder
+    private function createSubqueryToJoin(ModelSharQ $iBuilder, TableNode $iTableNode, array $modifiers): ModelSharQ
     {// 2023-08-01
         $iRelation = $iTableNode->getRelation();
         $iRelationExpression = $iTableNode->getRelationExpression();
@@ -410,7 +410,7 @@ class RelationJoiner
             return $modify;
         }, $modifier);
 
-        return function(ModelQueryBuilder $iBuilder, ...$args) use($modifierFunctions)
+        return function(ModelSharQ $iBuilder, ...$args) use($modifierFunctions)
         {
             foreach($modifierFunctions as $modifierFunction)
             {
@@ -419,7 +419,7 @@ class RelationJoiner
         };
     }
 
-    private function ensureIdAndRelationPropsAreSelected(ModelQueryBuilder $iBuilder, TableNode $iTableNode)
+    private function ensureIdAndRelationPropsAreSelected(ModelSharQ $iBuilder, TableNode $iTableNode)
     {
         $tableRef = $iBuilder->getTableRef();
 

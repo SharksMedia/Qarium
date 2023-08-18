@@ -7,14 +7,14 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-use Sharksmedia\Objection\ModelQueryBuilder;
-use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
-use Sharksmedia\QueryBuilder\QueryBuilder;
-use Sharksmedia\QueryBuilder\Statement\Raw;
+use Sharksmedia\Qarium\ModelSharQ;
+use Sharksmedia\Qarium\ModelSharQOperationSupport;
+use Sharksmedia\SharQ\SharQ;
+use Sharksmedia\SharQ\Statement\Raw;
 
-class WhereInCompositeOperation extends ObjectionToQueryBuilderConvertingOperation
+class WhereInCompositeOperation extends QariumToSharQConvertingOperation
 {
     private $prefix;
 
@@ -26,24 +26,24 @@ class WhereInCompositeOperation extends ObjectionToQueryBuilderConvertingOperati
     }
 
     /**
-     * @param ModelQueryBuilder|ModelQueryBuilderOperationSupport $iBuilder
-     * @param QueryBuilder|Join|null $iQueryBuilder
-     * @return QueryBuilder|Join|null
+     * @param ModelSharQ|ModelSharQOperationSupport $iBuilder
+     * @param SharQ|Join|null $iSharQ
+     * @return SharQ|Join|null
      */
-    public function onBuildQueryBuilder(ModelQueryBuilderOperationSupport $iBuilder, $iQueryBuilder)
+    public function onBuildSharQ(ModelSharQOperationSupport $iBuilder, $iSharQ)
     {
-        $whereInArgs = self::buildWhereInArgs($iBuilder->getQueryBuilder(), ...$this->getArguments($iBuilder));
+        $whereInArgs = self::buildWhereInArgs($iBuilder->getSharQ(), ...$this->getArguments($iBuilder));
 
-        if($this->prefix === 'not') return $iQueryBuilder->whereNotIn(...$whereInArgs);
+        if($this->prefix === 'not') return $iSharQ->whereNotIn(...$whereInArgs);
 
-        return $iQueryBuilder->whereIn(...$whereInArgs);
+        return $iSharQ->whereIn(...$whereInArgs);
     }
 
-    private static function buildWhereInArgs($iQueryBuilder, $columns, $values)
+    private static function buildWhereInArgs($iSharQ, $columns, $values)
     {
         if(self::isCompositeKey($columns))
         {
-            return self::buildCompositeArgs($iQueryBuilder, $columns, $values);
+            return self::buildCompositeArgs($iSharQ, $columns, $values);
         }
         else
         {
@@ -56,7 +56,7 @@ class WhereInCompositeOperation extends ObjectionToQueryBuilderConvertingOperati
         return is_array($columns) && count($columns) > 1;
     }
 
-    private static function buildCompositeArgs($iQueryBuilder, $columns, $values)
+    private static function buildCompositeArgs($iSharQ, $columns, $values)
     {
         if(is_array($values))
         {
@@ -64,7 +64,7 @@ class WhereInCompositeOperation extends ObjectionToQueryBuilderConvertingOperati
         }
         else
         {
-            return self::buildCompositeSubqueryArgs($iQueryBuilder, $columns, $values);
+            return self::buildCompositeSubqueryArgs($iSharQ, $columns, $values);
         }
     }
 
@@ -80,7 +80,7 @@ class WhereInCompositeOperation extends ObjectionToQueryBuilderConvertingOperati
         }
     }
 
-    private static function buildCompositeSubqueryArgs($iQueryBuilder, $columns, $subquery)
+    private static function buildCompositeSubqueryArgs($iSharQ, $columns, $subquery)
     {
         // Might have to use ?? instead of ?
         $sql = '(' . implode(',', array_fill(0, count($columns), '??')) . ')';
@@ -94,7 +94,7 @@ class WhereInCompositeOperation extends ObjectionToQueryBuilderConvertingOperati
         {
             $values = self::pickNonNull($values, []);
         }
-        else if(!($values instanceof QueryBuilder))
+        else if(!($values instanceof SharQ))
         {
             $values = [$values];
         }

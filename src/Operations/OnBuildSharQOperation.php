@@ -9,28 +9,29 @@ declare(strict_types=1);
 
 namespace Sharksmedia\Qarium\Operations;
 
+use Sharksmedia\Qarium\ModelSharQ;
 use Sharksmedia\Qarium\ModelSharQOperationSupport;
 
-class RunBeforeOperation extends ModelSharQOperation
+class OnBuildSharQOperation extends ModelSharQOperation
 {
     private ?\Closure $closure = null;
 
     public function onAdd(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
         $this->closure = $arguments[0];
+
         return true;
     }
 
-    public function onBefore1(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
+    public function onBuildSharQ(ModelSharQOperationSupport $iBuilder, $iSharQ)
     {
-        if($this->closure === null) return true;
+        if($this->closure === null) return $iSharQ;
 
         $closure = $this->closure;
 
-        $result = $closure($iBuilder, ...$arguments);
-
-        return $result ?? true;
+        return $closure($iBuilder, $iSharQ);
     }
 }
+
 
 

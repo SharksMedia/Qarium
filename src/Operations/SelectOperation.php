@@ -7,14 +7,14 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-use Sharksmedia\Objection\ModelQueryBuilder;
-use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
-use Sharksmedia\Objection\Utilities;
-use Sharksmedia\QueryBuilder\QueryBuilder;
+use Sharksmedia\Qarium\ModelSharQ;
+use Sharksmedia\Qarium\ModelSharQOperationSupport;
+use Sharksmedia\Qarium\Utilities;
+use Sharksmedia\SharQ\SharQ;
 
-class SelectOperation extends ObjectionToQueryBuilderConvertingOperation
+class SelectOperation extends QariumToSharQConvertingOperation
 {
     public const COUNT_REGEX = '/count/i';
 
@@ -29,7 +29,7 @@ class SelectOperation extends ObjectionToQueryBuilderConvertingOperation
         $this->selections = [];
     }
 
-    public function onAdd(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
+    public function onAdd(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
         $selections = Utilities::array_flatten($arguments);
 
@@ -47,17 +47,17 @@ class SelectOperation extends ObjectionToQueryBuilderConvertingOperation
     }
 
     /**
-     * @param ModelQueryBuilder|ModelQueryBuilderOperationSupport $iBuilder
-     * @param QueryBuilder|Join|null $iQueryBuilder
-     * @return QueryBuilder|Join|null
+     * @param ModelSharQ|ModelSharQOperationSupport $iBuilder
+     * @param SharQ|Join|null $iSharQ
+     * @return SharQ|Join|null
      */
-    public function onBuildQueryBuilder(ModelQueryBuilderOperationSupport $iBuilder, $iQueryBuilder)
+    public function onBuildSharQ(ModelSharQOperationSupport $iBuilder, $iSharQ)
     {
-        if($iQueryBuilder !== null && !($iQueryBuilder instanceof QueryBuilder) && !($iQueryBuilder instanceof Join))  throw new \Exception('Invalid QueryBuilder type: '.get_class($iQueryBuilder));
+        if($iSharQ !== null && !($iSharQ instanceof SharQ) && !($iSharQ instanceof Join))  throw new \Exception('Invalid SharQ type: '.get_class($iSharQ));
 
         $arguments = $this->getArguments($iBuilder);
 
-        return $iQueryBuilder->{$this->name}(...$arguments);
+        return $iSharQ->{$this->name}(...$arguments);
     }
 
 
@@ -76,7 +76,7 @@ class SelectOperation extends ObjectionToQueryBuilderConvertingOperation
         return count($this->selections) > 0;
     }
 
-    public function findSelection(ModelQueryBuilderOperationSupport $iBuilder, $selectionToFind): ?Selection
+    public function findSelection(ModelSharQOperationSupport $iBuilder, $selectionToFind): ?Selection
     {
         $selectionInstanceToFind = Selection::create($selectionToFind);
 

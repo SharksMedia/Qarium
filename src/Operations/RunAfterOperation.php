@@ -7,21 +7,21 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
+use Sharksmedia\Qarium\ModelSharQOperationSupport;
 
-class RunAfterOperation extends ModelQueryBuilderOperation
+class RunAfterOperation extends ModelSharQOperation
 {
     private ?\Closure $closure = null;
 
-    public function onAdd(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
+    public function onAdd(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
         $this->closure = $arguments[0];
         return true;
     }
 
-    public function onAfter3(ModelQueryBuilderOperationSupport $iBuilder, &$result)
+    public function onAfter3(ModelSharQOperationSupport $iBuilder, &$result)
     {
         if($this->closure === null) return $result;
 

@@ -7,11 +7,11 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
+use Sharksmedia\Qarium\ModelSharQOperationSupport;
 
-class FindByIdOperation extends ModelQueryBuilderOperation
+class FindByIdOperation extends ModelSharQOperation
 {
     private $id;
 
@@ -22,14 +22,14 @@ class FindByIdOperation extends ModelQueryBuilderOperation
         $this->id = $this->options['id'] ?? null;
     }
 
-    public function onAdd(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
+    public function onAdd(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
         if($this->id === null) $this->id = $arguments[0];
 
         return parent::onAdd($iBuilder, $arguments);
     }
 
-    public function onBuild(ModelQueryBuilderOperationSupport $iBuilder): void
+    public function onBuild(ModelSharQOperationSupport $iBuilder): void
     {
         $iBuilder->whereComposite($iBuilder->getFullIdColumn(), $this->id);
     }

@@ -7,14 +7,14 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-use Sharksmedia\Objection\JoinBuilder;
-use Sharksmedia\Objection\ModelQueryBuilder;
-use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
-use Sharksmedia\QueryBuilder\QueryBuilder;
+use Sharksmedia\Qarium\JoinBuilder;
+use Sharksmedia\Qarium\ModelSharQ;
+use Sharksmedia\Qarium\ModelSharQOperationSupport;
+use Sharksmedia\SharQ\SharQ;
 
-abstract class ModelQueryBuilderOperation
+abstract class ModelSharQOperation
 {
     /**
      * 2023-07-04
@@ -38,14 +38,14 @@ abstract class ModelQueryBuilderOperation
     /**
      * 2023-07-04
      * The parent operation that added this operation.
-     * @var ModelQueryBuilderOperation|null
+     * @var ModelSharQOperation|null
      */
-    protected ?ModelQueryBuilderOperation $parentOperation;
+    protected ?ModelSharQOperation $parentOperation;
 
     /**
      * 2023-07-04
      * Operations this operation added in any of its hooks.
-     * @var array<int, ModelQueryBuilderOperation>
+     * @var array<int, ModelSharQOperation>
      */
     protected array $childOperations;
 
@@ -78,21 +78,21 @@ abstract class ModelQueryBuilderOperation
         $reflector = new \ReflectionMethod(static::class, $function);
         $hasOverriden = ($reflector->getDeclaringClass()->getName() === static::class);
 
-        if(static::class === ModelQueryBuilderOperation::class) return false;
+        if(static::class === ModelSharQOperation::class) return false;
 
         return $hasOverriden;
     }
 
     /**
      * 2023-07-04
-     * @return ModelQueryBuilderOperation|null
+     * @return ModelSharQOperation|null
      */
-    public function getParentOperation(): ?ModelQueryBuilderOperation
+    public function getParentOperation(): ?ModelSharQOperation
     {
         return $this->parentOperation;
     }
 
-    public function setParentOperation(?ModelQueryBuilderOperation $parentOperation): void
+    public function setParentOperation(?ModelSharQOperation $parentOperation): void
     {
         $this->parentOperation = $parentOperation;
     }
@@ -104,7 +104,7 @@ abstract class ModelQueryBuilderOperation
 
     /**
      * 2023-07-04
-     * @param class-string<ModelQueryBuilderOperation> $className
+     * @param class-string<ModelSharQOperation> $className
      * @return bool
      */
     public function isOperation(string $className): bool
@@ -147,11 +147,11 @@ abstract class ModelQueryBuilderOperation
      * This is called immediately when a query builder method is called.
      *
      * This method should never call any methods that add operations to the builder.
-     * @param ModelQueryBuilder $iBuilder
+     * @param ModelSharQ $iBuilder
      * @param array $arguments
      * @return bool
      */
-    public function onAdd(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool { return true; }
+    public function onAdd(ModelSharQOperationSupport $iBuilder, ...$arguments): bool { return true; }
 
     public function hasOnAdd(): bool { return static::funcHasBeenOverriden('onAdd'); }
 
@@ -162,34 +162,34 @@ abstract class ModelQueryBuilderOperation
      *
      * This method can be asynchronous.
      * You may call methods that add operations to to the builder.
-     * @param ModelQueryBuilderOperationSupport $iBuilder
+     * @param ModelSharQOperationSupport $iBuilder
      * @param array $arguments
      * @return bool
      */
-    public function onBefore1(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool { return true; }
+    public function onBefore1(ModelSharQOperationSupport $iBuilder, ...$arguments): bool { return true; }
 
     public function hasOnBefore1(): bool { return static::funcHasBeenOverriden('onBefore1'); }
 
-    public function onBefore2(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool { return true; }
+    public function onBefore2(ModelSharQOperationSupport $iBuilder, ...$arguments): bool { return true; }
 
     public function hasOnBefore2(): bool { return static::funcHasBeenOverriden('onBefore2'); }
 
-    public function onBefore3(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool { return true; }
+    public function onBefore3(ModelSharQOperationSupport $iBuilder, ...$arguments): bool { return true; }
 
     public function hasOnBefore3(): bool { return static::funcHasBeenOverriden('onBefore3'); }
     /**
      * 2023-07-04
      * This is called as the last thing when the query is executed but before
      * the actual database operation (shark query) is executed. If your operation
-     * needs to call other query building operations (methods that add QueryBuilderOperations)
+     * needs to call other query building operations (methods that add SharQOperations)
      * this is the best and last place to do it.
      *
      * This method must be synchronous.
      * You may call methods that add operations to to the builder.
-     * @param ModelQueryBuilderOperationSupport $iBuilder
+     * @param ModelSharQOperationSupport $iBuilder
      * @return bool
      */
-    public function onBuild(ModelQueryBuilderOperationSupport $iBuilder): void { }
+    public function onBuild(ModelSharQOperationSupport $iBuilder): void { }
 
     public function hasOnBuild(): bool { return static::funcHasBeenOverriden('onBuild'); }
 
@@ -197,19 +197,19 @@ abstract class ModelQueryBuilderOperation
      * 2023-07-04
      * This is called when the shark query is built. Here you should only call shark
      * methods. You may call getters and other immutable methods of the `builder`
-     * but you should never call methods that add QueryBuilderOperations.
+     * but you should never call methods that add SharQOperations.
      *
      * This method must be synchronous.
      * This method should never call any methods that add operations to the builder.
      * This method should always return the shark query builder.
      *
-     * @param ModelQueryBuilder|ModelQueryBuilderOperationSupport $iBuilder
-     * @param QueryBuilder|Join|null $iQueryBuilder
-     * @return QueryBuilder|Join|null
+     * @param ModelSharQ|ModelSharQOperationSupport $iBuilder
+     * @param SharQ|Join|null $iSharQ
+     * @return SharQ|Join|null
      */
-    public function onBuildQueryBuilder(ModelQueryBuilderOperationSupport $iBuilder, $iQueryBuilder) { return $iQueryBuilder; }
+    public function onBuildSharQ(ModelSharQOperationSupport $iBuilder, $iSharQ) { return $iSharQ; }
 
-    public function hasOnBuildQueryBuilder(): bool { return static::funcHasBeenOverriden('onBuildQueryBuilder'); }
+    public function hasOnBuildSharQ(): bool { return static::funcHasBeenOverriden('onBuildSharQ'); }
 
     /**
      * 2023-07-04
@@ -219,10 +219,10 @@ abstract class ModelQueryBuilderOperation
      * is called.
      *
      * This method can be asynchronous.
-     * @param QueryBuilder $iSharkQueryBuilder
+     * @param SharQ $iSharkSharQ
      * @return array
      */
-    public function onRawResult(ModelQueryBuilderOperationSupport $iBuilder, array $rows) { return $rows; }
+    public function onRawResult(ModelSharQOperationSupport $iBuilder, array $rows) { return $rows; }
 
     public function hasOnRawResult(): bool { return static::funcHasBeenOverriden('onRawResult'); }
 
@@ -234,11 +234,11 @@ abstract class ModelQueryBuilderOperation
      * is called.
      *
      * This method can be asynchronous.
-     * @param ModelQueryBuilderOperationSupport $iBuilder
+     * @param ModelSharQOperationSupport $iBuilder
      * @param array|Model|null $result
      * @return array|Model|null
      */
-    public function onAfter1(ModelQueryBuilderOperationSupport $iBuilder, &$result) { return $result; }
+    public function onAfter1(ModelSharQOperationSupport $iBuilder, &$result) { return $result; }
 
     public function hasOnAfter1(): bool { return static::funcHasBeenOverriden('onAfter1'); }
 
@@ -246,7 +246,7 @@ abstract class ModelQueryBuilderOperation
      * @param array|Model|null $result
      * @return array|Model|null
      */
-    public function onAfter2(ModelQueryBuilderOperationSupport $iBuilder, &$result) { return $result; }
+    public function onAfter2(ModelSharQOperationSupport $iBuilder, &$result) { return $result; }
 
     public function hasOnAfter2(): bool { return static::funcHasBeenOverriden('onAfter2'); }
 
@@ -254,7 +254,7 @@ abstract class ModelQueryBuilderOperation
      * @param array|Model|null $result
      * @return array|Model|null
      */
-    public function onAfter3(ModelQueryBuilderOperationSupport $iBuilder, &$result) { return $result; }
+    public function onAfter3(ModelSharQOperationSupport $iBuilder, &$result) { return $result; }
 
     public function hasOnAfter3(): bool { return static::funcHasBeenOverriden('onAfter3'); }
 
@@ -264,11 +264,11 @@ abstract class ModelQueryBuilderOperation
      * this one. This method is called after all `onBefore` and `onBuild` hooks
      * but before the database query is executed.
      *
-     * This method must return a ModelQueryBuilderOperationSupport instance.
-     * @param ModelQueryBuilderOperationSupport $iBuilder
-     * @return ModelQueryBuilderOperationSupport
+     * This method must return a ModelSharQOperationSupport instance.
+     * @param ModelSharQOperationSupport $iBuilder
+     * @return ModelSharQOperationSupport
      */
-    public function queryExecutor(ModelQueryBuilderOperationSupport $iBuilder): ?ModelQueryBuilderOperationSupport { return null; }
+    public function queryExecutor(ModelSharQOperationSupport $iBuilder): ?ModelSharQOperationSupport { return null; }
 
     public function hasQueryExecutor(): bool { return static::funcHasBeenOverriden('queryExecutor'); }
 
@@ -276,11 +276,11 @@ abstract class ModelQueryBuilderOperation
      * 2023-07-04
      * This is called if an error occurs in the query execution.
      *
-     * This method must return a QueryBuilder instance.
-     * @param ModelQueryBuilder $iBuilder
+     * This method must return a SharQ instance.
+     * @param ModelSharQ $iBuilder
      * @param \Throwable $error
      */
-    public function onError(ModelQueryBuilder $iBuilder, ...$arguments) { }
+    public function onError(ModelSharQ $iBuilder, ...$arguments) { }
 
     public function hasOnError(): bool { return static::funcHasBeenOverriden('onError'); }
 
@@ -292,18 +292,18 @@ abstract class ModelQueryBuilderOperation
      * should return an operation that simply finds the item but
      * doesn't update anything. An insert operation should return
      * null since there is no find equivalent for it etc.
-     * @param QueryBuilder $iSharkQueryBuilder
-     * @return ModelQueryBuilderOperation
+     * @param SharQ $iSharkSharQ
+     * @return ModelSharQOperation
      */
-    public function toFindOperation(ModelQueryBuilderOperationSupport $iBuilder): ?ModelQueryBuilderOperation { return $this; }
+    public function toFindOperation(ModelSharQOperationSupport $iBuilder): ?ModelSharQOperation { return $this; }
 
-    protected function hasToFindOperation(): bool { return false; }
+    public function hasToFindOperation(): bool { return false; }
 
     /**
      *
      * Given a set of operations, returns true if any of this operation's
      * ancestor operations are included in the set.
-     * @param array<int, ModelQueryBuilderOperation> $ancestorsSet
+     * @param array<int, ModelSharQOperation> $ancestorsSet
      */
     public function isAncestorInSet(array $ancestorsSet): bool
     {
@@ -311,7 +311,7 @@ abstract class ModelQueryBuilderOperation
 
         if($ancestor === null) return false;
 
-        $ancestorsSetHash = array_map(function(ModelQueryBuilderOperation $operation) { return $operation->_identifier; }, $ancestorsSet);
+        $ancestorsSetHash = array_map(function(ModelSharQOperation $operation) { return $operation->_identifier; }, $ancestorsSet);
 
         while($ancestor !== null)
         {
@@ -331,9 +331,9 @@ abstract class ModelQueryBuilderOperation
      * Add an operation as a child operation. `hookName` must be the
      * name of the parent operation's hook that called this method.
      * @param string $hookName
-     * @param ModelQueryBuilderOperation $operation
+     * @param ModelSharQOperation $operation
      */
-    public function addChildOperation(string $hookName, ModelQueryBuilderOperation $operation): void
+    public function addChildOperation(string $hookName, ModelSharQOperation $operation): void
     {
         $operation->setAdderHookName($hookName);
         $operation->setParentOperation($this);
@@ -344,11 +344,11 @@ abstract class ModelQueryBuilderOperation
     /**
      * 2023-07-04
      * Removes a single child operation from this operation.
-     * @param ModelQueryBuilderOperation $operation
+     * @param ModelSharQOperation $operation
      */
-    public function removeChildOperation(ModelQueryBuilderOperation $operation): void
+    public function removeChildOperation(ModelSharQOperation $operation): void
     {
-        $this->childOperations = array_filter($this->childOperations, function(ModelQueryBuilderOperation $childOperation) use ($operation)
+        $this->childOperations = array_filter($this->childOperations, function(ModelSharQOperation $childOperation) use ($operation)
         {
             return $childOperation !== $operation;
         });
@@ -359,11 +359,11 @@ abstract class ModelQueryBuilderOperation
     /**
      * 2023-07-04
      * Replaces a single child operation
-     * @param ModelQueryBuilderOperation $operation
+     * @param ModelSharQOperation $operation
      */
-    public function replaceChildOperation(ModelQueryBuilderOperation $oldOperation, ModelQueryBuilderOperation $newOperation): void
+    public function replaceChildOperation(ModelSharQOperation $oldOperation, ModelSharQOperation $newOperation): void
     {
-        $this->childOperations = array_map(function(ModelQueryBuilderOperation $childOperation) use ($oldOperation, $newOperation)
+        $this->childOperations = array_map(function(ModelSharQOperation $childOperation) use ($oldOperation, $newOperation)
         {
             if($childOperation === $oldOperation) return $newOperation;
 
@@ -376,7 +376,7 @@ abstract class ModelQueryBuilderOperation
 
     public function removeChildOperationByHookName(string $hookName): void
     {
-        $this->childOperations = array_filter($this->childOperations, function(ModelQueryBuilderOperation $childOperation) use ($hookName)
+        $this->childOperations = array_filter($this->childOperations, function(ModelSharQOperation $childOperation) use ($hookName)
         {
             return $childOperation->adderHookName !== $hookName;
         });

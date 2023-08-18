@@ -2,31 +2,31 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\QueryBuilder;
+namespace Tests\Unit\SharQ;
 
 use Codeception\Test\Unit;
-use Sharksmedia\Objection\Exceptions\ModifierNotFoundError;
-use Sharksmedia\Objection\Model;
-use Sharksmedia\Objection\ModelQueryBuilderBase;
-use Sharksmedia\Objection\ModelQueryBuilder;
-use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
-use Sharksmedia\Objection\Objection;
-use Sharksmedia\Objection\Operations\DeleteOperation;
-use Sharksmedia\Objection\Operations\FindOperation;
-use Sharksmedia\Objection\Operations\InsertOperation;
-use Sharksmedia\Objection\Operations\RelateOperation;
-use Sharksmedia\Objection\Operations\UnrelateOperation;
-use Sharksmedia\Objection\Operations\UpdateOperation;
-use Sharksmedia\Objection\ReferenceBuilder;
-use Sharksmedia\QueryBuilder\Client;
-use Sharksmedia\QueryBuilder\Client\MySQL;
-use Sharksmedia\QueryBuilder\Config;
-use Sharksmedia\QueryBuilder\Query;
-use Sharksmedia\QueryBuilder\QueryBuilder;
+use Sharksmedia\Qarium\Exceptions\ModifierNotFoundError;
+use Sharksmedia\Qarium\Model;
+use Sharksmedia\Qarium\ModelSharQBase;
+use Sharksmedia\Qarium\ModelSharQ;
+use Sharksmedia\Qarium\ModelSharQOperationSupport;
+use Sharksmedia\Qarium\Qarium;
+use Sharksmedia\Qarium\Operations\DeleteOperation;
+use Sharksmedia\Qarium\Operations\FindOperation;
+use Sharksmedia\Qarium\Operations\InsertOperation;
+use Sharksmedia\Qarium\Operations\RelateOperation;
+use Sharksmedia\Qarium\Operations\UnrelateOperation;
+use Sharksmedia\Qarium\Operations\UpdateOperation;
+use Sharksmedia\Qarium\ReferenceBuilder;
+use Sharksmedia\SharQ\Client;
+use Sharksmedia\SharQ\Client\MySQL;
+use Sharksmedia\SharQ\Config;
+use Sharksmedia\SharQ\Query;
+use Sharksmedia\SharQ\SharQ;
 use Tests\Support\MockMySQLClient;
 use Tests\Support\MockPDOStatement;
 
-class QueryBuilderTest extends Unit
+class SharQTest extends Unit
 {
     /**
      * @var \UnitTester
@@ -46,9 +46,7 @@ class QueryBuilderTest extends Unit
             ->database('db')
             ->charset('utf8mb4');
 
-        $iTempClient = new MySQL($iConfig);
-
-        $iClient = new MockMySQLClient($iConfig, function(Query $iQuery, array $options) use($iTempClient)
+        $iClient = new MockMySQLClient($iConfig, function(Query $iQuery, array $options)
         {
             $sql = $iQuery->getSQL();
             $bindings = $iQuery->getBindings();
@@ -73,11 +71,11 @@ class QueryBuilderTest extends Unit
 
         $iClient->initializeDriver();
 
-        Objection::setClient($iClient);
+        Qarium::setClient($iClient);
 
-        $iQueryBuilder = new QueryBuilder($iClient, 'db');
+        $iSharQ = new SharQ($iClient, 'db');
 
-        Model::setQueryBuilder($iQueryBuilder);
+        Model::setSharQ($iSharQ);
         // You may initialize objects here if necessary
 
         $this->mockQueryResults = [];
@@ -85,11 +83,19 @@ class QueryBuilderTest extends Unit
 
         $iModelReflectionClass = new \ReflectionClass(Model::class);
         $iModelReflectionClass->setStaticPropertyValue('metadataCache', []);
+
+        $iModelReflectionClass = new \ReflectionClass(Model::class);
+        $iModelReflectionClass->setStaticPropertyValue('iRelationCache', []);
+
+        parent::_before();
     }
 
     protected function _after()
     {
-        // This method will run after each test
+        $this->mockQueryResults = [];
+        $this->executedQueries = [];
+        
+        parent::_after();
     }
 
     // protected function setUp(): void
@@ -103,19 +109,19 @@ class QueryBuilderTest extends Unit
         return new ReferenceBuilder($expression);
     }
 
-    public static function createFindOperation(ModelQueryBuilder $iBuilder, array $whereObj): FindOperation
+    public static function createFindOperation(ModelSharQ $iBuilder, array $whereObj): FindOperation
     {
         $TestFindOperation = new class('find') extends FindOperation
         {
             public ?array $whereObject = null;
 
-            public function onBefore2(ModelQueryBuilderOperationSupport $builder, ...$arguments): bool { return true; }
+            public function onBefore2(ModelSharQOperationSupport $builder, ...$arguments): bool { return true; }
 
-            public function onAfter2(ModelQueryBuilderOperationSupport $builder, &$result) { return $result; }
+            public function onAfter2(ModelSharQOperationSupport $builder, &$result) { return $result; }
 
-            public function onBuildQueryBuilder($iBuilder, $iQueryBuilder)
+            public function onBuildSharQ($iBuilder, $iSharQ)
             {
-                return $iQueryBuilder->where($this->whereObject);
+                return $iSharQ->where($this->whereObject);
             }
         };
 
@@ -126,26 +132,26 @@ class QueryBuilderTest extends Unit
         return $iFindOperation;
     }
 
-    public static function createInsertOperation(ModelQueryBuilder $iBuilder, array $whereObj): InsertOperation
+    public static function createInsertOperation(ModelSharQ $iBuilder, array $whereObj): InsertOperation
     {
         $TestInsertOperation = new class('insert') extends InsertOperation
         {
             public array $insertData = [];
 
-            public function onBefore2(ModelQueryBuilderOperationSupport $builder, ...$arguments): bool { return true; }
+            public function onBefore2(ModelSharQOperationSupport $builder, ...$arguments): bool { return true; }
 
-            public function onBefore3(ModelQueryBuilderOperationSupport $builder, ...$arguments): bool { return true; }
+            public function onBefore3(ModelSharQOperationSupport $builder, ...$arguments): bool { return true; }
 
-            public function onAfter2(ModelQueryBuilderOperationSupport $iBuilder, &$result) { return $result; }
+            public function onAfter2(ModelSharQOperationSupport $iBuilder, &$result) { return $result; }
 
-            public function onAdd(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
+            public function onAdd(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
             {
                 $this->iModels = [$arguments[0]];
 
                 return true;
             }
 
-            public function onBuildQueryBuilder($iBuilder, $iQueryBuilder)
+            public function onBuildSharQ($iBuilder, $iSharQ)
             {
                 $modelClass = $iBuilder->getModelClass();
 
@@ -161,7 +167,7 @@ class QueryBuilderTest extends Unit
                 
                 $this->iModels[0] = $data;
 
-                return $iQueryBuilder->insert($this->iModels);
+                return $iSharQ->insert($this->iModels);
             }
         };
 
@@ -172,19 +178,19 @@ class QueryBuilderTest extends Unit
         return $iInsertOperation;
     }
 
-    public static function createUpdateOperation(ModelQueryBuilder $iBuilder, array $whereObj): UpdateOperation
+    public static function createUpdateOperation(ModelSharQ $iBuilder, array $whereObj): UpdateOperation
     {
         $TestUpdateOperation = new class('update') extends UpdateOperation
         {
             public $testUpdateData = [];
 
-            public function onBefore2(ModelQueryBuilderOperationSupport $builder, ...$arguments): bool { return true; }
+            public function onBefore2(ModelSharQOperationSupport $builder, ...$arguments): bool { return true; }
 
-            public function onBefore3(ModelQueryBuilderOperationSupport $builder, ...$arguments): bool { return true; }
+            public function onBefore3(ModelSharQOperationSupport $builder, ...$arguments): bool { return true; }
 
-            public function onAfter2(ModelQueryBuilderOperationSupport $iBuilder, &$result) { return $result; }
+            public function onAfter2(ModelSharQOperationSupport $iBuilder, &$result) { return $result; }
 
-            public function onAdd(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
+            public function onAdd(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
             {
                 $data = $arguments[0];
 
@@ -195,7 +201,7 @@ class QueryBuilderTest extends Unit
                 return true;
             }
 
-            public function onBuildQueryBuilder($iBuilder, $iQueryBuilder)
+            public function onBuildSharQ($iBuilder, $iSharQ)
             {
                 $data = $this->iModel->toDatabaseArray($iBuilder);
 
@@ -205,7 +211,7 @@ class QueryBuilderTest extends Unit
                 
                 $this->iModel = $modelClass::ensureModel($data, $this->modelOptions);
 
-                return $iQueryBuilder->update($this->iModel);
+                return $iSharQ->update($this->iModel);
             }
         };
 
@@ -216,17 +222,17 @@ class QueryBuilderTest extends Unit
         return $iUpdateOperation;
     }
 
-    public static function createDeleteOperation(ModelQueryBuilder $iBuilder, array $whereObj): DeleteOperation
+    public static function createDeleteOperation(ModelSharQ $iBuilder, array $whereObj): DeleteOperation
     {
         $TestDeleteOperation = new class('delete') extends DeleteOperation
         {
             public array $whereObject = [];
 
-            public function onAfter2(ModelQueryBuilderOperationSupport $iBuilder, &$result) { return $result; }
+            public function onAfter2(ModelSharQOperationSupport $iBuilder, &$result) { return $result; }
 
-            public function onBuildQueryBuilder($iBuilder, $iQueryBuilder)
+            public function onBuildSharQ($iBuilder, $iSharQ)
             {
-                return $iQueryBuilder->delete()->where($this->whereObject);
+                return $iSharQ->delete()->where($this->whereObject);
             }
         };
 
@@ -238,9 +244,9 @@ class QueryBuilderTest extends Unit
     }
 
     // Tests
-    public function testShouldHaveQueryBuilderMethods(): void
+    public function testShouldHaveSharQMethods(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model { };
+        $TestModel = new class extends \Sharksmedia\Qarium\Model { };
         
         $ignoreMethods =
         [
@@ -259,8 +265,8 @@ class QueryBuilderTest extends Unit
             'eventNames',
             'rawListeners',
             'pluck', // not supported anymore in objection v3+
-            'queryBuilder', // this method is added to the knex mock, but should not available on objection's QueryBuilder
-            'raw', // this method is added to the knex mock, but should not available on objection's QueryBuilder
+            'queryBuilder', // this method is added to the knex mock, but should not available on objection's SharQ
+            'raw', // this method is added to the knex mock, but should not available on objection's SharQ
 
             'getClient',
             'getSchema',
@@ -271,42 +277,40 @@ class QueryBuilderTest extends Unit
             'hasAlias',
             'fetchMode',
             '__clone',
+            '_where',
+            '_join',
+            '_whereWrapped',
 
         ];
 
-        $builder = ModelQueryBuilder::forClass($TestModel::class);
+        $builder = ModelSharQ::forClass($TestModel::class);
 
         // $missingFunctions = [];
 
-        $queryBuilderMethods = get_class_methods(QueryBuilder::class);
+        $queryBuilderMethods = get_class_methods(SharQ::class);
         foreach($queryBuilderMethods as $qbMethodName)
         {
             if(!in_array($qbMethodName, $ignoreMethods, true))
             {
                 // if(!method_exists($builder, $qbMethodName)) $missingFunctions[] = $qbMethodName;
 
-                $this->assertTrue(method_exists($builder, $qbMethodName), "QueryBuilder method '" . $qbMethodName . "' is missing from ModelQueryBuilder");
+                $this->assertTrue(method_exists($builder, $qbMethodName), "SharQ method '" . $qbMethodName . "' is missing from ModelSharQ");
             }
         }
-
-        // codecept_debug($missingFunctions);
-        //
-        // $this->assertTrue(count($missingFunctions) === 0, "QueryBuilder methoth is missing from ModelQueryBuilder");
-
     }
 
     public function testModelClassShouldReturnTheModelClass(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model { };
+        $TestModel = new class extends \Sharksmedia\Qarium\Model { };
 
-        $this->assertEquals($TestModel::class, ModelQueryBuilder::forClass($TestModel::class)->getModelClass());
+        $this->assertEquals($TestModel::class, ModelSharQ::forClass($TestModel::class)->getModelClass());
     }
 
     public function testModifyShouldExecuteTheGivenFunctionAndPassTheBuilderToIt(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model { };
+        $TestModel = new class extends \Sharksmedia\Qarium\Model { };
 
-        $builder = ModelQueryBuilder::forClass($TestModel::class);
+        $builder = ModelSharQ::forClass($TestModel::class);
         $called = false;
 
         $builder->modify(function($b) use ($builder, &$called)
@@ -320,9 +324,9 @@ class QueryBuilderTest extends Unit
 
     public function testShouldBeAbleToPassArgumentsToModify(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model { };
+        $TestModel = new class extends \Sharksmedia\Qarium\Model { };
 
-        $builder = ModelQueryBuilder::forClass($TestModel::class);
+        $builder = ModelSharQ::forClass($TestModel::class);
         $called1 = false;
         $called2 = false;
 
@@ -365,7 +369,7 @@ class QueryBuilderTest extends Unit
 
     public function testShouldBeAbleToPassArgumentsToModifyWhenUsingNamedModifiers(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getModifiers(): array
             {// 2023-08-02
@@ -393,7 +397,7 @@ class QueryBuilderTest extends Unit
         $called1 = false;
         $called2 = false;
 
-        $builder = ModelQueryBuilder::forClass($TestModel::class);
+        $builder = ModelSharQ::forClass($TestModel::class);
 
         // Should accept a single modifier.
         $builder->modify('modifier1', 'foo', 1, $this, function() use(&$called1){ $called1 = true; }, $builder);
@@ -408,9 +412,9 @@ class QueryBuilderTest extends Unit
 
     public function testShouldThrowIfAnUnknownModifierIsSpecified(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model { };
+        $TestModel = new class extends \Sharksmedia\Qarium\Model { };
 
-        $builder = ModelQueryBuilder::forClass($TestModel::class);
+        $builder = ModelSharQ::forClass($TestModel::class);
 
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Unable to determine modify function from provided value: "unknown".');
@@ -420,26 +424,19 @@ class QueryBuilderTest extends Unit
 
     public function testModifyShouldDoNothingWhenReceivingUndefined(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model { };
+        $TestModel = new class extends \Sharksmedia\Qarium\Model { };
 
-        $builder = ModelQueryBuilder::forClass($TestModel::class);
+        $builder = ModelSharQ::forClass($TestModel::class);
         $res = null;
 
-        try
-        {
-            $res = $builder->modify(null);
-        }
-        catch(\Exception $e)
-        {
-            $this->fail("Exception should not have been thrown");
-        }
+        $res = $builder->modify(null);
 
         $this->assertSame($builder, $res);
     }
 
     public function testModifyAcceptAListOfStringsAndCallTheCorrespondingModifiers(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model 
+        $TestModel = new class extends \Sharksmedia\Qarium\Model 
         {
             public static function getModifiers(): array
             {
@@ -458,7 +455,7 @@ class QueryBuilderTest extends Unit
             }
         };
 
-        $builder = ModelQueryBuilder::forClass($TestModel::class);
+        $builder = ModelSharQ::forClass($TestModel::class);
         $aCalled = false;
         $bCalled = false;
 
@@ -497,7 +494,7 @@ class QueryBuilderTest extends Unit
     public function testModifyCallsTheModifierNotFoundHookForUnknownModifiers(): void
     {
         $caughtModifiers = [];
-        $TestModel = new class extends \Sharksmedia\Objection\Model 
+        $TestModel = new class extends \Sharksmedia\Qarium\Model 
         {
             // public static function modifierNotFound($qb, $modifier)
             // {
@@ -518,7 +515,7 @@ class QueryBuilderTest extends Unit
 
         };
 
-        $builder = ModelQueryBuilder::forClass($TestModel::class);
+        $builder = ModelSharQ::forClass($TestModel::class);
 
         $this->expectException(ModifierNotFoundError::class);
         $this->expectExceptionMessage('Unable to determine modify function from provided value: "a".');
@@ -553,15 +550,15 @@ class QueryBuilderTest extends Unit
 
     public function testShouldStillThrowIfModifierNotFoundDelegateToTheDefinitionInTheSuperClass(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model 
+        $TestModel = new class extends \Sharksmedia\Qarium\Model 
         {
-            public static function modifierNotFound(ModelQueryBuilder $iBuilder, string $modifierName): void
+            public static function modifierNotFound(ModelSharQ $iBuilder, string $modifierName): void
             {
                 parent::modifierNotFound($iBuilder, $modifierName);
             }
         };
 
-        $builder = ModelQueryBuilder::forClass($TestModel::class);
+        $builder = ModelSharQ::forClass($TestModel::class);
 
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Unable to determine modify function from provided value: "unknown".');
@@ -572,7 +569,7 @@ class QueryBuilderTest extends Unit
     // public function testShouldNotThrowIfModifierNotFoundHandlesAnUnknownModifier(): void
     // {
     //     $caughtModifier = null;
-    //     $TestModel = new class extends \Sharksmedia\Objection\Model 
+    //     $TestModel = new class extends \Sharksmedia\Qarium\Model 
     //     {
     //         public static function modifierNotFound($builder, $modifier) use(&$caughtModifier) 
     //         {
@@ -580,7 +577,7 @@ class QueryBuilderTest extends Unit
     //         }
     //     };
     //
-    //     $builder = ModelQueryBuilder::forClass($TestModel::class);
+    //     $builder = ModelSharQ::forClass($TestModel::class);
     //
     //     try 
     //     {
@@ -597,20 +594,20 @@ class QueryBuilderTest extends Unit
 
     public function testShouldSelectAllFromTheModelTableIfNoQueryMethodsAreCalled(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
         };
 
-        $iModelQueryBuilder = ModelQueryBuilder::forClass($TestModel::class);
+        $iModelSharQ = ModelSharQ::forClass($TestModel::class);
 
-        $this->assertEquals('SELECT `Model`.* FROM `Model`', $iModelQueryBuilder->toSQL());
+        $this->assertEquals('SELECT `Model`.* FROM `Model`', $iModelSharQ->toSQL());
     }
 
-    public function testShouldHaveQueryBuilderMethods2(): void
+    public function testShouldHaveSharQMethods2(): void
     {
         // Doesn't test all the methods. Just enough to make sure the method calls are correctly
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
         };
@@ -618,7 +615,7 @@ class QueryBuilderTest extends Unit
         $this->executedQueries = [];
 
         // Initialize the builder.
-        $queryBuilder = ModelQueryBuilder::forClass($TestModel::class);
+        $queryBuilder = ModelSharQ::forClass($TestModel::class);
 
         // Call the methods.
         $queryBuilder
@@ -627,11 +624,11 @@ class QueryBuilderTest extends Unit
             ->where('id', 10)
             ->where('height', '>', 180)
             ->where(['name' => 'test'])
-        ->orWhere(function(ModelQueryBuilderBase $queryBuilder)
+        ->orWhere(function(ModelSharQBase $queryBuilder)
             {
-                // The builder passed to these functions should be a QueryBuilderBase instead of
+                // The builder passed to these functions should be a SharQBase instead of
                 // a raw query builder.
-                $this->assertInstanceOf(ModelQueryBuilder::class, $queryBuilder);
+                $this->assertInstanceOf(ModelSharQ::class, $queryBuilder);
                 $queryBuilder->where('age', '<', 10)->andWhere('eyeColor', 'blue');
             });
 
@@ -650,16 +647,16 @@ class QueryBuilderTest extends Unit
         );
     }
 
-    public function testShouldReturnAQueryBuilderFromTimeoutMethod(): void
+    public function testShouldReturnASharQFromTimeoutMethod(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
         };
 
-        $builder = ModelQueryBuilder::forClass($TestModel::class)->timeout(3000);
+        $builder = ModelSharQ::forClass($TestModel::class)->timeout(3000);
 
-        $this->assertInstanceOf(ModelQueryBuilder::class, $builder);
+        $this->assertInstanceOf(ModelSharQ::class, $builder);
     }
 
     // #################################################################
@@ -668,12 +665,12 @@ class QueryBuilderTest extends Unit
 
     public function testShouldCreateAWhereClauseUsingColumnReferencesInsteadOfValues1(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
         };
 
-        $query = ModelQueryBuilder::forClass($TestModel::class)
+        $query = ModelSharQ::forClass($TestModel::class)
             ->where('SomeTable.someColumn', self::ref('SomeOtherTable.someOtherColumn'))
             ->toSQL();
 
@@ -685,12 +682,12 @@ class QueryBuilderTest extends Unit
 
     public function testShouldCreateAWhereClauseUsingColumnReferencesInsteadOfValues2(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
         };
 
-        $query = ModelQueryBuilder::forClass($TestModel::class)
+        $query = ModelSharQ::forClass($TestModel::class)
             ->where('SomeTable.someColumn', '>', self::ref('SomeOtherTable.someOtherColumn'))
             ->toSQL();
 
@@ -705,24 +702,24 @@ class QueryBuilderTest extends Unit
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('The operator "lol" is not permitted');
 
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
         };
 
-        ModelQueryBuilder::forClass($TestModel::class)
+        ModelSharQ::forClass($TestModel::class)
             ->where('SomeTable.someColumn', 'lol', self::ref('SomeOtherTable.someOtherColumn'))
             ->toSQL();
     }
 
     public function testOrWhereShouldCreateAWhereClauseUsingColumnReferencesInsteadOfValues(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
         };
 
-        $query = ModelQueryBuilder::forClass($TestModel::class)
+        $query = ModelSharQ::forClass($TestModel::class)
             ->where('id', 10)
             ->orWhere('SomeTable.someColumn', self::ref('SomeOtherTable.someOtherColumn'))
             ->toSQL();
@@ -739,12 +736,12 @@ class QueryBuilderTest extends Unit
 
     public function testShouldCreateMultipleWhereQueries(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
         };
 
-        $query = ModelQueryBuilder::forClass($TestModel::class)
+        $query = ModelSharQ::forClass($TestModel::class)
             ->whereComposite(['A.a', 'B.b'], '>', [1, 2])
             ->toSQL();
 
@@ -759,24 +756,24 @@ class QueryBuilderTest extends Unit
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('The operator "lol" is not permitted');
 
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
         };
 
-        ModelQueryBuilder::forClass($TestModel::class)
+        ModelSharQ::forClass($TestModel::class)
             ->whereComposite('SomeTable.someColumn', 'lol', 'SomeOtherTable.someOtherColumn')
             ->toSQL();
     }
 
     public function testOperatorShouldDefaultToEqualWhereComposite(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
         };
 
-        $query = ModelQueryBuilder::forClass($TestModel::class)
+        $query = ModelSharQ::forClass($TestModel::class)
             ->whereComposite(['A.a', 'B.b'], [1, 2])
             ->toSQL();
 
@@ -788,12 +785,12 @@ class QueryBuilderTest extends Unit
 
     public function testShouldWorkLikeANormalWhereWhenOneColumnIsGiven1WhereComposite(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
         };
 
-        $query = ModelQueryBuilder::forClass($TestModel::class)
+        $query = ModelSharQ::forClass($TestModel::class)
             ->whereComposite(['A.a'], 1)
             ->toSQL();
 
@@ -805,12 +802,12 @@ class QueryBuilderTest extends Unit
 
     public function testShouldWorkLikeANormalWhereWhenOneColumnIsGiven2WhereComposite(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
         };
 
-        $query = ModelQueryBuilder::forClass($TestModel::class)
+        $query = ModelSharQ::forClass($TestModel::class)
             ->whereComposite('A.a', 1)
             ->toSQL();
 
@@ -826,12 +823,12 @@ class QueryBuilderTest extends Unit
 
     public function testShouldCreateWhereInQueryForCompositeIdAndSingleChoice(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
         };
 
-        $query = ModelQueryBuilder::forClass($TestModel::class)
+        $query = ModelSharQ::forClass($TestModel::class)
             ->whereInComposite(['A.a', 'B.b'], [[1, 2]])
             ->toSQL();
 
@@ -843,12 +840,12 @@ class QueryBuilderTest extends Unit
 
     public function testShouldCreateWhereInQueryForCompositeIdAndArrayOfChoices(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
         };
 
-        $query = ModelQueryBuilder::forClass($TestModel::class)
+        $query = ModelSharQ::forClass($TestModel::class)
             ->whereInComposite(['A.a', 'B.b'], [[1, 2], [3, 4]])
             ->toSQL();
 
@@ -860,12 +857,12 @@ class QueryBuilderTest extends Unit
 
     public function testShouldWorkJustLikeANormalWhereInQueryIfOneColumnIsGiven1(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
         };
 
-        $query = ModelQueryBuilder::forClass($TestModel::class)
+        $query = ModelSharQ::forClass($TestModel::class)
             ->whereInComposite(['A.a'], [[1], [3]])
             ->toSQL();
 
@@ -877,12 +874,12 @@ class QueryBuilderTest extends Unit
 
     public function testShouldWorkJustLikeANormalWhereInQueryIfOneColumnIsGiven2(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
         };
 
-        $query = ModelQueryBuilder::forClass($TestModel::class)
+        $query = ModelSharQ::forClass($TestModel::class)
             ->whereInComposite('A.a', [[1], [3]])
             ->toSQL();
 
@@ -894,12 +891,12 @@ class QueryBuilderTest extends Unit
 
     public function testShouldWorkJustLikeANormalWhereInQueryIfOneColumnIsGiven3(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
         };
 
-        $query = ModelQueryBuilder::forClass($TestModel::class)
+        $query = ModelSharQ::forClass($TestModel::class)
             ->whereInComposite('A.a', [1, 3])
             ->toSQL();
 
@@ -911,15 +908,15 @@ class QueryBuilderTest extends Unit
 
     public function testShouldWorkJustLikeANormalWhereInQueryIfOneColumnIsGiven4(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
         };
 
-        $subQuery = ModelQueryBuilder::forClass($TestModel::class)
+        $subQuery = ModelSharQ::forClass($TestModel::class)
             ->select('a');
 
-        $query = ModelQueryBuilder::forClass($TestModel::class)
+        $query = ModelSharQ::forClass($TestModel::class)
             ->whereInComposite('A.a', $subQuery)
             ->toSQL();
 
@@ -931,12 +928,12 @@ class QueryBuilderTest extends Unit
 
     public function testShouldWorkJustLikeANormalWhereInQueryIfOneColumnIsGiven5(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
         };
 
-        $query = ModelQueryBuilder::forClass($TestModel::class)
+        $query = ModelSharQ::forClass($TestModel::class)
             ->whereInComposite('A.a', 1)
             ->toSQL();
 
@@ -948,15 +945,15 @@ class QueryBuilderTest extends Unit
 
     public function testShouldCreateWhereInQueryForCompositeIdAndASubquery(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
         };
 
-        $subQuery = ModelQueryBuilder::forClass($TestModel::class)
+        $subQuery = ModelSharQ::forClass($TestModel::class)
             ->select('a', 'b');
 
-        $query = ModelQueryBuilder::forClass($TestModel::class)
+        $query = ModelSharQ::forClass($TestModel::class)
             ->whereInComposite(['A.a', 'B.b'], $subQuery)
             ->toSQL();
 
@@ -968,7 +965,7 @@ class QueryBuilderTest extends Unit
 
     public function testShouldConvertArrayQueryResultIntoModelInstances(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public int $a;
 
@@ -977,7 +974,7 @@ class QueryBuilderTest extends Unit
 
         $this->mockQueryResults = [[['a' => 1], ['a' => 2]]];
 
-        $results = ModelQueryBuilder::forClass($TestModel::class)->run();
+        $results = ModelSharQ::forClass($TestModel::class)->run();
 
         $this->assertCount(2, $results);
         $this->assertInstanceOf($TestModel::class, $results[0]);
@@ -987,7 +984,7 @@ class QueryBuilderTest extends Unit
 
     public function testShouldConvertAnObjectQueryResultIntoAModelInstance(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public int $a;
 
@@ -996,7 +993,7 @@ class QueryBuilderTest extends Unit
 
         $this->mockQueryResults = [[['a' => 1]]];
 
-        $result = ModelQueryBuilder::forClass($TestModel::class)
+        $result = ModelSharQ::forClass($TestModel::class)
             ->first()
             ->run();
 
@@ -1004,9 +1001,9 @@ class QueryBuilderTest extends Unit
         $this->assertEquals(1, $result->a);
     }
 
-    public function testShouldPassTheQueryBuilderAsThisAndParameterForTheHooks(): void
+    public function testShouldPassTheSharQAsThisAndParameterForTheHooks(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public int $a;
             public int $b;
@@ -1024,54 +1021,48 @@ class QueryBuilderTest extends Unit
 
         $exception = new \Exception('abort');
 
-        try
-        {
-            ModelQueryBuilder::forClass($TestModel::class)
-                ->runBefore(function(ModelQueryBuilder $builder) use(&$text)
-                    {
-                        $this->assertInstanceOf(ModelQueryBuilder::class, $builder);
-                        $text .= 'a';
-                    })
-                ->onBuild(function(ModelQueryBuilder $builder) use(&$text)
-                    {
-                        $this->assertInstanceOf(ModelQueryBuilder::class, $builder);
-                        $text .= 'b';
-                    })
-                ->onBuildQueryBuilder(function($iBuilder, $iQueryBuilder) use(&$text)
-                    {
-                        $this->assertInstanceOf(ModelQueryBuilder::class, $iBuilder);
-                        // Assuming isQueryBuilder() is equivalent to checking if $iQueryBuilder is an instance of a specific class
-                        $this->assertInstanceOf(QueryBuilder::class, $iQueryBuilder);
-                        $text .= 'c';
-                    })
-                ->runAfter(function($builder, ?array $data) use(&$text)
-                    {
-                        $this->assertInstanceOf(ModelQueryBuilder::class, $builder);
-                        $text .= 'd';
-                    })
-                ->runAfter(function($builder, ?array $data) use(&$text)
-                    {
-                        $this->assertInstanceOf(ModelQueryBuilder::class, $builder);
-                        $text .= 'e';
-                    })
-                ->runAfter(function() use($exception)
-                    {
-                        throw $exception;
-                    })
-                ->onError(function($builder, \Exception $err) use(&$text)
-                    {
-                        $this->assertInstanceOf(ModelQueryBuilder::class, $builder);
-                        $this->assertEquals('abort', $err->getMessage());
-                        $text .= 'f';
-                    })
-                ->run();
-        }
-        catch(\Exception $error)
-        {
-            if($error !== $exception) throw $error;
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('abort');
 
-            // Catch the exception so the test can continue and we can check the $text value
-        }
+        ModelSharQ::forClass($TestModel::class)
+            ->runBefore(function(ModelSharQ $builder) use(&$text)
+                {
+                    $this->assertInstanceOf(ModelSharQ::class, $builder);
+                    $text .= 'a';
+                })
+            ->onBuild(function(ModelSharQ $builder) use(&$text)
+                {
+                    $this->assertInstanceOf(ModelSharQ::class, $builder);
+                    $text .= 'b';
+                })
+            ->onBuildSharQ(function($iBuilder, $iSharQ) use(&$text)
+                {
+                    $this->assertInstanceOf(ModelSharQ::class, $iBuilder);
+                    // Assuming isSharQ() is equivalent to checking if $iSharQ is an instance of a specific class
+                    $this->assertInstanceOf(SharQ::class, $iSharQ);
+                    $text .= 'c';
+                })
+            ->runAfter(function($builder, ?array $data) use(&$text)
+                {
+                    $this->assertInstanceOf(ModelSharQ::class, $builder);
+                    $text .= 'd';
+                })
+            ->runAfter(function($builder, ?array $data) use(&$text)
+                {
+                    $this->assertInstanceOf(ModelSharQ::class, $builder);
+                    $text .= 'e';
+                })
+            ->runAfter(function() use($exception)
+                {
+                    throw $exception;
+                })
+            ->onError(function($builder, \Exception $err) use(&$text)
+                {
+                    $this->assertInstanceOf(ModelSharQ::class, $builder);
+                    $this->assertEquals('abort', $err->getMessage());
+                    $text .= 'f';
+                })
+            ->run();
 
         $this->assertEquals('abcdef', $text);
     }
@@ -1080,60 +1071,49 @@ class QueryBuilderTest extends Unit
     {
         $called = false;
 
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
         };
 
-        try
-        {
-            ModelQueryBuilder::forClass($TestModel::class)
-                ->runBefore(function($result, $builder)
-                    {
-                        throw new \Exception();
-                    })
-                ->onError(function($builder, $err) use (&$called)
-                    {
-                        $this->assertInstanceOf(ModelQueryBuilder::class, $builder);
-                        $called = true;
-                    })
-                ->run();
-        }
-        catch(\Exception $e)
-        {
-            // Handle error if needed
-        }
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('run before error');
+
+        ModelSharQ::forClass($TestModel::class)
+            ->runBefore(function($result, $builder)
+                {
+                    throw new \Exception('run before error');
+                })
+            ->onError(function($builder, $err) use (&$called)
+                {
+                    $this->assertInstanceOf(ModelSharQ::class, $builder);
+                    $called = true;
+                })
+            ->run();
 
         $this->assertTrue($called);
     }
 
     public function testAnyReturnValueFromOnErrorShouldBeTheResultOfTheQuery(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
         };
 
         $result = null;
 
-        try
-        {
-            $result = ModelQueryBuilder::forClass($TestModel::class)
-                ->returnError(true)
-                ->runBefore(function($builder, $result)
-                    {
-                        throw new \Exception();
-                    })
-                ->onError(function($builder, $err)
-                    {
-                        return 'my custom error';
-                    })
-                ->run();
-        }
-        catch(\Exception $e)
-        {
-            // Handle error if needed
-        }
+        $result = ModelSharQ::forClass($TestModel::class)
+            ->returnError(true)
+            ->runBefore(function($builder, $result)
+                {
+                    throw new \Exception('run before error');
+                })
+            ->onError(function($builder, $err)
+                {
+                    return 'my custom error';
+                })
+            ->run();
 
         $this->assertEquals('my custom error', $result);
     }
@@ -1142,7 +1122,7 @@ class QueryBuilderTest extends Unit
     {
         $this->mockQueryResults = [[['a'=>0]]];
 
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public int $a;
 
@@ -1161,81 +1141,69 @@ class QueryBuilderTest extends Unit
 
         $res = 0;
 
-        try
-        {
-            ModelQueryBuilder::forClass($TestModel::class)
-                ->runBefore(function() use(&$res)
-                    {
-                        $this->assertEquals(0, $res);
-                        ++$res;
-                    })
-                ->runBefore(function() use(&$res)
-                    {
-                        $this->assertEquals(1, $res);
-                        ++$res;
-                    })
-                ->runBefore(function() use(&$res)
-                    {
-                        $this->assertEquals(2, $res);
-                        ++$res;
-                    })
-                ->runAfter(function($builder) use(&$res)
-                    {
-                        $this->assertEquals(3, $res);
-                        // Assuming there's a delay or wait function available in PHP
-                        return ++$res;
-                    })
-                ->runAfter(function($builder) use(&$res)
-                    {
-                        $this->assertEquals(4, $res);
-                        return ++$res;
-                    })
-                ->run();
-        }
-        catch(\Exception $e)
-        {
-            // Handle error if needed
-        }
+        ModelSharQ::forClass($TestModel::class)
+            ->runBefore(function() use(&$res)
+                {
+                    $this->assertEquals(0, $res);
+                    ++$res;
+                })
+            ->runBefore(function() use(&$res)
+                {
+                    $this->assertEquals(1, $res);
+                    ++$res;
+                })
+            ->runBefore(function() use(&$res)
+                {
+                    $this->assertEquals(2, $res);
+                    ++$res;
+                })
+            ->runAfter(function($builder) use(&$res)
+                {
+                    $this->assertEquals(3, $res);
+                    // Assuming there's a delay or wait function available in PHP
+                    return ++$res;
+                })
+            ->runAfter(function($builder) use(&$res)
+                {
+                    $this->assertEquals(4, $res);
+                    return ++$res;
+                })
+            ->run();
 
         $this->assertEquals(5, $res);
     }
 
     public function testShouldNotExecuteQueryIfAnErrorIsThrownFromRunBefore(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
         };
 
         $this->executedQueries = [];
 
-        try {
-            ModelQueryBuilder::forClass($TestModel::class)
-                ->runBefore(function()
-                    {
-                        throw new \Exception('some error');
-                    })
-                ->onBuild(function()
-                    {
-                        $this->fail('should not get here');
-                    })
-                ->runAfter(function()
-                    {
-                        $this->fail('should not get here');
-                    })
-                ->run();
-        }
-        catch(\Exception $e)
-        {
-            $this->assertEquals('some error', $e->getMessage());
-            // Replace 'executedQueries' with the appropriate method to get the number of executed queries
-            $this->assertCount(0, $this->executedQueries);
-        }
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('some error');
+
+        ModelSharQ::forClass($TestModel::class)
+            ->runBefore(function()
+                {
+                    throw new \Exception('some error');
+                })
+            ->onBuild(function()
+                {
+                    $this->fail('should not get here');
+                })
+            ->runAfter(function()
+                {
+                    $this->fail('should not get here');
+                })
+            ->run();
     }
 
     public function testShouldCallCustomFindImplementationDefinedByFindOperationFactory(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public int $a;
 
@@ -1254,7 +1222,7 @@ class QueryBuilderTest extends Unit
 
         $this->executedQueries = [];
 
-        $builder = ModelQueryBuilder::forClass($TestModel::class)
+        $builder = ModelSharQ::forClass($TestModel::class)
             ->findOperationFactory(function($iBuilder)
                 {
                     $iFindOperation = self::createFindOperation($iBuilder, ['a' => 1]);
@@ -1270,7 +1238,7 @@ class QueryBuilderTest extends Unit
 
     public function testShouldNotCallCustomFindImplementationDefinedByFindOperationFactoryIfInsertIsCalled(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public int $a;
 
@@ -1289,7 +1257,7 @@ class QueryBuilderTest extends Unit
 
         $this->executedQueries = [];
 
-        $builder = ModelQueryBuilder::forClass($TestModel::class)
+        $builder = ModelSharQ::forClass($TestModel::class)
             ->findOperationFactory(function($iBuilder)
                 {
                     return self::createFindOperation($iBuilder, ['a' => 1]);
@@ -1304,7 +1272,7 @@ class QueryBuilderTest extends Unit
 
     public function testShouldNotCallCustomFindImplementationDefinedByFindOperationFactoryIfUpdateIsCalled(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             protected static array $metadataCache =
             [
@@ -1323,7 +1291,7 @@ class QueryBuilderTest extends Unit
 
         $this->executedQueries = [];
 
-        $builder = ModelQueryBuilder::forClass($TestModel::class)
+        $builder = ModelSharQ::forClass($TestModel::class)
             ->findOperationFactory(function($iBuilder)
                 {
                     return self::createFindOperation($iBuilder, ['a' => 1]);
@@ -1338,7 +1306,7 @@ class QueryBuilderTest extends Unit
 
     public function testShouldNotCallCustomFindImplementationDefinedByFindOperationFactoryIfDeleteIsCalled(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public int $a;
 
@@ -1357,7 +1325,7 @@ class QueryBuilderTest extends Unit
 
         $this->executedQueries = [];
 
-        $builder = ModelQueryBuilder::forClass($TestModel::class)
+        $builder = ModelSharQ::forClass($TestModel::class)
             ->findOperationFactory(function($iBuilder)
                 {
                     return self::createFindOperation($iBuilder, ['a' => 1]);
@@ -1372,7 +1340,7 @@ class QueryBuilderTest extends Unit
 
     public function testShouldCallCustomInsertImplementationDefinedByInsertOperationFactory(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public ?int $a=null;
             public ?int $b=null;
@@ -1391,7 +1359,7 @@ class QueryBuilderTest extends Unit
 
         $this->executedQueries = [];
 
-        $result = ModelQueryBuilder::forClass($TestModel::class)
+        $result = ModelSharQ::forClass($TestModel::class)
             ->insertOperationFactory(function($iBuilder)
                 {
                     return self::createInsertOperation($iBuilder, ['b'=>2]);
@@ -1405,7 +1373,7 @@ class QueryBuilderTest extends Unit
 
     public function testShouldCallCustomUpdateImplementationDefinedByUpdateOperationFactory(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public ?int $a=null;
             public ?int $b=null;
@@ -1424,7 +1392,7 @@ class QueryBuilderTest extends Unit
 
         $this->executedQueries = [];
 
-        $result = ModelQueryBuilder::forClass($TestModel::class)
+        $result = ModelSharQ::forClass($TestModel::class)
             ->updateOperationFactory(function ($iBuilder) {
                 return self::createUpdateOperation($iBuilder, ['b'=>2]);
             })
@@ -1437,7 +1405,7 @@ class QueryBuilderTest extends Unit
 
     public function testShouldCallCustomPatchImplementationDefinedByPatchOperationFactory(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public ?int $a=null;
             public ?int $b=null;
@@ -1456,7 +1424,7 @@ class QueryBuilderTest extends Unit
 
         $this->executedQueries = [];
 
-        $result = ModelQueryBuilder::forClass($TestModel::class)
+        $result = ModelSharQ::forClass($TestModel::class)
             ->patchOperationFactory(function ($iBuilder) {
                 return self::createUpdateOperation($iBuilder, ['b'=>2]);
             })
@@ -1469,7 +1437,7 @@ class QueryBuilderTest extends Unit
 
     public function testShouldCallCustomDeleteImplementationDefinedByDeleteOperationFactory(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public ?int $a=null;
             public ?int $b=null;
@@ -1488,7 +1456,7 @@ class QueryBuilderTest extends Unit
 
         $this->executedQueries = [];
 
-        $result = ModelQueryBuilder::forClass($TestModel::class)
+        $result = ModelSharQ::forClass($TestModel::class)
             ->deleteOperationFactory(function($iBuilder)
                 {
                     return self::createDeleteOperation($iBuilder, ['id'=>100]);
@@ -1502,7 +1470,7 @@ class QueryBuilderTest extends Unit
 
     public function testShouldCallCustomRelateImplementationDefinedByRelateOperationFactory(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public ?int $a=null;
             public ?int $b=null;
@@ -1521,7 +1489,7 @@ class QueryBuilderTest extends Unit
 
         $this->executedQueries = [];
 
-        $result = ModelQueryBuilder::forClass($TestModel::class)
+        $result = ModelSharQ::forClass($TestModel::class)
             ->relateOperationFactory(function($iBuilder)
                 {
                     return self::createInsertOperation($iBuilder, ['b'=>2]);
@@ -1535,7 +1503,7 @@ class QueryBuilderTest extends Unit
 
     public function testShouldCallCustomUnrelateImplementationDefinedByUnrelateOperationFactory(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public ?int $a=null;
             public ?int $b=null;
@@ -1554,7 +1522,7 @@ class QueryBuilderTest extends Unit
 
         $this->executedQueries = [];
 
-        $result = ModelQueryBuilder::forClass($TestModel::class)
+        $result = ModelSharQ::forClass($TestModel::class)
             ->unrelateOperationFactory(function($iBuilder)
                 {
                     return self::createDeleteOperation($iBuilder, ['id'=>100]);
@@ -1568,7 +1536,7 @@ class QueryBuilderTest extends Unit
 
     public function testShouldBeAbleToExecuteSameQueryMultipleTimes(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public ?int $a=null;
             public ?int $b=null;
@@ -1585,8 +1553,8 @@ class QueryBuilderTest extends Unit
             public static function getTableName(): string { return 'Model'; }
         };
 
-        /** @var ModelQueryBuilder $query */
-        $query = ModelQueryBuilder::forClass($TestModel::class)
+        /** @var ModelSharQ $query */
+        $query = ModelSharQ::forClass($TestModel::class)
         ->updateOperationFactory(function($builder)
             {
                 return self::createUpdateOperation($builder, ['b' => 2]);
@@ -1610,7 +1578,7 @@ class QueryBuilderTest extends Unit
 
     public function testResultSizeShouldCreateAndExecuteAQueryThatReturnsTheSizeOfTheQuery(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public ?int $a=null;
             public ?int $b=null;
@@ -1631,7 +1599,7 @@ class QueryBuilderTest extends Unit
 
         $this->mockQueryResults = [[['count' => '123']]];
         
-        $result = ModelQueryBuilder::forClass($TestModel::class)
+        $result = ModelSharQ::forClass($TestModel::class)
             ->where('test', 100)
             ->orderBy('order')
             ->limit(10)
@@ -1648,12 +1616,12 @@ class QueryBuilderTest extends Unit
 
     public function testShouldConsiderWithSchemaWhenLookingForColumnInfo(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             protected ?int $id=null;
             // protected ?string $count=null;
-
-            public static $RelatedClass; 
+            
+            public static $RelatedClass = null;
 
             protected static array $metadataCache =
             [
@@ -1675,7 +1643,7 @@ class QueryBuilderTest extends Unit
                     'iRelated'=>
                     [
                         'relation' => Model::BELONGS_TO_ONE_RELATION,
-                        'modelClass' => self::$RelatedClass::class,
+                        'modelClass' => static::$RelatedClass::class,
                         'join'=>
                         [
                             'from' => 'Model.id',
@@ -1695,7 +1663,7 @@ class QueryBuilderTest extends Unit
             }
         };
 
-        $TestModelRelated = new class extends \Sharksmedia\Objection\Model
+        $TestModelRelated = new class extends \Sharksmedia\Qarium\Model
         {
             protected ?int $id=null;
 
@@ -1724,7 +1692,7 @@ class QueryBuilderTest extends Unit
         $this->executedQueries = [];
         // $this->mockQueryResults = [[ 'count'=>'123' ]];
         
-        ModelQueryBuilder::forClass($TestModel::class)
+        ModelSharQ::forClass($TestModel::class)
             ->withSchema('someSchema')
             ->withGraphJoined('iRelated')
             ->run();
@@ -1738,12 +1706,13 @@ class QueryBuilderTest extends Unit
             ['sql'=>'SELECT `Model`.`id` AS `id`, `iRelated`.`id` AS `iRelated:id` FROM `someSchema`.`Model` LEFT JOIN `someSchema`.`Related` AS `iRelated` ON(`iRelated`.`id` = `Model`.`id`)', 'bindings'=>[]],
         ];
 
+        $this->assertCount(3, $this->executedQueries);
         $this->assertEquals($expectedQueries, $this->executedQueries);
     }
 
     public function testRangeShouldReturnARangeAndTheTotalCount()
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public ?string $a=null;
 
@@ -1752,7 +1721,7 @@ class QueryBuilderTest extends Unit
 
         $this->mockQueryResults = [[['a' => '1']], [['count' => '123']]];
 
-        $res = ModelQueryBuilder::forClass($TestModel::class)
+        $res = ModelSharQ::forClass($TestModel::class)
             ->where('test', 100)
             ->orderBy('order')
             ->range(100, 200)
@@ -1774,7 +1743,7 @@ class QueryBuilderTest extends Unit
 
     public function testPageShouldReturnAPageAndTheTotalCount()
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public ?string $a=null;
 
@@ -1783,7 +1752,7 @@ class QueryBuilderTest extends Unit
 
         $this->mockQueryResults = [[['a' => '2']], [['count' => '123']]];
 
-        $res = ModelQueryBuilder::forClass($TestModel::class)
+        $res = ModelSharQ::forClass($TestModel::class)
             ->where('test', 100)
             ->orderBy('order')
             ->page(10, 100)
@@ -1805,7 +1774,7 @@ class QueryBuilderTest extends Unit
     public function testOperationTypeMethodsShouldReturnTrueOnlyForTheRightOperations()
     {
         /** @var \Model $TestModel */
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public ?string $id=null;
 
@@ -1829,7 +1798,7 @@ class QueryBuilderTest extends Unit
             }
         };
 
-        $RelatedTestModel = new class extends \Sharksmedia\Objection\Model
+        $RelatedTestModel = new class extends \Sharksmedia\Qarium\Model
         {
             protected ?string $someRelId=null;
 
@@ -1867,7 +1836,7 @@ class QueryBuilderTest extends Unit
     public function testHasWheresShouldReturnTrueForAllVariantsOfWhereQueries(): void
     {
         /** @var \Model $TestModel */
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public ?int $id=null;
             public ?int $someId=null;
@@ -1912,7 +1881,7 @@ class QueryBuilderTest extends Unit
             }
         };
 
-        $RelatedTestModel = new class extends \Sharksmedia\Objection\Model
+        $RelatedTestModel = new class extends \Sharksmedia\Qarium\Model
         {
             protected ?string $someRelId=null;
 
@@ -1967,7 +1936,7 @@ class QueryBuilderTest extends Unit
     public function testHasSelectsShouldReturnTrueForAllVariantsOfSelectQueries(): void
     {
         /** @var \Model $TestModel */
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
             public static function getTableIDs(): array { return ['id']; }
@@ -1988,7 +1957,7 @@ class QueryBuilderTest extends Unit
     public function testHasWithGraphShouldReturnTrueForQueriesWithEagerStatements(): void
     {
         /** @var \Model $TestModel */
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public ?string $id=null;
 
@@ -2012,7 +1981,7 @@ class QueryBuilderTest extends Unit
             }
         };
 
-        $RelatedTestModel = new class extends \Sharksmedia\Objection\Model
+        $RelatedTestModel = new class extends \Sharksmedia\Qarium\Model
         {
             protected ?string $someRelId=null;
 
@@ -2032,7 +2001,7 @@ class QueryBuilderTest extends Unit
     public function testHasShouldMatchDefinedQueryOperations(): void
     {
         /** @var \Model $TestModel */
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
             public static function getTableIDs(): array { return ['id']; }
@@ -2056,7 +2025,7 @@ class QueryBuilderTest extends Unit
     public function testClearShouldRemoveMatchingQueryOperations(): void
     {
         /** @var \Model $TestModel */
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
             public static function getTableIDs(): array { return ['id']; }
@@ -2083,7 +2052,7 @@ class QueryBuilderTest extends Unit
     public function testUpdateShouldCallBeforeUpdateOnTheModel(): void
     {
         /** @var \Model $TestModel */
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public $a;
             public $b;
@@ -2121,14 +2090,20 @@ class QueryBuilderTest extends Unit
 
         $this->assertEquals('beforeUpdate', $model->c);
 
-        // $this->assertEquals('SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', $this->executedQueries[0]['sql']);
-        $this->assertEquals('UPDATE `Model` SET `a` = ?, `b` = ?, `c` = ?', $this->executedQueries[0]['sql']);
+        $this->assertCount(1, $this->executedQueries);
+        $this->assertEquals(
+            [
+                // ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings'=>['Model']],
+                ['sql'=>'UPDATE `Model` SET `a` = ?, `b` = ?, `c` = ?', 'bindings'=>[10, 'test', 'beforeUpdate']],
+            ],
+            $this->executedQueries
+        );
     }
 
     public function testUpdateShouldCallBeforeUpdateOnTheModelAsync(): void
     {
         /** @var \Model $TestModel */
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public $a;
             public $b;
@@ -2164,14 +2139,17 @@ class QueryBuilderTest extends Unit
             ->run();
 
         $this->assertEquals('beforeUpdate', $model->c);
-        // $this->assertEquals('SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', $this->executedQueries[0]['sql']);
-        $this->assertEquals('UPDATE `Model` SET `a` = ?, `b` = ?, `c` = ?', $this->executedQueries[0]['sql']);
+        $this->assertCount(1, $this->executedQueries);
+        $this->assertEquals([
+            // ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings'=>['Model']],
+            ['sql'=>'UPDATE `Model` SET `a` = ?, `b` = ?, `c` = ?', 'bindings'=>['10', 'test', 'beforeUpdate']],
+        ], $this->executedQueries);
     }
 
     public function testPatchShouldCallBeforeUpdateOnTheModel(): void
     {
         /** @var \Model $TestModel */
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public $a;
             public $b;
@@ -2214,7 +2192,7 @@ class QueryBuilderTest extends Unit
     public function testPatchShouldCallBeforeUpdateOnTheModelAsync(): void
     {
         /** @var \Model $TestModel */
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public $a;
             public $b;
@@ -2257,7 +2235,7 @@ class QueryBuilderTest extends Unit
     public function testInsertShouldCallBeforeInsertOnTheModel(): void
     {
         /** @var \Model $TestModel */
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public $a;
             public $b;
@@ -2299,7 +2277,7 @@ class QueryBuilderTest extends Unit
     public function testInsertShouldCallBeforeInsertOnTheModelAsync(): void
     {
         /** @var \Model $TestModel */
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public $a;
             public $b;
@@ -2348,7 +2326,7 @@ class QueryBuilderTest extends Unit
             ['a' => 2],
         ]];
 
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public $a;
             public $b;
@@ -2379,7 +2357,7 @@ class QueryBuilderTest extends Unit
             ['a' => 2],
         ]];
 
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public $a;
             public $b;
@@ -2411,7 +2389,7 @@ class QueryBuilderTest extends Unit
             ['a' => 2],
         ]];
 
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public $a;
             public $b;
@@ -2445,56 +2423,56 @@ class QueryBuilderTest extends Unit
     //     $this->expectException(\LogicException::class); // You can adjust the exception type to whatever you expect.
     //
     //     /** @var \Model $TestModel */
-    //     $TestModel = new class extends \Sharksmedia\Objection\Model
+    //     $TestModel = new class extends \Sharksmedia\Qarium\Model
     //     {
     //         public static function getTableName(): string { return 'Model'; }
     //         public static function getTableIDs(): array { return ['id']; }
     //     };
     //
-    //     $QueryBuilder = ModelQueryBuilder::forClass($TestModel::class);
-    //     $QueryBuilder->setQueryExecutor(function() {});
-    //     $QueryBuilder->setQueryExecutor(function() {});
+    //     $SharQ = ModelSharQ::forClass($TestModel::class);
+    //     $SharQ->setQueryExecutor(function() {});
+    //     $SharQ->setQueryExecutor(function() {});
     // }
 
     public function testClearWithGraphShouldClearEverythingRelatedToEager(): void
     {
         /** @var \Model $TestModel */
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
             public static function getTableIDs(): array { return ['id']; }
         };
 
-        $QueryBuilder = ModelQueryBuilder::forClass($TestModel::class)
+        $SharQ = ModelSharQ::forClass($TestModel::class)
             ->withGraphJoined('a(f).b', ['f' => function(){}])
             ->modifyGraph('a', function(){});
 
-        $this->assertNotNull($QueryBuilder->findOperation('eager'));
-        $QueryBuilder->clearWithGraph();
-        $this->assertNull($QueryBuilder->findOperation('eager'));
+        $this->assertNotNull($SharQ->findOperation('eager'));
+        $SharQ->clearWithGraph();
+        $this->assertNull($SharQ->findOperation('eager'));
     }
 
     public function testClearRejectShouldClearRemoveExplicitRejection(): void
     {
         /** @var \Model $TestModel */
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
             public static function getTableIDs(): array { return ['id']; }
         };
 
-        $QueryBuilder = ModelQueryBuilder::forClass($TestModel::class);
-        $QueryBuilder->reject('error');
+        $SharQ = ModelSharQ::forClass($TestModel::class);
+        $SharQ->reject('error');
 
 
-        $this->assertEquals('error', $QueryBuilder->getExplicitRejectValue());
-        $QueryBuilder->clearReject();
-        $this->assertNull($QueryBuilder->getExplicitRejectValue());
+        $this->assertEquals('error', $SharQ->getExplicitRejectValue());
+        $SharQ->clearReject();
+        $this->assertNull($SharQ->getExplicitRejectValue());
     }
 
     public function testJoinRelatedShouldAddJoinClauseToCorrectPlace(): void
     {
-        $M1 = new class extends \Sharksmedia\Objection\Model
+        $M1 = new class extends \Sharksmedia\Qarium\Model
         {
             public $id;
             public $m2Id;
@@ -2521,7 +2499,7 @@ class QueryBuilderTest extends Unit
             public static function getTableIDs(): array { return ['id']; }
         };
 
-        $M2 = new class extends \Sharksmedia\Objection\Model
+        $M2 = new class extends \Sharksmedia\Qarium\Model
         {
             public static $M1class;
 
@@ -2554,7 +2532,7 @@ class QueryBuilderTest extends Unit
                 return [
                     'm1' => [
                         'relation' => Model::HAS_MANY_RELATION,
-                        'modelClass' => self::$M1class,
+                        'modelClass' => static::$M1class,
                         'join' => [
                             'from' => 'M2.id',
                             'to' => 'M1.m2Id',
@@ -2566,8 +2544,8 @@ class QueryBuilderTest extends Unit
 
         $M2::$M1class = $M1::class;
 
-        $QueryBuilder = $M2::query();
-        $QueryBuilder->joinRelated('m1', ['alias' => 'm'])
+        $SharQ = $M2::query();
+        $SharQ->joinRelated('m1', ['alias' => 'm'])
             ->join('M1', 'M1.id', 'M2.m1Id')
             ->run();
 
@@ -2579,12 +2557,12 @@ class QueryBuilderTest extends Unit
         );
     }
 
-    public function testAllQueryBuilderMethodsShouldWorkIfModelIsNotBoundToAKnexWhenTheQueryIs(): void
+    public function testAllSharQMethodsShouldWorkIfModelIsNotBoundToAKnexWhenTheQueryIs(): void
     {
         global $MockMySQLClient;
 
         /** @var \Model $UnboundModel */
-        $UnboundModel = new class extends \Sharksmedia\Objection\Model
+        $UnboundModel = new class extends \Sharksmedia\Qarium\Model
         {
             public $id;
             public int $foo = 0;
@@ -2601,9 +2579,9 @@ class QueryBuilderTest extends Unit
             public static function getTableName(): string { return 'Bar'; }
             public static function getTableIDs(): array { return ['id']; }
 
-            public function getUnsafeQueryBuilder(): ?QueryBuilder
+            public function getUnsafeSharQ(): ?SharQ
             {
-                return $this->context->iQueryBuilder;
+                return $this->context->iSharQ;
             }
         };
 
@@ -2621,7 +2599,7 @@ class QueryBuilderTest extends Unit
     public function testFirstShouldNotAddLimit1ByDefault(): void
     {
         /** @var \Model $TestModel */
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
             public static function getTableIDs(): array { return ['id']; }
@@ -2634,7 +2612,7 @@ class QueryBuilderTest extends Unit
     public function testFirstShouldAddLimit1IfModelUseLimitInFirstIsTrue(): void
     {
         /** @var \Model $TestModel */
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public const USE_LIMIT_IN_FIRST = true;
 
@@ -2649,7 +2627,7 @@ class QueryBuilderTest extends Unit
     public function testTableNameForShouldReturnTheTableName(): void
     {
         /** @var \Model $TestModel */
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
             public static function getTableIDs(): array { return ['id']; }
@@ -2665,7 +2643,7 @@ class QueryBuilderTest extends Unit
         return;
         
         /** @var \Model $TestModel */
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
             public static function getTableIDs(): array { return ['id']; }
@@ -2678,7 +2656,7 @@ class QueryBuilderTest extends Unit
     public function testTableRefForShouldReturnTheTableNameByDefault(): void
     {
         /** @var \Model $TestModel */
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
             public static function getTableIDs(): array { return ['id']; }
@@ -2691,7 +2669,7 @@ class QueryBuilderTest extends Unit
     public function testTableRefForShouldReturnTheAlias(): void
     {
         /** @var \Model $TestModel */
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
             public static function getTableIDs(): array { return ['id']; }
@@ -2701,28 +2679,28 @@ class QueryBuilderTest extends Unit
         $this->assertEquals('Lyl', $query->getTableRefFor($TestModel::class));
     }
 
-    public function testShouldUseModelQueryBuilderInBuilderMethods(): void
+    public function testShouldUseModelSharQInBuilderMethods(): void
     {
         $this->markTestSkipped('Not implemented yet');
         return;
 
         /** @var \Model $TestModel */
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
             public static function getTableIDs(): array { return ['id']; }
 
-            public static $ModelQueryBuilder;
-            public static $CustomQueryBuilderClass;
+            public static $ModelSharQ;
+            public static $CustomSharQClass;
 
-            public static function query($iTransactionOrClient=null): ModelQueryBuilder
+            public static function query($iTransactionOrClient=null): ModelSharQ
             {
-                if(static::$ModelQueryBuilder === null)
+                if(static::$ModelSharQ === null)
                 {
-                    static::$ModelQueryBuilder = new self::$CustomQueryBuilderClass(static::class);
+                    static::$ModelSharQ = new static::$CustomSharQClass(static::class);
                 }
 
-                $query = static::$ModelQueryBuilder::forClass(static::class)
+                $query = static::$ModelSharQ::forClass(static::class)
                     ->transacting($iTransactionOrClient);
 
                 static::onCreateQuery($query);
@@ -2731,35 +2709,32 @@ class QueryBuilderTest extends Unit
             }
         };
 
-        $CustomQueryBuilder = new class($TestModel::class) extends ModelQueryBuilder {};
+        $CustomSharQ = new class($TestModel::class) extends ModelSharQ {};
 
-        $TestModel::$CustomQueryBuilderClass = $CustomQueryBuilder::class;
+        $TestModel::$CustomSharQClass = $CustomSharQ::class;
 
         $checks = [];
 
         $TestModel::query()
-        ->select('*', function($builder) use(&$checks, $CustomQueryBuilder)
+        ->select('*', function($builder) use(&$checks, $CustomSharQ)
             {
-                $checks[] = $builder instanceof $CustomQueryBuilder;
+                $checks[] = $builder instanceof $CustomSharQ;
             })
-        ->where(function($builder) use(&$checks, $CustomQueryBuilder)
+        ->where(function($builder) use(&$checks, $CustomSharQ)
             {
-                codecept_debug($builder);
-                $checks[] = $builder instanceof $CustomQueryBuilder;
+                $checks[] = $builder instanceof $CustomSharQ;
 
-                $builder->where(function($builder) use(&$checks, $CustomQueryBuilder)
+                $builder->where(function($builder) use(&$checks, $CustomSharQ)
                 {
-                    $checks[] = $builder instanceof $CustomQueryBuilder;
+                    $checks[] = $builder instanceof $CustomSharQ;
                 });
             })
-        ->modify(function($builder) use(&$checks, $CustomQueryBuilder)
+        ->modify(function($builder) use(&$checks, $CustomSharQ)
             {
-                $checks[] = $builder instanceof $CustomQueryBuilder;
+                $checks[] = $builder instanceof $CustomSharQ;
             })
             ->run();
     
-        codecept_debug($checks);
-
         $this->assertCount(4, $checks);
         $this->assertTrue(array_reduce($checks, function($carry, $item)
         {
@@ -2770,7 +2745,7 @@ class QueryBuilderTest extends Unit
     public function testHasSelectionAs(): void
     {
         /** @var \Model $TestModel */
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
             public static function getTableIDs(): array { return ['id']; }
@@ -2797,7 +2772,7 @@ class QueryBuilderTest extends Unit
     public function testHasSelection(): void
     {
         /** @var \Model $TestModel */
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
             public static function getTableIDs(): array { return ['id']; }
@@ -2833,10 +2808,8 @@ class QueryBuilderTest extends Unit
         $this->markTestSkipped('Not implemented yet');
         return;
 
-        $parsed = ModelQueryBuilder::parseRelationExpression('[foo, bar.baz]');
+        $parsed = ModelSharQ::parseRelationExpression('[foo, bar.baz]');
 
-        codecept_debug($parsed);
-        
         $expected = [
             '$name' => null,
             '$relation' => null,
@@ -2875,36 +2848,96 @@ class QueryBuilderTest extends Unit
 
     public function testAllowGraphWithSingleFunctionJoined(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $this->markTestSkipped('Not implemented yet');
+
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
+            public $id;
+            public $a;
+
             public static function getTableName(): string { return 'Model'; }
             public static function getTableIDs(): array { return ['id']; }
+
+            public static function getRelationMappings(): array
+            {
+                return [
+                    'a'=>[
+                        'relation' => Model::HAS_ONE_RELATION,
+                        'modelClass' => static::class,
+                        'join' => [
+                            'from' => 'Model.id',
+                            'to' => 'Model.id',
+                        ],
+                    ]
+                ];
+            }
         };
 
         $TestModel->query()->allowGraph('a')->withGraphJoined('a(f1)', ['f1' => function () {}])->run();
 
-        $this->assertCount(1, self::$executedQueries);
+        $this->assertCount(1, $this->executedQueries);
     }
 
     public function testWithGraphJoinedAllowGraphOrder(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $this->markTestSkipped('Not implemented yet');
+
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
+            public $id;
+            public $a;
+
             public static function getTableName(): string { return 'Model'; }
             public static function getTableIDs(): array { return ['id']; }
+
+            public static function getRelationMappings(): array
+            {
+                return [
+                    'a'=>[
+                        'relation' => Model::HAS_ONE_RELATION,
+                        'modelClass' => static::class,
+                        'join' => [
+                            'from' => 'Model.id',
+                            'to' => 'Model.id',
+                        ],
+                    ]
+                ];
+            }
         };
 
         $TestModel->query()->withGraphJoined('a(f1)', ['f1' => function () {}])->allowGraph('a')->run();
 
-        $this->assertCount(1, self::$executedQueries);
+        $this->assertCount(1, $this->executedQueries);
     }
 
     public function testAllowGraphComplexWithGraphJoinedSimple(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
+            public $id;
+            public $a;
+
+            public static array $metadataCache =
+            [
+                'Model'=>[ ['Field'=>'a'] ]
+            ];
+
             public static function getTableName(): string { return 'Model'; }
             public static function getTableIDs(): array { return ['id']; }
+
+            public static function getRelationMappings(): array
+            {
+                return [
+                    'a'=>[
+                        'relation' => Model::HAS_ONE_RELATION,
+                        'modelClass' => static::class,
+                        'join' => [
+                            'from' => 'Model.id',
+                            'to' => 'Model.id',
+                        ],
+                    ]
+                ];
+            }
         };
 
         $TestModel->query()->allowGraph('[a, b.c.[d, e]]')->withGraphJoined('a')->run();
@@ -2912,63 +2945,261 @@ class QueryBuilderTest extends Unit
 
     public function testAllowGraphComplexWithGraphJoinedNested(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
+            public $id;
+            public $b;
+            public $c;
+
+            public static array $metadataCache =
+            [
+                'Model'=>[
+                    ['Field'=>'id'],
+                    ['Field'=>'a'],
+                    ['Field'=>'c'],
+                ]
+            ];
+
             public static function getTableName(): string { return 'Model'; }
             public static function getTableIDs(): array { return ['id']; }
+
+            public static function getRelationMappings(): array
+            {
+                return [
+                    'a'=>[
+                        'relation' => Model::HAS_ONE_RELATION,
+                        'modelClass' => static::class,
+                        'join' => [
+                            'from' => 'Model.id',
+                            'to' => 'Model.id',
+                        ],
+                    ],
+                    'b'=>[
+                        'relation' => Model::HAS_ONE_RELATION,
+                        'modelClass' => static::class,
+                        'join' => [
+                            'from' => 'Model.id',
+                            'to' => 'Model.id',
+                        ],
+                    ],
+                    'c'=>[
+                        'relation' => Model::HAS_ONE_RELATION,
+                        'modelClass' => static::class,
+                        'join' => [
+                            'from' => 'Model.id',
+                            'to' => 'Model.id',
+                        ],
+                    ],
+                ];
+            }
         };
 
         $TestModel->query()->allowGraph('[a, b.c.[d, e]]')->withGraphJoined('b.c')->run();
 
-        $this->assertCount(1, self::$executedQueries);
+        $this->assertCount(2, $this->executedQueries);
+        $this->assertEquals(
+            [
+                ['sql' => 'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings' => ['Model']],
+                ['sql' => 'SELECT `Model`.`id` AS `id`, `Model`.`a` AS `a`, `Model`.`c` AS `c`, `b`.`id` AS `b:id`, `b`.`a` AS `b:a`, `b`.`c` AS `b:c`, `b:c`.`id` AS `b:c:id`, `b:c`.`a` AS `b:c:a`, `b:c`.`c` AS `b:c:c` FROM `Model` LEFT JOIN `Model` AS `b` ON(`b`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `b:c` ON(`b:c`.`id` = `Model`.`id`)', 'bindings' => []],
+            ],
+            $this->executedQueries
+        );
     }
 
     public function testAllowGraphComplexWithGraphJoinedDeepNested(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
+            public $id;
+            public $b;
+            public $c;
+            public $e;
+
+            public static array $metadataCache =
+            [
+                'Model'=>[
+                    ['Field'=>'id'],
+                    ['Field'=>'b'],
+                    ['Field'=>'c'],
+                    ['Field'=>'e'],
+                ]
+            ];
+
             public static function getTableName(): string { return 'Model'; }
             public static function getTableIDs(): array { return ['id']; }
+
+            public static $relatedClass;
+
+            public static function getRelationMappings(): array
+            {
+                return [
+                    'b'=>[
+                        'relation' => Model::HAS_ONE_RELATION,
+                        'modelClass'=>static::$relatedClass,
+                        'join' => [
+                            'from' => 'Model.id',
+                            'to' => 'Model.id',
+                        ],
+                    ],
+                    'c'=>[
+                        'relation'=>Model::HAS_ONE_RELATION,
+                        'modelClass'=>static::$relatedClass,
+                        'join' => [
+                            'from' => 'Model.id',
+                            'to' => 'Model.id',
+                        ],
+                    ],
+                    'e'=>[
+                        'relation' => Model::HAS_ONE_RELATION,
+                        'modelClass'=>static::$relatedClass,
+                        'join' => [
+                            'from' => 'Model.id',
+                            'to' => 'Model.id',
+                        ],
+                    ],
+                ];
+            }
         };
+
+        $TestModel::$relatedClass = $TestModel::class;
 
         $TestModel->query()->allowGraph('[a, b.c.[d, e]]')->withGraphJoined('b.c.e')->run();
 
-        $this->assertCount(1, self::$executedQueries);
+        $this->assertCount(2, $this->executedQueries);
+        $this->assertEquals(
+            [
+                ['sql' => 'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings' => ['Model']],
+                ['sql' => 'SELECT `Model`.`id` AS `id`, `Model`.`b` AS `b`, `Model`.`c` AS `c`, `Model`.`e` AS `e`, `b`.`id` AS `b:id`, `b`.`b` AS `b:b`, `b`.`c` AS `b:c`, `b`.`e` AS `b:e`, `b:c`.`id` AS `b:c:id`, `b:c`.`b` AS `b:c:b`, `b:c`.`c` AS `b:c:c`, `b:c`.`e` AS `b:c:e`, `b:c:e`.`id` AS `b:c:e:id`, `b:c:e`.`b` AS `b:c:e:b`, `b:c:e`.`c` AS `b:c:e:c`, `b:c:e`.`e` AS `b:c:e:e` FROM `Model` LEFT JOIN `Model` AS `b` ON(`b`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `b:c` ON(`b:c`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `b:c:e` ON(`b:c:e`.`id` = `Model`.`id`)', 'bindings' => []],
+            ],
+            $this->executedQueries
+        );
     }
 
     public function testAllowGraphOverlappingWithGraphJoinedSimple(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
+            public $id;
+            public $a;
+
+            public static array $metadataCache =
+            [
+                'Model'=>[
+                    ['Field'=>'id'],
+                    ['Field'=>'a'],
+                    ['Field'=>'b'],
+                ]
+            ];
+
             public static function getTableName(): string { return 'Model'; }
             public static function getTableIDs(): array { return ['id']; }
+
+            public static function getRelationMappings(): array
+            {
+                return [
+                    'a'=>[
+                        'relation' => Model::HAS_ONE_RELATION,
+                        'modelClass' => static::class,
+                        'join' => [
+                            'from' => 'Model.id',
+                            'to' => 'Model.id',
+                        ],
+                    ],
+                    'b'=>[
+                        'relation' => Model::HAS_ONE_RELATION,
+                        'modelClass' => static::class,
+                        'join' => [
+                            'from' => 'Model.id',
+                            'to' => 'Model.id',
+                        ],
+                    ],
+                ];
+            }
         };
 
         $TestModel->query()->allowGraph('[a, b.c.[a, e]]')->allowGraph('b.c.[b, d]')->withGraphJoined('a')->run();
+
+        $this->assertCount(2, $this->executedQueries);
+
+        $this->assertEquals(
+            [
+                ['sql' => 'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings' => ['Model']],
+                ['sql' => 'SELECT `Model`.`id` AS `id`, `Model`.`a` AS `a`, `Model`.`b` AS `b`, `a`.`id` AS `a:id`, `a`.`a` AS `a:a`, `a`.`b` AS `a:b` FROM `Model` LEFT JOIN `Model` AS `a` ON(`a`.`id` = `Model`.`id`)', 'bindings' => []],
+            ],
+            $this->executedQueries
+        );
     }
 
     public function testAllowGraphMultipleOverlappingWithGraphJoinedNested(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
+            public $id;
+            public $a;
+
+            public static array $metadataCache =
+            [
+                'Model'=>[
+                    ['Field'=>'id'],
+                    ['Field'=>'a'],
+                    ['Field'=>'b'],
+                ]
+            ];
+
             public static function getTableName(): string { return 'Model'; }
             public static function getTableIDs(): array { return ['id']; }
+
+            public static function getRelationMappings(): array
+            {
+                return [
+                    'a'=>[
+                        'relation' => Model::HAS_ONE_RELATION,
+                        'modelClass' => static::class,
+                        'join' => [
+                            'from' => 'Model.id',
+                            'to' => 'Model.id',
+                        ],
+                    ],
+                    'b'=>[
+                        'relation' => Model::HAS_ONE_RELATION,
+                        'modelClass' => static::class,
+                        'join' => [
+                            'from' => 'Model.id',
+                            'to' => 'Model.id',
+                        ],
+                    ],
+                ];
+            }
         };
 
         $TestModel->query()->allowGraph('[a.[a, b], b.c.[a, e]]')->allowGraph('[a.[c, d], b.c.[b, d]]')->withGraphJoined('a.b')->run();
 
-        $this->assertCount(1, self::$executedQueries);
+        $this->assertCount(2, $this->executedQueries);
+
+        $this->assertEquals(
+            [
+                ['sql' => 'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings' => ['Model']],
+                ['sql' => 'SELECT `Model`.`id` AS `id`, `Model`.`a` AS `a`, `Model`.`b` AS `b`, `a`.`id` AS `a:id`, `a`.`a` AS `a:a`, `a`.`b` AS `a:b`, `a:b`.`id` AS `a:b:id`, `a:b`.`a` AS `a:b:a`, `a:b`.`b` AS `a:b:b` FROM `Model` LEFT JOIN `Model` AS `a` ON(`a`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `a:b` ON(`a:b`.`id` = `Model`.`id`)', 'bindings' => []],
+            ],
+            $this->executedQueries
+        );
     }
 
     public function testNestedGraphFetchingWithSuccess(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public $id;
+            public $a;
+            public $c;
 
             protected static array $metadataCache =
             [
-                'Model' => [ ['Field'=>'id'], ],
+                'Model' => [
+                    ['Field'=>'id'],
+                    ['Field'=>'a'],
+                    ['Field'=>'c'],
+                ],
             ];
 
             public static function getTableName(): string { return 'Model'; }
@@ -2981,36 +3212,15 @@ class QueryBuilderTest extends Unit
                 return [
                     'a'=>[
                         'relation'=>self::HAS_MANY_RELATION,
-                        'modelClass'=>self::$aclass,
+                        'modelClass'=>static::class,
                         'join'=>[
                             'from'=>'Model.id',
                             'to'=>'Model.id'
                         ],
-                    ]
-                ];
-            }
-        };
-
-        $AModel = new class extends \Sharksmedia\Objection\Model
-        {
-            public $id;
-
-            protected static array $metadataCache =
-            [
-                'Model' => [ ['Field'=>'id'], ],
-            ];
-
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
-
-            public static $cclass;
-
-            public static function getRelationMappings(): array
-            {
-                return [
+                    ],
                     'c'=>[
                         'relation'=>self::HAS_MANY_RELATION,
-                        'modelClass'=>self::$cclass,
+                        'modelClass'=>static::class,
                         'join'=>[
                             'from'=>'Model.id',
                             'to'=>'Model.id'
@@ -3019,46 +3229,34 @@ class QueryBuilderTest extends Unit
                 ];
             }
         };
-
-        $CModel = new class extends \Sharksmedia\Objection\Model
-        {
-            public $id;
-
-            protected static array $metadataCache =
-            [
-                'Model' => [ ['Field'=>'id'], ],
-            ];
-
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
-        };
-
-        $TestModel::$aclass = $AModel::class;
-        $AModel::$cclass = $CModel::class;
 
         $TestModel->query()->allowGraph('[a.[a, b], b.[a, c]]')->allowGraph('[a.[c, d], b.c.[b, d]]')->withGraphJoined('a.c')->run();
 
         $this->assertCount(2, $this->executedQueries);
         $this->assertEquals(
-            ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings'=>['Model']],
-            $this->executedQueries[0]
-        );
-
-        $this->assertEquals(
-            ['sql'=>'SELECT `Model`.`id` AS `id`, `a`.`id` AS `a:id`, `a:c`.`id` AS `a:c:id` FROM `Model` LEFT JOIN `Model` AS `a` ON(`a`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `a:c` ON(`a:c`.`id` = `Model`.`id`)', 'bindings'=>[]],
-            $this->executedQueries[1]
+            [
+                ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings'=>['Model']],
+                ['sql'=>'SELECT `Model`.`id` AS `id`, `Model`.`a` AS `a`, `Model`.`c` AS `c`, `a`.`id` AS `a:id`, `a`.`a` AS `a:a`, `a`.`c` AS `a:c`, `a:c`.`id` AS `a:c:id`, `a:c`.`a` AS `a:c:a`, `a:c`.`c` AS `a:c:c` FROM `Model` LEFT JOIN `Model` AS `a` ON(`a`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `a:c` ON(`a:c`.`id` = `Model`.`id`)', 'bindings'=>[]],
+            ],
+            $this->executedQueries
         );
     }
 
     public function testMultipleNestedGraphWithSuccess(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public $id;
+            public $a;
+            public $b;
 
             protected static array $metadataCache =
             [
-                'Model' => [ ['Field'=>'id'], ],
+                'Model' => [
+                    ['Field'=>'id'],
+                    ['Field'=>'a'],
+                    ['Field'=>'b'],
+                ],
             ];
 
             public static function getTableName(): string { return 'Model'; }
@@ -3069,38 +3267,17 @@ class QueryBuilderTest extends Unit
             public static function getRelationMappings(): array
             {
                 return [
-                    'b'=>[
-                        'relation'=>self::HAS_MANY_RELATION,
-                        'modelClass'=>self::$aclass,
-                        'join'=>[
-                            'from'=>'Model.id',
-                            'to'=>'Model.id'
-                        ],
-                    ]
-                ];
-            }
-        };
-
-        $AModel = new class extends \Sharksmedia\Objection\Model
-        {
-            public $id;
-
-            protected static array $metadataCache =
-            [
-                'Model' => [ ['Field'=>'id'], ],
-            ];
-
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
-
-            public static $bclass;
-
-            public static function getRelationMappings(): array
-            {
-                return [
                     'a'=>[
                         'relation'=>self::HAS_MANY_RELATION,
-                        'modelClass'=>self::$bclass,
+                        'modelClass'=>static::class,
+                        'join'=>[
+                            'from'=>'Model.id',
+                            'to'=>'Model.id'
+                        ],
+                    ],
+                    'b'=>[
+                        'relation'=>self::HAS_MANY_RELATION,
+                        'modelClass'=>static::class,
                         'join'=>[
                             'from'=>'Model.id',
                             'to'=>'Model.id'
@@ -3109,40 +3286,22 @@ class QueryBuilderTest extends Unit
                 ];
             }
         };
-
-        $BModel = new class extends \Sharksmedia\Objection\Model
-        {
-            public $id;
-
-            protected static array $metadataCache =
-            [
-                'Model' => [ ['Field'=>'id'], ],
-            ];
-
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
-        };
-
-        $TestModel::$aclass = $AModel::class;
-        $AModel::$bclass = $BModel::class;
 
         $TestModel->query()->allowGraph('[a.[a, b], b.[a, c]]')->allowGraph('[a.[c, d], b.c.[b, d]]')->withGraphJoined('b.a')->run();
 
         $this->assertCount(2, $this->executedQueries);
         $this->assertEquals(
-            ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings'=>['Model']],
-            $this->executedQueries[0]
-        );
-
-        $this->assertEquals(
-            ['sql'=>'SELECT `Model`.`id` AS `id`, `b`.`id` AS `b:id`, `b:a`.`id` AS `b:a:id` FROM `Model` LEFT JOIN `Model` AS `b` ON(`b`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `b:a` ON(`b:a`.`id` = `Model`.`id`)', 'bindings'=>[]],
-            $this->executedQueries[1]
+            [
+                ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings'=>['Model']],
+                ['sql'=>'SELECT `Model`.`id` AS `id`, `Model`.`a` AS `a`, `Model`.`b` AS `b`, `b`.`id` AS `b:id`, `b`.`a` AS `b:a`, `b`.`b` AS `b:b`, `b:a`.`id` AS `b:a:id`, `b:a`.`a` AS `b:a:a`, `b:a`.`b` AS `b:a:b` FROM `Model` LEFT JOIN `Model` AS `b` ON(`b`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `b:a` ON(`b:a`.`id` = `Model`.`id`)', 'bindings'=>[]],
+            ],
+            $this->executedQueries
         );
     }
 
     public function testAllowGraphNestedWithGraphJoinedDeeper(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public $id;
 
@@ -3161,126 +3320,68 @@ class QueryBuilderTest extends Unit
                 return [
                     'b'=>[
                         'relation'=>self::HAS_MANY_RELATION,
-                        'modelClass'=>self::$aclass,
+                        'modelClass'=>static::class,
                         'join'=>[
                             'from'=>'Model.id',
                             'to'=>'Model.id'
                         ],
-                    ]
-                ];
-            }
-        };
-
-        $AModel = new class extends \Sharksmedia\Objection\Model
-        {
-            public $id;
-
-            protected static array $metadataCache =
-            [
-                'Model' => [ ['Field'=>'id'], ],
-            ];
-
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
-
-            public static $cclass;
-
-            public static function getRelationMappings(): array
-            {
-                return [
+                    ],
                     'c'=>[
                         'relation'=>self::HAS_MANY_RELATION,
-                        'modelClass'=>self::$cclass,
+                        'modelClass'=>static::class,
                         'join'=>[
                             'from'=>'Model.id',
                             'to'=>'Model.id'
                         ],
-                    ]
+                    ],
                 ];
             }
         };
-
-        $CModel = new class extends \Sharksmedia\Objection\Model
-        {
-            public $id;
-
-            protected static array $metadataCache =
-            [
-                'Model' => [ ['Field'=>'id'], ],
-            ];
-
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
-        };
-
-        $TestModel::$aclass = $AModel::class;
-        $AModel::$cclass = $CModel::class;
 
         $TestModel->query()->allowGraph('[a.[a, b], b.[a, c]]')->allowGraph('[a.[c, d], b.c.[b, d]]')->withGraphJoined('b.c')->run();
 
-        $this->assertCount(2, $this->executedQueries);
         $this->assertEquals(
-            ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings'=>['Model']],
-            $this->executedQueries[0]
-        );
-
-        $this->assertEquals(
-            ['sql'=>'SELECT `Model`.`id` AS `id`, `b`.`id` AS `b:id`, `b:c`.`id` AS `b:c:id` FROM `Model` LEFT JOIN `Model` AS `b` ON(`b`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `b:c` ON(`b:c`.`id` = `Model`.`id`)', 'bindings'=>[]],
-            $this->executedQueries[1]
+            [
+                ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings'=>['Model']],
+                ['sql'=>'SELECT `Model`.`id` AS `id`, `b`.`id` AS `b:id`, `b:c`.`id` AS `b:c:id` FROM `Model` LEFT JOIN `Model` AS `b` ON(`b`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `b:c` ON(`b:c`.`id` = `Model`.`id`)', 'bindings'=>[]],
+            ],
+            $this->executedQueries
         );
     }
 
     public function testMultipleGraphWithSpecificNestedGraphFetch(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public $id;
+            public $b;
 
             protected static array $metadataCache =
             [
-                'Model' => [ ['Field'=>'id'], ],
+                'Model' => [
+                    ['Field'=>'id'],
+                    ['Field'=>'b'],
+                    ['Field'=>'c'],
+                ],
             ];
 
             public static function getTableName(): string { return 'Model'; }
             public static function getTableIDs(): array { return ['id']; }
-
-            public static $aclass;
 
             public static function getRelationMappings(): array
             {
                 return [
                     'b'=>[
                         'relation'=>self::HAS_MANY_RELATION,
-                        'modelClass'=>self::$aclass,
+                        'modelClass'=>static::class,
                         'join'=>[
                             'from'=>'Model.id',
                             'to'=>'Model.id'
                         ],
-                    ]
-                ];
-            }
-        };
-
-        $AModel = new class extends \Sharksmedia\Objection\Model
-        {
-            public $id;
-
-            protected static array $metadataCache =
-            [
-                'Model' => [ ['Field'=>'id'], ],
-            ];
-
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
-
-            public static $cclass;
-
-            public static function getRelationMappings(): array
-            {
-                return [
+                    ],
                     'c'=>[
                         'relation'=>self::HAS_MANY_RELATION,
-                        'modelClass'=>self::$cclass,
+                        'modelClass'=>static::class,
                         'join'=>[
                             'from'=>'Model.id',
                             'to'=>'Model.id'
@@ -3290,138 +3391,779 @@ class QueryBuilderTest extends Unit
             }
         };
 
-        $CModel = new class extends \Sharksmedia\Objection\Model
-        {
-            public $id;
-
-            protected static array $metadataCache =
-            [
-                'Model' => [ ['Field'=>'id'], ],
-            ];
-
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
-        };
-
-        $TestModel::$aclass = $AModel::class;
-        // $AModel::$cclass = $CModel::class;
-        $AModel::$cclass = $TestModel::class;
+        $this->executedQueries = [];
 
         $TestModel->query()->allowGraph('[a.[a, b], b.[a, c]]')->allowGraph('[a.[c, d], b.c.[b, d]]')->withGraphJoined('b.c.b')->run();
 
         $this->assertCount(2, $this->executedQueries);
         $this->assertEquals(
-            ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings'=>['Model']],
-            $this->executedQueries[0]
-        );
-
-        $this->assertEquals(
-            ['sql'=>'SELECT `Model`.`id` AS `id`, `b`.`id` AS `b:id`, `b:c`.`id` AS `b:c:id`, `b:c:b`.`id` AS `b:c:b:id` FROM `Model` LEFT JOIN `Model` AS `b` ON(`b`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `b:c` ON(`b:c`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `b:c:b` ON(`b:c:b`.`id` = `Model`.`id`)', 'bindings'=>[]],
-            $this->executedQueries[1]
+            [
+                ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings'=>['Model']],
+                ['sql'=>'SELECT `Model`.`id` AS `id`, `Model`.`b` AS `b`, `Model`.`c` AS `c`, `b`.`id` AS `b:id`, `b`.`b` AS `b:b`, `b`.`c` AS `b:c`, `b:c`.`id` AS `b:c:id`, `b:c`.`b` AS `b:c:b`, `b:c`.`c` AS `b:c:c`, `b:c:b`.`id` AS `b:c:b:id`, `b:c:b`.`b` AS `b:c:b:b`, `b:c:b`.`c` AS `b:c:b:c` FROM `Model` LEFT JOIN `Model` AS `b` ON(`b`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `b:c` ON(`b:c`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `b:c:b` ON(`b:c:b`.`id` = `Model`.`id`)', 'bindings'=>[]],
+            ],
+            $this->executedQueries
         );
     }
 
     public function testMismatchedGraphFetchShouldFail(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public $id;
+            public $a;
+            public $b;
 
             protected static array $metadataCache =
             [
-                'Model' => [ ['Field'=>'id'], ],
+                'Model' => [
+                    ['Field'=>'id'],
+                    ['Field'=>'a'],
+                    ['Field'=>'b'],
+                ],
             ];
 
             public static function getTableName(): string { return 'Model'; }
             public static function getTableIDs(): array { return ['id']; }
-
-            public static $aclass;
 
             public static function getRelationMappings(): array
             {
                 return [
                     'a'=>[
                         'relation'=>self::HAS_MANY_RELATION,
-                        'modelClass'=>self::$aclass,
+                        'modelClass'=>static::class,
                         'join'=>[
                             'from'=>'Model.id',
                             'to'=>'Model.id'
                         ],
-                    ]
-                ];
-            }
-        };
-
-        $AModel = new class extends \Sharksmedia\Objection\Model
-        {
-            public $id;
-
-            protected static array $metadataCache =
-            [
-                'Model' => [ ['Field'=>'id'], ],
-            ];
-
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
-
-            public static $cclass;
-
-            public static function getRelationMappings(): array
-            {
-                return [
+                    ],
                     'b'=>[
                         'relation'=>self::HAS_MANY_RELATION,
-                        'modelClass'=>self::$cclass,
+                        'modelClass'=>static::class,
                         'join'=>[
                             'from'=>'Model.id',
                             'to'=>'Model.id'
                         ],
-                    ]
+                    ],
                 ];
             }
         };
 
-        $CModel = new class extends \Sharksmedia\Objection\Model
-        {
-            public $id;
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Eager expression not allowed: a.b');
 
-            protected static array $metadataCache =
-            [
-                'Model' => [ ['Field'=>'id'], ],
-            ];
-
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
-        };
-
-        $TestModel::$aclass = $AModel::class;
-        $AModel::$cclass = $CModel::class;
-
-        try
-        {
-            $TestModel->query()->allowGraph('[a, b.c.[d, e]]')->withGraphJoined('a.b')->run();
-            $this->fail('Expected exception not thrown.');
-        }
-        catch(\Exception $e)
-        {
-            codecept_debug($e.'');
-            $this->assertCount(0, $this->executedQueries);
-        }
+        $TestModel->query()->allowGraph('[a, b.c.[d, e]]')->withGraphJoined('a.b')->run();
     }
 
     public function testMismatchedGraphFetchWithMultipleAllowGraphShouldFail(): void
     {
-        $TestModel = new class extends \Sharksmedia\Objection\Model
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getTableName(): string { return 'Model'; }
             public static function getTableIDs(): array { return ['id']; }
         };
 
-        try {
-            $TestModel->query()->allowGraph('[a, b.c.[d, e]]')->allowGraph('a.[c, d]')->withGraphJoined('a.b')->run();
-            $this->fail('Expected exception not thrown.');
-        } catch (\Exception $e) {
-            $this->assertCount(0, self::$executedQueries);
-        }
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Eager expression not allowed: a.b');
+
+        $TestModel->query()->allowGraph('[a, b.c.[d, e]]')->allowGraph('a.[c, d]')->withGraphJoined('a.b')->run();
+    }
+
+    public function testEagerFetchWithGraphShouldFail(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
+        {
+            public static function getTableName(): string { return 'Model'; }
+            public static function getTableIDs(): array { return ['id']; }
+        };
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Eager expression not allowed: a.b');
+
+        $TestModel->query()->withGraphJoined('a.b')->allowGraph('[a, b.c.[d, e]]')->run();
+    }
+
+    public function testEagerFetchWithMultipleGraphShouldFail(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
+        {
+            public static function getTableName(): string { return 'Model'; }
+            public static function getTableIDs(): array { return ['id']; }
+        };
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Eager expression not allowed: a.b');
+
+        $TestModel->query()->withGraphJoined('a.b')->allowGraph('[a, b.c.[d, e]]')->allowGraph('a.[c, d]')->run();
+    }
+
+    public function testDeeperEagerFetchWithGraphShouldFail(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
+        {
+            public static function getTableName(): string { return 'Model'; }
+            public static function getTableIDs(): array { return ['id']; }
+        };
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Eager expression not allowed: b.c.d.e');
+
+        $TestModel->query()->withGraphJoined('b.c.d.e')->allowGraph('[a, b.c.[d, e]]')->run();
+    }
+
+    public function testDeeperEagerFetchWithMultipleGraphShouldFail(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
+        {
+            public static function getTableName(): string { return 'Model'; }
+            public static function getTableIDs(): array { return ['id']; }
+        };
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Eager expression not allowed: b.c.d.e');
+
+        $TestModel->query()->withGraphJoined('b.c.d.e')->allowGraph('[a, b.c.[d, e]]')->allowGraph('b.c.a')->run();
+    }
+
+    public function testGraphExpressionObjectShouldReturnEagerExpressionAsObject(): void
+    {
+        $this->markTestSkipped('Not implemented yet');
+        return;
+
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
+        {
+            public static function getTableName(): string { return 'Model'; }
+            public static function getTableIDs(): array { return ['id']; }
+        };
+
+        $builder = $TestModel::query()->withGraphJoined('[a, b.c(foo)]');
+
+        $expected = [
+            '$name' => null,
+            '$relation' => null,
+            '$modify' => [],
+            '$recursive' => false,
+            '$allRecursive' => false,
+            '$childNames' => ['a', 'b'],
+            'a' => [
+                '$name' => 'a',
+                '$relation' => 'a',
+                '$modify' => [],
+                '$recursive' => false,
+                '$allRecursive' => false,
+                '$childNames' => [],
+            ],
+            'b' => [
+                '$name' => 'b',
+                '$relation' => 'b',
+                '$modify' => [],
+                '$recursive' => false,
+                '$allRecursive' => false,
+                '$childNames' => ['c'],
+                'c' => [
+                    '$name' => 'c',
+                    '$relation' => 'c',
+                    '$modify' => ['foo'],
+                    '$recursive' => false,
+                    '$allRecursive' => false,
+                    '$childNames' => [],
+                ],
+            ],
+        ];
+
+        $this->assertEquals($expected, $builder->graphExpressionObject());
+    }
+
+    public function testModifiersShouldReturnEagerExpressionsModifiersAsObject(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
+        {
+            public static function getTableName(): string { return 'Model'; }
+            public static function getTableIDs(): array { return ['id']; }
+        };
+
+        $foo = function ($builder) {
+            return $builder->where('foo');
+        };
+
+        $builder = $TestModel::query()->withGraphJoined('[a, b.c(foo)]')->modifiers(['foo' => $foo]);
+
+        $this->assertEquals(['foo' => $foo], $builder->getModifiers());
+    }
+
+    public function testShouldUseCorrectSharQs(): void
+    {
+        $M1 = new class extends \Sharksmedia\Qarium\Model
+        {
+            public $id;
+
+            public static function getTableName(): string { return 'M1'; }
+            
+            static $M2class;
+            static $M1ModelSharQClass;
+
+            protected static array $metadataCache =
+            [
+                'M1'=>[
+                    ['Field'=>'id'],
+                ]
+            ];
+
+            public static function getRelationMappings(): array
+            {
+                return [
+                    'm2' => [
+                        'relation' => static::HAS_MANY_RELATION,
+                        'modelClass' => static::$M2class,
+                        'join' => [
+                            'from'=>'M1.id',
+                            'to'=>'M2.m1Id'
+                        ],
+                    ],
+                ];
+            }
+            
+            public static function query($iTransactionOrClient=null): ModelSharQ
+            {
+                return new static::$M1ModelSharQClass(static::class);
+            }
+        };
+
+        $M2 = new class extends \Sharksmedia\Qarium\Model
+        {
+            public $id;
+            public $m1Id;
+
+            public static function getTableName(): string { return 'M2'; }
+
+            static $M3class;
+            static $M2ModelSharQClass;
+
+            protected static array $metadataCache =
+            [
+                'M2'=>[
+                    ['Field'=>'id'],
+                ]
+            ];
+            
+            public static function getRelationMappings(): array
+            {
+                return [
+                    'm3' => [
+                        'relation' => static::BELONGS_TO_ONE_RELATION,
+                        'modelClass' => static::$M3class,
+                        'join' => [
+                            'from'=>'M2.id',
+                            'to'=>'M3.m2Id'
+                        ],
+                    ],
+                ];
+            }
+            
+            public static function query($iTransactionOrClient=null): ModelSharQ
+            {
+                return new static::$M2ModelSharQClass(static::class);
+            }
+        };
+
+        $M3 = new class extends \Sharksmedia\Qarium\Model
+        {
+            public $id;
+            public $m2Id;
+
+            public static function getTableName(): string { return 'M3'; }
+            
+            static $M3ModelSharQClass;
+
+            protected static array $metadataCache =
+            [
+                'M3'=>[
+                    ['Field'=>'id'],
+                ]
+            ];
+
+            public static function query($iTransactionOrClient=null): ModelSharQ
+            {
+                return new static::$M3ModelSharQClass(static::class);
+            }
+        };
+
+        $M1ModelSharQ = new class($M1::class) extends \Sharksmedia\Qarium\ModelSharQ {};
+        $M2ModelSharQ = new class($M2::class) extends \Sharksmedia\Qarium\ModelSharQ {};
+        $M3ModelSharQ = new class($M3::class) extends \Sharksmedia\Qarium\ModelSharQ {};
+
+
+        $M1::$M2class = $M2::class;
+        $M1::$M1ModelSharQClass = $M1ModelSharQ::class;
+
+        $M2::$M3class = $M3::class;
+        $M2::$M2ModelSharQClass = $M2ModelSharQ::class;
+
+        $M3::$M3ModelSharQClass = $M3ModelSharQ::class;
+
+
+        $this->mockQueryResults = [
+            [['id' => 1, 'm1Id' => 2, 'm3Id' => 3]],
+            [['id' => 1, 'm1Id' => 2, 'm3Id' => 3]],
+            [['id' => 1, 'm1Id' => 2, 'm3Id' => 3]],
+        ];
+
+        $filter1Check = false;
+        $filter2Check = false;
+
+        $M1::query()
+            ->withGraphJoined('m2.m3')
+            ->modifyGraph('m2', function($builder) use(&$filter1Check, $M2ModelSharQ)
+                {
+                    $filter1Check = $builder instanceof $M2ModelSharQ;
+                })
+            ->modifyGraph('m2.m3', function($builder) use(&$filter2Check, $M3ModelSharQ)
+                {
+                    $filter2Check = $builder instanceof $M3ModelSharQ;
+                })
+            ->run();
+
+        $executedQueries = [
+            ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings'=>['M1']],
+            ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings'=>['M2']],
+            ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings'=>['M3']],
+
+            ['sql'=>'SELECT `M1`.`id` AS `id`, `m2`.`id` AS `m2:id`, `m2:m3`.`id` AS `m2:m3:id` FROM `M1` LEFT JOIN `M2` AS `m2` ON(`m2`.`m1Id` = `M1`.`id`) LEFT JOIN `M3` AS `m2:m3` ON(`m2:m3`.`m2Id` = `M2`.`id`)', 'bindings'=>[]],
+        ];
+
+        $this->assertEquals($executedQueries, $this->executedQueries);
+        $this->assertTrue($filter1Check);
+        $this->assertTrue($filter2Check);
+    }
+
+    public function testAfterFindShouldBeCalledAfterRelationsHaveBeenFetched(): void
+    {
+        $M1 = new class extends \Sharksmedia\Qarium\Model
+        {
+            public static $M1class;
+
+            public $someRel = [];
+            public $ids = [];
+
+            public $id;
+            public $m1Id;
+
+            protected static array $metadataCache =
+            [
+                'M1'=>[
+                    ['Field'=>'id'],
+                    ['Field'=>'m1Id'],
+                ]
+            ];
+
+            public static function getTableName(): string { return 'M1'; }
+            public static function getTableIDs(): array { return ['id']; }
+
+            public function lafterFind($context) 
+            {
+                $this->ids = array_map(function($item)
+                {
+                    return $item->id;
+                }, $this->someRel);
+
+                return $context;
+            }
+
+            public static function getRelationMappings(): array
+            {
+                return [
+                    'someRel' => [
+                        'relation' => static::HAS_MANY_RELATION,
+                        'modelClass' => static::$M1class,
+                        'join' => [
+                            'from'=>'M1.id',
+                            'to'=>'M1.m1Id'
+                        ],
+                    ],
+                ];
+            }
+        };
+
+        $M1::$M1class = $M1::class;
+
+
+        /*
+        SELECT
+            `M1`.`id` AS `id`,
+            `M1`.`m1Id` AS `m1Id`,
+            `someRel`.`id` AS `someRel:id`,
+            `someRel`.`m1Id` AS `someRel:m1Id`,
+            `someRel:someRel`.`id` AS `someRel:someRel:id`,
+            `someRel:someRel`.`m1Id` AS `someRel:someRel:m1Id`
+        FROM
+            `M1`
+            LEFT JOIN `M1` AS `someRel` ON `someRel`.`m1Id` = `M1`.`id`
+            LEFT JOIN `M1` AS `someRel:someRel` ON `someRel:someRel`.`m1Id` = `someRel`.`id`
+        */
+
+        // Mocking database results
+        $this->mockQueryResults =
+        [
+            [], // Metadata
+            [
+	            [ "id"=>1, "m1Id"=>null, "someRel:id"=>4, "someRel:m1Id"=>1, "someRel:someRel:id"=>10, "someRel:someRel:m1Id"=>4 ],
+	            [ "id"=>1, "m1Id"=>null, "someRel:id"=>4, "someRel:m1Id"=>1, "someRel:someRel:id"=>9, "someRel:someRel:m1Id"=>4 ],
+	            [ "id"=>1, "m1Id"=>null, "someRel:id"=>3, "someRel:m1Id"=>1, "someRel:someRel:id"=>8, "someRel:someRel:m1Id"=>3 ],
+	            [ "id"=>1, "m1Id"=>null, "someRel:id"=>3, "someRel:m1Id"=>1, "someRel:someRel:id"=>7, "someRel:someRel:m1Id"=>3 ],
+	            [ "id"=>2, "m1Id"=>null, "someRel:id"=>6, "someRel:m1Id"=>2, "someRel:someRel:id"=>14, "someRel:someRel:m1Id"=>6 ],
+	            [ "id"=>2, "m1Id"=>null, "someRel:id"=>6, "someRel:m1Id"=>2, "someRel:someRel:id"=>13, "someRel:someRel:m1Id"=>6 ],
+	            [ "id"=>2, "m1Id"=>null, "someRel:id"=>5, "someRel:m1Id"=>2, "someRel:someRel:id"=>12, "someRel:someRel:m1Id"=>5 ],
+	            [ "id"=>2, "m1Id"=>null, "someRel:id"=>5, "someRel:m1Id"=>2, "someRel:someRel:id"=>11, "someRel:someRel:m1Id"=>5 ],
+	            [ "id"=>3, "m1Id"=>1, "someRel:id"=>8, "someRel:m1Id"=>3, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
+	            [ "id"=>3, "m1Id"=>1, "someRel:id"=>7, "someRel:m1Id"=>3, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
+	            [ "id"=>4, "m1Id"=>1, "someRel:id"=>10, "someRel:m1Id"=>4, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
+	            [ "id"=>4, "m1Id"=>1, "someRel:id"=>9, "someRel:m1Id"=>4, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
+	            [ "id"=>5, "m1Id"=>2, "someRel:id"=>12, "someRel:m1Id"=>5, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
+	            [ "id"=>5, "m1Id"=>2, "someRel:id"=>11, "someRel:m1Id"=>5, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
+	            [ "id"=>6, "m1Id"=>2, "someRel:id"=>14, "someRel:m1Id"=>6, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
+	            [ "id"=>6, "m1Id"=>2, "someRel:id"=>13, "someRel:m1Id"=>6, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
+	            [ "id"=>7, "m1Id"=>3, "someRel:id"=>null, "someRel:m1Id"=>null, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
+	            [ "id"=>8, "m1Id"=>3, "someRel:id"=>null, "someRel:m1Id"=>null, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
+	            [ "id"=>9, "m1Id"=>4, "someRel:id"=>null, "someRel:m1Id"=>null, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
+	            [ "id"=>10, "m1Id"=>4, "someRel:id"=>null, "someRel:m1Id"=>null, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
+	            [ "id"=>11, "m1Id"=>5, "someRel:id"=>null, "someRel:m1Id"=>null, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
+	            [ "id"=>12, "m1Id"=>5, "someRel:id"=>null, "someRel:m1Id"=>null, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
+	            [ "id"=>13, "m1Id"=>6, "someRel:id"=>null, "someRel:m1Id"=>null, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
+	            [ "id"=>14, "m1Id"=>6, "someRel:id"=>null, "someRel:m1Id"=>null, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ]
+            ]
+        ];
+
+        // Execute query and verify
+        $result = $M1::query()
+            ->withGraphJoined('someRel.someRel')
+            ->run();
+
+        $this->assertCount(2, $this->executedQueries);
+        $this->assertEquals([
+            ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings'=>['M1']],
+            ['sql'=>'SELECT `M1`.`id` AS `id`, `M1`.`m1Id` AS `m1Id`, `someRel`.`id` AS `someRel:id`, `someRel`.`m1Id` AS `someRel:m1Id`, `someRel:someRel`.`id` AS `someRel:someRel:id`, `someRel:someRel`.`m1Id` AS `someRel:someRel:m1Id` FROM `M1` LEFT JOIN `M1` AS `someRel` ON(`someRel`.`m1Id` = `M1`.`id`) LEFT JOIN `M1` AS `someRel:someRel` ON(`someRel:someRel`.`m1Id` = `M1`.`id`)', 'bindings'=>[]],
+        ], $this->executedQueries);
+
+        $this->assertEquals([
+            (object) [
+                'someRel' => [
+                    (object) [
+                        'someRel' => [
+                            (object) ['someRel' => [], 'ids' => [], 'id' => 10, 'm1Id' => 4],
+                            (object) ['someRel' => [], 'ids' => [], 'id' => 9, 'm1Id' => 4]
+                        ],
+                        'ids' => [],
+                        'id' => 4,
+                        'm1Id' => 1
+                    ],
+                    (object) [
+                        'someRel' => [
+                            (object) ['someRel' => [], 'ids' => [], 'id' => 8, 'm1Id' => 3],
+                            (object) ['someRel' => [], 'ids' => [], 'id' => 7, 'm1Id' => 3]
+                        ],
+                        'ids' => [],
+                        'id' => 3,
+                        'm1Id' => 1
+                    ]
+                ],
+                'ids' => [4, 3],
+                'id' => 1,
+                'm1Id' => null
+            ],
+            (object) [
+                'someRel' => [
+                    (object) [
+                        'someRel' => [
+                            (object) ['someRel' => [], 'ids' => [], 'id' => 14, 'm1Id' => 6],
+                            (object) ['someRel' => [], 'ids' => [], 'id' => 13, 'm1Id' => 6]
+                        ],
+                        'ids' => [],
+                        'id' => 6,
+                        'm1Id' => 2
+                    ],
+                    (object) [
+                        'someRel' => [
+                            (object) ['someRel' => [], 'ids' => [], 'id' => 12, 'm1Id' => 5],
+                            (object) ['someRel' => [], 'ids' => [], 'id' => 11, 'm1Id' => 5]
+                        ],
+                        'ids' => [],
+                        'id' => 5,
+                        'm1Id' => 2
+                    ]
+                ],
+                'ids' => [6, 5],
+                'id' => 2,
+                'm1Id' => null
+            ],
+            (object) [
+                'someRel' => [
+                    (object) ['someRel' => [], 'ids' => [], 'id' => 8, 'm1Id' => 3],
+                    (object) ['someRel' => [], 'ids' => [], 'id' => 7, 'm1Id' => 3]
+                ],
+                'ids' => [8, 7],
+                'id' => 3,
+                'm1Id' => 1
+            ],
+            (object) [
+                'someRel' => [
+                    (object) ['someRel' => [], 'ids' => [], 'id' => 10, 'm1Id' => 4],
+                    (object) ['someRel' => [], 'ids' => [], 'id' => 9, 'm1Id' => 4]
+                ],
+                'ids' => [10, 9],
+                'id' => 4,
+                'm1Id' => 1
+            ],
+            (object) [
+                'someRel' => [
+                    (object) ['someRel' => [], 'ids' => [], 'id' => 12, 'm1Id' => 5],
+                    (object) ['someRel' => [], 'ids' => [], 'id' => 11, 'm1Id' => 5]
+                ],
+                'ids' => [12, 11],
+                'id' => 5,
+                'm1Id' => 2
+            ],
+            (object) [
+                'someRel' => [
+                    (object) ['someRel' => [], 'ids' => [], 'id' => 14, 'm1Id' => 6],
+                    (object) ['someRel' => [], 'ids' => [], 'id' => 13, 'm1Id' => 6]
+                ],
+                'ids' => [14, 13],
+                'id' => 6,
+                'm1Id' => 2
+            ],
+            (object) ['someRel' => [], 'ids' => [], 'id' => 7, 'm1Id' => 3],
+            (object) ['someRel' => [], 'ids' => [], 'id' => 8, 'm1Id' => 3],
+            (object) ['someRel' => [], 'ids' => [], 'id' => 9, 'm1Id' => 4],
+            (object) ['someRel' => [], 'ids' => [], 'id' => 10, 'm1Id' => 4],
+            (object) ['someRel' => [], 'ids' => [], 'id' => 11, 'm1Id' => 5],
+            (object) ['someRel' => [], 'ids' => [], 'id' => 12, 'm1Id' => 5],
+            (object) ['someRel' => [], 'ids' => [], 'id' => 13, 'm1Id' => 6],
+            (object) ['someRel' => [], 'ids' => [], 'id' => 14, 'm1Id' => 6]
+        ], json_decode(json_encode($result)));
+    }
+
+    public function testContextShouldMergeContext(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Qarium\Model 
+        {
+            public static function getTableName(): string { return 'TestModel'; }
+            public static function getTableIDs(): array { return ['id']; }
+        };
+
+        $builder = $TestModel::query()->context(['a' => 1])->context(['b' => 2]);
+
+        global $MockMySQLClient;
+
+        $this->assertEquals(['a' => 1, 'b' => 2], $builder->context()->getInternalData());
+        $this->assertTrue($builder->getContext()->transaction === $MockMySQLClient);
+    }
+
+    public function testClearContextShouldClearTheContext(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Qarium\Model 
+        {
+            public static function getTableName(): string { return 'TestModel'; }
+            public static function getTableIDs(): array { return ['id']; }
+        };
+
+        $builder = $TestModel::query()->context(['a' => 1])->clearContext();
+        $this->assertEquals([], $builder->getContext()->userContext->getInternalData());
+    }
+
+    public function testContextWithoutPreviousContext(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Qarium\Model 
+        {
+            public static function getTableName(): string { return 'TestModel'; }
+            public static function getTableIDs(): array { return ['id']; }
+        };
+
+        $builder = $TestModel::query()->context(['a' => 1])->context(['b' => 2]);
+
+        global $MockMySQLClient;
+
+        $this->assertEquals(['a' => 1, 'b' => 2], $builder->getContext()->userContext->getInternalData());
+        $this->assertTrue($builder->getContext()->transaction === $MockMySQLClient);
+    }
+
+    public function testCloningSharQShouldCloneContext(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Qarium\Model 
+        {
+            public static function getTableName(): string { return 'TestModel'; }
+            public static function getTableIDs(): array { return ['id']; }
+        };
+
+        $builder = $TestModel::query()->context(['a' => 1]);
+
+        $builder2 = clone $builder;
+        $builder2->context(['b' => 2]);
+
+        $this->assertEquals(['a' => 1], $builder->context()->getInternalData());
+        $this->assertEquals(['a' => 1, 'b' => 2], $builder2->context()->getInternalData());
+    }
+
+    public function testChildQueryOfShouldCopyReferenceOfContext(): void
+    {
+        $this->markTestSkipped('This test is not working yet.');
+
+        $TestModel = new class extends \Sharksmedia\Qarium\Model 
+        {
+            public static function getTableName(): string { return 'TestModel'; }
+            public static function getTableIDs(): array { return ['id']; }
+        };
+
+        $builder = $TestModel::query()->context(['a' => 1]);
+        $builder2 = $TestModel::query()->childQueryOf($builder)->context(['b' => 2]);
+
+        $this->assertEquals(['a' => 1, 'b' => 2], $builder->context()->getInternalData());
+        $this->assertEquals(['a' => 1, 'b' => 2], $builder2->context()->getInternalData());
+    }
+
+    public function testChildQueryOfWithForkOptionShouldCopyContext(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Qarium\Model 
+        {
+            public static function getTableName(): string { return 'TestModel'; }
+            public static function getTableIDs(): array { return ['id']; }
+        };
+
+        $builder = $TestModel::query()->context(['a' => 1]);
+        $builder2 = $TestModel::query()->childQueryOf($builder, true)->context(['b' => 2]);
+
+        $this->assertEquals(['a' => 1], $builder->context()->getInternalData());
+        $this->assertEquals(['a' => 1, 'b' => 2], $builder2->context()->getInternalData());
+    }
+
+    public function testValuesSavedToContextInHooksShouldBeAvailableLater(): void
+    {
+        $TestModel = new class extends \Sharksmedia\Qarium\Model 
+        {
+            public $a = null;
+            public static $foo = null;
+
+            public static function getTableName(): string { return 'TestModel'; }
+            public static function getTableIDs(): array { return ['id']; }
+
+            public function lbeforeUpdate($context): void
+            {
+                $context->foo = 101;
+            }
+
+            public function lafterUpdate($context): void 
+            {
+                static::$foo = $context->foo;
+            }
+        };
+
+        $instance = $TestModel::query()->patch(['a' => 1])->run();
+        $this->assertEquals(101, $TestModel::$foo);
+    }
+
+    public function testQueryUpdate(): void
+    {
+        $person = new class extends \Sharksmedia\Qarium\Model 
+        {
+            public $id;
+            public $foo;
+
+            public static function getTableName(): string { return 'person'; }
+            public static function getTableIDs(): array { return ['id']; }
+        };
+
+        $query = $person::query()->update(['foo' => 'bar'])->where('name', 'like', '%foo');
+        $sql = $query->toFindQuery()->toString();
+
+        $this->assertEquals('SELECT `person`.* FROM `person` WHERE `name` LIKE ?', $sql);
+    }
+
+    public function testRelatedQueryHasManyUpdate(): void
+    {
+        $person = new class extends \Sharksmedia\Qarium\Model 
+        {
+            public $id;
+
+            public static $petClass;
+            
+            public static function getTableName(): string { return 'person'; }
+            public static function getTableIDs(): array { return ['id']; }
+
+            public static function getRelationMappings(): array
+            {
+                return [
+                    'pets' => [
+                        'relation'=>self::HAS_MANY_RELATION,
+                        'modelClass'=>self::$petClass,
+                        'join' => [
+                            'from'=>'person.id',
+                            'to'=>'pet.owner_id'
+                        ]
+                    ]
+                ];
+            }
+        };
+
+        $pet = new class extends \Sharksmedia\Qarium\Model 
+        {
+            public $id;
+            public $owner_id;
+            public $foo;
+
+            public static function getTableName(): string { return 'pet'; }
+            public static function getTableIDs(): array { return ['id']; }
+        };
+
+        $person::$petClass = $pet::class;
+
+        $instance = $person::createFromDatabaseArray(['id' => 1]);
+
+        $query = $instance->lrelatedQuery('pets')->update(['foo' => 'bar'])->where('name', 'like', '%foo');
+        $sql = $query->toFindQuery()->toString();
+        
+        $this->assertEquals('SELECT `pet`.* FROM `pet` WHERE `pet`.`owner_id` IN(?) AND `name` LIKE ?', $sql);
+    }
+
+    public function testRelatedQueryBelongsToOneUpdate(): void
+    {
+        $person = new class extends \Sharksmedia\Qarium\Model 
+        {
+            public $id;
+            public $foo;
+            
+            public static function getTableName(): string { return 'person'; }
+            public static function getTableIDs(): array { return ['id']; }
+        };
+
+        $pet = new class extends \Sharksmedia\Qarium\Model 
+        {
+            public $id;
+            public $owner_id;
+
+            public static $personClass;
+
+            public static function getTableName(): string { return 'pet'; }
+            public static function getTableIDs(): array { return ['id']; }
+
+            public static function getRelationMappings(): array
+            {
+                return [
+                    'owner'=> [
+                        'relation'=>self::BELONGS_TO_ONE_RELATION,
+                        'modelClass'=>self::$personClass,
+                        'join'=>[
+                            'from'=>'pet.owner_id',
+                            'to'=>'person.id'
+                        ]
+                    ]
+                ];
+            }
+        };
+
+        $pet::$personClass = $person::class;
+
+        $instance = $pet::createFromDatabaseArray(['owner_id' => 1]);
+        $query = $instance->lrelatedQuery('owner')->patch(['foo' => 'bar'])->where('name', 'like', '%foo');
+        $sql = $query->toFindQuery()->toString();
+        
+        $this->assertEquals('SELECT `person`.* FROM `person` WHERE `person`.`id` IN(?) AND `name` LIKE ?', $sql);
     }
 }

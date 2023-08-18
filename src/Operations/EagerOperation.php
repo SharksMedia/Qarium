@@ -7,12 +7,12 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-use Sharksmedia\Objection\RelationExpression;
-use Sharksmedia\Objection\ModelQueryBuilder;
+use Sharksmedia\Qarium\RelationExpression;
+use Sharksmedia\Qarium\ModelSharQ;
 
-class EagerOperation extends ModelQueryBuilderOperation
+class EagerOperation extends ModelSharQOperation
 {
     /**
      * 2023-07-10
@@ -80,27 +80,38 @@ class EagerOperation extends ModelQueryBuilderOperation
     {
         $expression = clone $this->iRelationExpression;
 
-        foreach($this->modifiersAtPath as $name=>$modifier)
+        foreach($this->modifiersAtPath as $i=>$modifier)
         {
-            foreach($expression->expressionsAtPath($modifier->path) as $expr)
+            $name = self::getModifierName($i);
+
+            $iPath = RelationExpression::create($modifier['path']);
+
+            foreach($expression->expressionAtPath($iPath) as $expr)
             {
-                $expr->addModifier($modifier->modifier);
+                // $expr->addModifier($modifier->modifier);
+                $expr->addModifier($name);
             }
         }
 
         return $expression;
     }
 
-    public function buildFinalModifiers(ModelQueryBuilder $iBuilder): array
+    public function buildFinalModifiers(ModelSharQ $iBuilder): array
     {
         $modifiers = $iBuilder->getModifiers();
 
-        foreach($this->modifiersAtPath as $name=>$modifier)
+        foreach($this->modifiersAtPath as $i=>$modifier)
         {
-            $modifiers[$name] = $modifier->modifier;
+            $name = self::getModifierName($i);
+            $modifiers[$name] = $modifier['modifier'];
         }
 
         return $modifiers;
+    }
+
+    private static function getModifierName($index)
+    {
+        return "_f{$index}_";
     }
 
 }

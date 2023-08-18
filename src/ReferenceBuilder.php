@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection;
+namespace Sharksmedia\Qarium;
 
 // 2023-07-12
 
@@ -114,7 +114,7 @@ class ReferenceBuilder
         return ($this->parsedExpr === null || count($this->parsedExpr->access) === 0) && $this->cast === null && !$this->toJson;
     }
 
-    public function fullColumn(ModelQueryBuilderOperationSupport $iBuilder)
+    public function fullColumn(ModelSharQOperationSupport $iBuilder)
     {
         $table = null;
         if($this->getTableName() !== null) $table = $this->getTableName();
@@ -196,9 +196,9 @@ class ReferenceBuilder
         return $this;
     }
 
-    public function toQueryBuilderRaw(ModelQueryBuilderOperationSupport $iBuilder): \Sharksmedia\QueryBuilder\Statement\Raw
+    public function toSharQRaw(ModelSharQOperationSupport $iBuilder): \Sharksmedia\SharQ\Statement\Raw
     {
-        return new \Sharksmedia\QueryBuilder\Statement\Raw(...$this->createRawArgs($iBuilder));
+        return new \Sharksmedia\SharQ\Statement\Raw(...$this->createRawArgs($iBuilder));
     }
 
     public function parseExpression(string $expr)
@@ -208,7 +208,7 @@ class ReferenceBuilder
         $this->table = $this->parsedExpr->table;
     }
 
-    public function createRawArgs(ModelQueryBuilderOperationSupport $iBuilder)
+    public function createRawArgs(ModelSharQOperationSupport $iBuilder)
     {
         $bindings = [];
         $sql = $this->createReferenceSql($iBuilder, $bindings);
@@ -220,7 +220,7 @@ class ReferenceBuilder
         return [$sql, ...$bindings];
     }
 
-    private function createReferenceSql(ModelQueryBuilderOperationSupport $iBuilder, array &$bindings)
+    private function createReferenceSql(ModelSharQOperationSupport $iBuilder, array &$bindings)
     {
         $bindings[] = $this->fullColumn($iBuilder);
 

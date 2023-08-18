@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 // 2023-08-14
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-use Sharksmedia\Objection\Model;
-use Sharksmedia\Objection\ModelQueryBuilder;
-use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
+use Sharksmedia\Qarium\Model;
+use Sharksmedia\Qarium\ModelSharQ;
+use Sharksmedia\Qarium\ModelSharQOperationSupport;
 
 class InstanceUpdateOperation extends UpdateOperation
 {
@@ -22,7 +22,7 @@ class InstanceUpdateOperation extends UpdateOperation
         $this->modelOptions['old'] = $options['instance'];
     }
 
-    public function onAdd(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
+    public function onAdd(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
         $returnValue = parent::onAdd($iBuilder, ...$arguments);
 
@@ -32,10 +32,10 @@ class InstanceUpdateOperation extends UpdateOperation
     }
 
     /**
-     * @param ModelQueryBuilderOperationSupport|ModelQueryBuilder $iBuilder
+     * @param ModelSharQOperationSupport|ModelSharQ $iBuilder
      * @throws \Exception
      */
-    public function onBuild(ModelQueryBuilderOperationSupport $iBuilder): void
+    public function onBuild(ModelSharQOperationSupport $iBuilder): void
     {
         parent::onBuild($iBuilder);
 
@@ -49,7 +49,7 @@ class InstanceUpdateOperation extends UpdateOperation
         $iBuilder->findById($this->instance->getID());
     }
 
-    public function onAfter2(ModelQueryBuilderOperationSupport $iBuilder, &$result)
+    public function onAfter2(ModelSharQOperationSupport $iBuilder, &$result)
     {
         // The result may be an object if `returning` was used.
         if(is_array($result)) $result = $result[0];
@@ -62,7 +62,7 @@ class InstanceUpdateOperation extends UpdateOperation
         return $result;
     }
 
-    public function toFindOperation(ModelQueryBuilderOperationSupport $iBuilder): ?ModelQueryBuilderOperation
+    public function toFindOperation(ModelSharQOperationSupport $iBuilder): ?ModelSharQOperation
     {
         return new InstanceFindOperation('find', ['instance'=>$this->instance]);
     }

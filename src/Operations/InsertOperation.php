@@ -7,14 +7,14 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-use Sharksmedia\Objection\Model;
-use Sharksmedia\Objection\ModelQueryBuilder;
-use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
-use Sharksmedia\Objection\StaticHookArguments;
+use Sharksmedia\Qarium\Model;
+use Sharksmedia\Qarium\ModelSharQ;
+use Sharksmedia\Qarium\ModelSharQOperationSupport;
+use Sharksmedia\Qarium\StaticHookArguments;
 
-class InsertOperation extends ModelQueryBuilderOperation
+class InsertOperation extends ModelSharQOperation
 {
     protected array $iModels;
     protected bool $isArray;
@@ -29,7 +29,7 @@ class InsertOperation extends ModelQueryBuilderOperation
         $this->modelOptions = array_merge([], $this->options['modelOptions'] ?? []);
     }
 
-    public function onAdd(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
+    public function onAdd(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
         $array = $arguments[0];
         $modelClass = $iBuilder->getModelClass();
@@ -40,7 +40,7 @@ class InsertOperation extends ModelQueryBuilderOperation
         return true;
     }
 
-    public function onBefore2(ModelQueryBuilderOperationSupport $iBuilder, ...$arguments): bool
+    public function onBefore2(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
         if(count($this->iModels) > 1) throw new \Exception('Batch insert only works with Postgresql and SQL Server');
 
@@ -50,9 +50,9 @@ class InsertOperation extends ModelQueryBuilderOperation
         // return $arguments;
     }
 
-    public function onBuildQueryBuilder(ModelQueryBuilderOperationSupport $iBuilder, $iQueryBuilder)
+    public function onBuildSharQ(ModelSharQOperationSupport $iBuilder, $iSharQ)
     {
-        return $iQueryBuilder->insert(array_map(function(Model $iModel) use($iBuilder)
+        return $iSharQ->insert(array_map(function(Model $iModel) use($iBuilder)
         {
             $data = $iModel->toDatabaseArray($iBuilder);
 
@@ -60,7 +60,7 @@ class InsertOperation extends ModelQueryBuilderOperation
         }, $this->iModels));
     }
 
-    public function onAfter1(ModelQueryBuilderOperationSupport $iBuilder, &$result)
+    public function onAfter1(ModelSharQOperationSupport $iBuilder, &$result)
     {
         if(!is_array($result) || count($result) === 0 || $result === $this->iModels)
         {
@@ -87,7 +87,7 @@ class InsertOperation extends ModelQueryBuilderOperation
         return $this->iModels;
     }
 
-    public function onAfter2(ModelQueryBuilderOperationSupport $iBuilder, &$result)
+    public function onAfter2(ModelSharQOperationSupport $iBuilder, &$result)
     {
         $result = $this->isArray
             ? $this->iModels
@@ -96,16 +96,16 @@ class InsertOperation extends ModelQueryBuilderOperation
         return self::callAfterInsert($iBuilder, $this->iModels, $result);
     }
 
-    public function toFindOperation(ModelQueryBuilderOperationSupport $iBuilder): ?ModelQueryBuilderOperation
+    public function toFindOperation(ModelSharQOperationSupport $iBuilder): ?ModelSharQOperation
     {
         return null;
     }
 
     /**
-     * @param ModelQueryBuilder $iBuilder
+     * @param ModelSharQ $iBuilder
      * @param Model[] $iModels
      */
-    private static function callBeforeInsert(ModelQueryBuilder $iBuilder, array $iModels)
+    private static function callBeforeInsert(ModelSharQ $iBuilder, array $iModels)
     {
         foreach($iModels as $iModel)
         {
@@ -120,7 +120,7 @@ class InsertOperation extends ModelQueryBuilderOperation
         return $result;
     }
 
-    private static function callAfterInsert(ModelQueryBuilder $iBuilder, array $iModels, $iResult)
+    private static function callAfterInsert(ModelSharQ $iBuilder, array $iModels, $iResult)
     {
         foreach($iModels as $iModel)
         {

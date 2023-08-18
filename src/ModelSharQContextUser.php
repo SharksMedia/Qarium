@@ -2,27 +2,27 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection;
+namespace Sharksmedia\Qarium;
 
 // 2023-07-11
 
-class ModelQueryBuilderContextUser
+class ModelSharQContextUser
 {
     /**
      * 2023-07-11
-     * @var ModelQueryBuilderOperationSupport
+     * @var ModelSharQOperationSupport
      */
-    private ModelQueryBuilderOperationSupport $iBuilder;
+    private ModelSharQOperationSupport $iBuilder;
 
     /**
      * 2023-08-02
-     * @var QueryBuilder|null
+     * @var SharQ|null
      */
-    private $iQueryBuilder;
+    private $iSharQ;
 
     /**
      * 2023-08-02
-     * @var ModelQueryBuilderContextUser|null
+     * @var ModelSharQContextUser|null
      */
     private $userContext;
 
@@ -56,17 +56,22 @@ class ModelQueryBuilderContextUser
         $this->internalData[$name] = $value;
     }
 
-    public function __construct(ModelQueryBuilderOperationSupport $iBuilder)
+    public function getInternalData()
+    {
+        return $this->internalData;
+    }
+
+    public function __construct(ModelSharQOperationSupport $iBuilder)
     {
         $this->iBuilder = $iBuilder;
     }
 
     public function getTransaction()
     {
-        return $this->iBuilder->getQueryBuilder();
+        return $this->iBuilder->getSharQ();
     }
 
-    public function newFromObject(ModelQueryBuilderOperationSupport $iBuilder, object $obj)
+    public function newFromObject(ModelSharQOperationSupport $iBuilder, object $obj)
     {
         $context = new static($iBuilder);
 
@@ -78,7 +83,7 @@ class ModelQueryBuilderContextUser
         return $context;
     }
 
-    public function newMerge(ModelQueryBuilderOperationSupport $iBuilder, $obj)
+    public function newMerge(ModelSharQOperationSupport $iBuilder, $obj)
     {
         $context = new static($iBuilder);
 
@@ -86,6 +91,8 @@ class ModelQueryBuilderContextUser
         {
             $context->{$key} = $value;
         }
+
+        if($obj instanceof ModelSharQContextUser) $obj = $obj->getInternalData();
 
         foreach($obj as $key=>$value)
         {

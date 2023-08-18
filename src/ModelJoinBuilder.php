@@ -7,18 +7,18 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection;
+namespace Sharksmedia\Qarium;
 
-use Sharksmedia\Objection\Operations\QueryBuilderOperation;
+use Sharksmedia\Qarium\Operations\SharQOperation;
 
-class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
+class ModelJoinBuilder extends ModelSharQOperationSupport
 {
     /**
      * @param array $args
      */
     public function using(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('using'), $args);
+        return $this->addOperation(new SharQOperation('using'), $args);
     }
 
     /**
@@ -26,7 +26,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function on(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('on'), $args);
+        return $this->addOperation(new SharQOperation('on'), $args);
     }
 
     /**
@@ -34,7 +34,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function orOn(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('orOn'), $args);
+        return $this->addOperation(new SharQOperation('orOn'), $args);
     }
 
     /**
@@ -42,7 +42,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function onBetween(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('onBetween'), $args);
+        return $this->addOperation(new SharQOperation('onBetween'), $args);
     }
 
     /**
@@ -50,7 +50,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function onNotBetween(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('onNotBetween'), $args);
+        return $this->addOperation(new SharQOperation('onNotBetween'), $args);
     }
 
     /**
@@ -58,7 +58,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function orOnBetween(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('orOnBetween'), $args);
+        return $this->addOperation(new SharQOperation('orOnBetween'), $args);
     }
 
     /**
@@ -66,7 +66,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function orOnNotBetween(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('orOnNotBetween'), $args);
+        return $this->addOperation(new SharQOperation('orOnNotBetween'), $args);
     }
 
     /**
@@ -74,7 +74,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function onIn(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('onIn'), $args);
+        return $this->addOperation(new SharQOperation('onIn'), $args);
     }
 
     /**
@@ -82,7 +82,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function onNotIn(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('onNotIn'), $args);
+        return $this->addOperation(new SharQOperation('onNotIn'), $args);
     }
 
     /**
@@ -90,7 +90,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function orOnIn(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('orOnIn'), $args);
+        return $this->addOperation(new SharQOperation('orOnIn'), $args);
     }
 
     /**
@@ -98,7 +98,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function orOnNotIn(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('orOnNotIn'), $args);
+        return $this->addOperation(new SharQOperation('orOnNotIn'), $args);
     }
 
     /**
@@ -106,7 +106,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function onNull(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('onNull'), $args);
+        return $this->addOperation(new SharQOperation('onNull'), $args);
     }
 
     /**
@@ -114,7 +114,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function orOnNull(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('orOnNull'), $args);
+        return $this->addOperation(new SharQOperation('orOnNull'), $args);
     }
 
     /**
@@ -122,7 +122,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function onNotNull(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('onNotNull'), $args);
+        return $this->addOperation(new SharQOperation('onNotNull'), $args);
     }
 
     /**
@@ -130,7 +130,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function orOnNotNull(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('orOnNotNull'), $args);
+        return $this->addOperation(new SharQOperation('orOnNotNull'), $args);
     }
 
     /**
@@ -138,7 +138,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function onExists(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('onExists'), $args);
+        return $this->addOperation(new SharQOperation('onExists'), $args);
     }
 
     /**
@@ -146,7 +146,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function orOnExists(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('orOnExists'), $args);
+        return $this->addOperation(new SharQOperation('orOnExists'), $args);
     }
 
     /**
@@ -154,7 +154,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function onNotExists(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('onNotExists'), $args);
+        return $this->addOperation(new SharQOperation('onNotExists'), $args);
     }
 
     /**
@@ -162,7 +162,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function orOnNotExists(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('orOnNotExists'), $args);
+        return $this->addOperation(new SharQOperation('orOnNotExists'), $args);
     }
 
     /**
@@ -170,7 +170,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function type(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('type'), $args);
+        return $this->addOperation(new SharQOperation('type'), $args);
     }
 
     /**
@@ -178,7 +178,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function andOn(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('andOn'), $args);
+        return $this->addOperation(new SharQOperation('andOn'), $args);
     }
 
     /**
@@ -186,7 +186,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function andOnIn(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('andOnIn'), $args);
+        return $this->addOperation(new SharQOperation('andOnIn'), $args);
     }
 
     /**
@@ -194,7 +194,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function andOnNotIn(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('andOnNotIn'), $args);
+        return $this->addOperation(new SharQOperation('andOnNotIn'), $args);
     }
 
     /**
@@ -202,7 +202,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function andOnNull(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('andOnNull'), $args);
+        return $this->addOperation(new SharQOperation('andOnNull'), $args);
     }
 
     /**
@@ -210,7 +210,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function andOnNotNull(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('andOnNotNull'), $args);
+        return $this->addOperation(new SharQOperation('andOnNotNull'), $args);
     }
 
     /**
@@ -218,7 +218,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function andOnExists(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('andOnExists'), $args);
+        return $this->addOperation(new SharQOperation('andOnExists'), $args);
     }
 
     /**
@@ -226,7 +226,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function andOnNotExists(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('andOnNotExists'), $args);
+        return $this->addOperation(new SharQOperation('andOnNotExists'), $args);
     }
 
     /**
@@ -234,7 +234,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function andOnBetween(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('andOnBetween'), $args);
+        return $this->addOperation(new SharQOperation('andOnBetween'), $args);
     }
 
     /**
@@ -242,7 +242,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function andOnNotBetween(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('andOnNotBetween'), $args);
+        return $this->addOperation(new SharQOperation('andOnNotBetween'), $args);
     }
 
     /**
@@ -250,7 +250,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function andOnJsonPathEquals(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('andOnJsonPathEquals'), $args);
+        return $this->addOperation(new SharQOperation('andOnJsonPathEquals'), $args);
     }
 
     /**
@@ -258,7 +258,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function onVal(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('onVal'), $args);
+        return $this->addOperation(new SharQOperation('onVal'), $args);
     }
 
     /**
@@ -266,7 +266,7 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function andOnVal(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('andOnVal'), $args);
+        return $this->addOperation(new SharQOperation('andOnVal'), $args);
     }
 
     /**
@@ -274,6 +274,6 @@ class ModelJoinBuilder extends ModelQueryBuilderOperationSupport
      */
     public function orOnVal(...$args): self
     {
-        return $this->addOperation(new QueryBuilderOperation('orOnVal'), $args);
+        return $this->addOperation(new SharQOperation('orOnVal'), $args);
     }
 }

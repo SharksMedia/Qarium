@@ -7,26 +7,26 @@
 
 declare(strict_types=1);
 
-namespace Sharksmedia\Objection\Operations;
+namespace Sharksmedia\Qarium\Operations;
 
-use Sharksmedia\Objection\ModelQueryBuilderOperationSupport;
+use Sharksmedia\Qarium\ModelSharQOperationSupport;
 
-class ResultSizeOperation extends ModelQueryBuilderOperation
+class ResultSizeOperation extends ModelSharQOperation
 {
-    public function onBuildQueryBuilder(ModelQueryBuilderOperationSupport $iBuilder, $iQueryBuilder)
+    public function onBuildSharQ(ModelSharQOperationSupport $iBuilder, $iSharQ)
     {
-        $iWrapperQueryBuiler = $iBuilder->getQueryBuilder();
+        $iWrapperQueryBuiler = $iBuilder->getSharQ();
 
-        $iBuilder->clear(ModelQueryBuilderOperationSupport::LIMIT_SELECTOR);
-        $iBuilder->clear(ModelQueryBuilderOperationSupport::ORDER_BY_SELECTOR);
+        $iBuilder->clear(ModelSharQOperationSupport::LIMIT_SELECTOR);
+        $iBuilder->clear(ModelSharQOperationSupport::ORDER_BY_SELECTOR);
 
         $iWrapperQueryBuiler->count('* AS count')
             ->from(function($q) use($iBuilder)
                 {
-                    $iBuilder->toQueryBuilder($q)->as('test');
+                    $iBuilder->toSharQ($q)->as('test');
                 });
 
-        return $iQueryBuilder;
+        return $iSharQ;
     }
 }
 
