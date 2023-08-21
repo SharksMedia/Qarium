@@ -257,9 +257,7 @@ class Relation
         $relatedTable = $relatedTable ?? $iBuilder->getTableNameFor($relatedModelClass);
         $ownerTable = $ownerTable ?? $iBuilder->getTableNameFor($this->ownerModelClass);
 
-        $relatedJoinSelect = $this->applyModify($relatedJoinSelectQuery);
-
-        if($this->modify !== null) $relatedJoinSelect->as($relatedTableAlias);
+        $relatedJoinSelect = $this->applyModify($relatedJoinSelectQuery)->as($relatedTableAlias);
 
         if($relatedJoinSelect->isSelectAll())
         {
