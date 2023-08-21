@@ -482,7 +482,7 @@ class Relation
     {// 2023-08-02
         try
         {
-            $iRelationProperty = new RelationProperty($refString, function($table) use ($context)
+            $iRelationProperty = new RelationProperty($refString, function($table) use($context)
             {
                 foreach([$context->ownerModelClass, $context->relatedModelClass] as $it)
                 {

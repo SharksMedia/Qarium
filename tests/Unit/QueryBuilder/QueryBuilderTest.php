@@ -4214,6 +4214,8 @@ class SharQTest extends Unit
             protected string $name;
             protected string $species;
 
+            public static $foodClass;
+
             protected static array $metadataCache =
             [
                 'Pets'=>
@@ -4227,9 +4229,47 @@ class SharQTest extends Unit
 
             public static function getTableName(): string { return 'Pets'; }
             public static function getTableIDs(): array { return ['petID']; }
+
+            public static function getRelationMappings(): array
+            {
+                $relations =
+                [
+                    'iFavoriteFood'=>
+                    [
+                        'relation'=>Model::BELONGS_TO_ONE_RELATION,
+                        'modelClass'=>self::$foodClass,
+                        'join'=>
+                        [
+                            'from'=>'Pets.favoriteFoodID',
+                            'to'=>'Foods.foodID'
+                        ]
+                    ]
+                ];
+
+                return $relations;
+            }
+        };
+
+        $Food = new class extends Model
+        {
+            protected int $foodID;
+            protected string $name;
+
+            protected static array $metadataCache =
+            [
+                'Foods'=>
+                [
+                    ['Field'=>'foodID'],
+                    ['Field'=>'name'],
+                ]
+            ];
+
+            public static function getTableName(): string { return 'Foods'; }
+            public static function getTableIDs(): array { return ['foodID']; }
         };
 
         $Person::$Petclass = $Pet::class;
+        $Pet::$foodClass = $Food::class;
 
         // Should be instance of Model at RelationOwner constructor
 
@@ -4267,5 +4307,37 @@ class SharQTest extends Unit
             'bindings'=>$iQuery->getBindings()
         ]);
 
+        $iDogsWithFoodQuery = $Person::relatedQuery('iPets')
+            ->for(1)
+            ->where('species', 'Dog')
+            ->withGraphJoined('iFavoriteFood')
+            ->orderBy('name', 'ASC');
+
+        $iQuery = $iDogsWithFoodQuery->toQuery();
+
+        $this->assertEquals([
+            'sql'=>'SELECT `Pets`.`petID` AS `petID`, `Pets`.`ownerID` AS `ownerID`, `Pets`.`name` AS `name`, `Pets`.`species` AS `species`, `iFavoriteFood`.`foodID` AS `iFavoriteFood:foodID`, `iFavoriteFood`.`name` AS `iFavoriteFood:name` FROM `Pets` LEFT JOIN `Foods` AS `iFavoriteFood` ON(`iFavoriteFood`.`foodID` = `Pets`.`favoriteFoodID`) WHERE `Pets`.`ownerID` IN(?) AND `species` = ? ORDER BY `name` ASC',
+            'bindings'=>[1, 'Dog']
+        ],
+        [
+            'sql'=>$iQuery->getSQL(),
+            'bindings'=>$iQuery->getBindings()
+        ]);
+
+        $iCatsWithFoodQuery = $iPerson->lrelatedQuery('iPets')
+            ->where('species', 'Cat')
+            ->withGraphJoined('iFavoriteFood')
+            ->orderBy('name', 'ASC');
+
+        $iQuery = $iCatsWithFoodQuery->toQuery();
+
+        $this->assertEquals([
+            'sql'=>'SELECT `Pets`.`petID` AS `petID`, `Pets`.`ownerID` AS `ownerID`, `Pets`.`name` AS `name`, `Pets`.`species` AS `species`, `iFavoriteFood`.`foodID` AS `iFavoriteFood:foodID`, `iFavoriteFood`.`name` AS `iFavoriteFood:name` FROM `Pets` LEFT JOIN `Foods` AS `iFavoriteFood` ON(`iFavoriteFood`.`foodID` = `Pets`.`favoriteFoodID`) WHERE `Pets`.`ownerID` IN(?) AND `species` = ? ORDER BY `name` ASC',
+            'bindings'=>[1, 'Cat']
+        ],
+        [
+            'sql'=>$iQuery->getSQL(),
+            'bindings'=>$iQuery->getBindings()
+        ]);
     }
 }

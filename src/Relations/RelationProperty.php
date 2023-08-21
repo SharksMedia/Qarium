@@ -130,15 +130,20 @@ class RelationProperty
 
     }
 
-    private static function createGetter(array $path): \Closure
+    private static function createGetter($path): \Closure
     {
-        if(count($path) === 1)
+        if(is_array($path) && count($path) === 1)
         {
             $prop = $path[0];
 
             return function(&$obj) use ($prop)
             {
-                return $obj[$prop];
+                $obj = (object)$obj;
+
+                $iReflectionProperty = new \ReflectionProperty($obj, $prop);
+                $iReflectionProperty->setAccessible(true);
+
+                return $iReflectionProperty->getValue($obj);
             };
         }
 
@@ -183,7 +188,7 @@ class RelationProperty
         };
     }
 
-    private static function createChecker(array $path): \Closure
+    private static function createChecker($path): \Closure
     {
         if(count($path) === 1)
         {
@@ -191,7 +196,10 @@ class RelationProperty
 
             return function(&$obj) use ($prop)
             {
-                return array_key_exists($prop, $obj);
+                $obj = (object)$obj;
+
+                return property_exists($obj, $prop);
+                // return array_key_exists($prop, $obj);
             };
         }
 
@@ -376,10 +384,11 @@ class RelationProperty
     public function getProps(&$obj)
     {
         $props = [];
+        $size = $this->getSize();
 
-        foreach($this->propGetters as $getter)
+        for($i=0; $i<$size; ++$i)
         {
-            $props[] = $getter($obj);
+            $props[] = $this->getProp($obj, $i);
         }
 
         return $props;

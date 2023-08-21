@@ -179,7 +179,7 @@ class RelationOwner
 
         $iProperties = array_map(function($iModel) use($iOwnerProperty)
         {
-            return $iOwnerProperty->getProperties($iModel);
+            return $iOwnerProperty->getProps($iModel);
         }, $iModels);
 
         if(!self::containsNonNull($iProperties)) return null;
@@ -226,10 +226,15 @@ class RelationOwner
     {
         $idProp = call_user_func([$iOwnerProperty->getModelClass(), 'getIdRelationProperty']); // TODO: Implement getIdRelationProperty() method
 
-        return array_reduce($idProp->getProperties(), function($carry, $prop)
+        $ownerProps = $iOwnerProperty->getProperties();
+
+        $isIdProp = count($ownerProps) !== 0;
+        foreach($idProp->getProperties() as $i=>$prop)
         {
-            return $carry && $prop === null;
-        }, true);
+            $isIdProp = $isIdProp && $prop === $ownerProps[$i];
+        }
+
+        return $isIdProp;
     }
 
     private static function containsNonNull(array $array): bool
