@@ -1701,8 +1701,8 @@ class SharQTest extends Unit
         [
             // "select * from information_schema.columns where table_name = 'Model' and table_catalog = current_database() and table_schema = 'someSchema'",
             // "select * from information_schema.columns where table_name = 'Related' and table_catalog = current_database() and table_schema = 'someSchema'",
-            ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings'=>['Model']],
-            ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings'=>['Related']],
+            ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings'=>['Model']],
+            ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings'=>['Related']],
             ['sql'=>'SELECT `Model`.`id` AS `id`, `iRelated`.`id` AS `iRelated:id` FROM `someSchema`.`Model` LEFT JOIN `someSchema`.`Related` AS `iRelated` ON(`iRelated`.`id` = `Model`.`id`)', 'bindings'=>[]],
         ];
 
@@ -2093,7 +2093,7 @@ class SharQTest extends Unit
         $this->assertCount(1, $this->executedQueries);
         $this->assertEquals(
             [
-                // ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings'=>['Model']],
+                // ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings'=>['Model']],
                 ['sql'=>'UPDATE `Model` SET `a` = ?, `b` = ?, `c` = ?', 'bindings'=>[10, 'test', 'beforeUpdate']],
             ],
             $this->executedQueries
@@ -2141,7 +2141,7 @@ class SharQTest extends Unit
         $this->assertEquals('beforeUpdate', $model->c);
         $this->assertCount(1, $this->executedQueries);
         $this->assertEquals([
-            // ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings'=>['Model']],
+            // ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings'=>['Model']],
             ['sql'=>'UPDATE `Model` SET `a` = ?, `b` = ?, `c` = ?', 'bindings'=>['10', 'test', 'beforeUpdate']],
         ], $this->executedQueries);
     }
@@ -2999,7 +2999,7 @@ class SharQTest extends Unit
         $this->assertCount(2, $this->executedQueries);
         $this->assertEquals(
             [
-                ['sql' => 'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings' => ['Model']],
+                ['sql' => 'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings' => ['Model']],
                 ['sql' => 'SELECT `Model`.`id` AS `id`, `Model`.`a` AS `a`, `Model`.`c` AS `c`, `b`.`id` AS `b:id`, `b`.`a` AS `b:a`, `b`.`c` AS `b:c`, `b:c`.`id` AS `b:c:id`, `b:c`.`a` AS `b:c:a`, `b:c`.`c` AS `b:c:c` FROM `Model` LEFT JOIN `Model` AS `b` ON(`b`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `b:c` ON(`b:c`.`id` = `Model`.`id`)', 'bindings' => []],
             ],
             $this->executedQueries
@@ -3068,7 +3068,7 @@ class SharQTest extends Unit
         $this->assertCount(2, $this->executedQueries);
         $this->assertEquals(
             [
-                ['sql' => 'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings' => ['Model']],
+                ['sql' => 'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings' => ['Model']],
                 ['sql' => 'SELECT `Model`.`id` AS `id`, `Model`.`b` AS `b`, `Model`.`c` AS `c`, `Model`.`e` AS `e`, `b`.`id` AS `b:id`, `b`.`b` AS `b:b`, `b`.`c` AS `b:c`, `b`.`e` AS `b:e`, `b:c`.`id` AS `b:c:id`, `b:c`.`b` AS `b:c:b`, `b:c`.`c` AS `b:c:c`, `b:c`.`e` AS `b:c:e`, `b:c:e`.`id` AS `b:c:e:id`, `b:c:e`.`b` AS `b:c:e:b`, `b:c:e`.`c` AS `b:c:e:c`, `b:c:e`.`e` AS `b:c:e:e` FROM `Model` LEFT JOIN `Model` AS `b` ON(`b`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `b:c` ON(`b:c`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `b:c:e` ON(`b:c:e`.`id` = `Model`.`id`)', 'bindings' => []],
             ],
             $this->executedQueries
@@ -3123,7 +3123,7 @@ class SharQTest extends Unit
 
         $this->assertEquals(
             [
-                ['sql' => 'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings' => ['Model']],
+                ['sql' => 'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings' => ['Model']],
                 ['sql' => 'SELECT `Model`.`id` AS `id`, `Model`.`a` AS `a`, `Model`.`b` AS `b`, `a`.`id` AS `a:id`, `a`.`a` AS `a:a`, `a`.`b` AS `a:b` FROM `Model` LEFT JOIN `Model` AS `a` ON(`a`.`id` = `Model`.`id`)', 'bindings' => []],
             ],
             $this->executedQueries
@@ -3178,7 +3178,7 @@ class SharQTest extends Unit
 
         $this->assertEquals(
             [
-                ['sql' => 'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings' => ['Model']],
+                ['sql' => 'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings' => ['Model']],
                 ['sql' => 'SELECT `Model`.`id` AS `id`, `Model`.`a` AS `a`, `Model`.`b` AS `b`, `a`.`id` AS `a:id`, `a`.`a` AS `a:a`, `a`.`b` AS `a:b`, `a:b`.`id` AS `a:b:id`, `a:b`.`a` AS `a:b:a`, `a:b`.`b` AS `a:b:b` FROM `Model` LEFT JOIN `Model` AS `a` ON(`a`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `a:b` ON(`a:b`.`id` = `Model`.`id`)', 'bindings' => []],
             ],
             $this->executedQueries
@@ -3235,7 +3235,7 @@ class SharQTest extends Unit
         $this->assertCount(2, $this->executedQueries);
         $this->assertEquals(
             [
-                ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings'=>['Model']],
+                ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings'=>['Model']],
                 ['sql'=>'SELECT `Model`.`id` AS `id`, `Model`.`a` AS `a`, `Model`.`c` AS `c`, `a`.`id` AS `a:id`, `a`.`a` AS `a:a`, `a`.`c` AS `a:c`, `a:c`.`id` AS `a:c:id`, `a:c`.`a` AS `a:c:a`, `a:c`.`c` AS `a:c:c` FROM `Model` LEFT JOIN `Model` AS `a` ON(`a`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `a:c` ON(`a:c`.`id` = `Model`.`id`)', 'bindings'=>[]],
             ],
             $this->executedQueries
@@ -3292,7 +3292,7 @@ class SharQTest extends Unit
         $this->assertCount(2, $this->executedQueries);
         $this->assertEquals(
             [
-                ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings'=>['Model']],
+                ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings'=>['Model']],
                 ['sql'=>'SELECT `Model`.`id` AS `id`, `Model`.`a` AS `a`, `Model`.`b` AS `b`, `b`.`id` AS `b:id`, `b`.`a` AS `b:a`, `b`.`b` AS `b:b`, `b:a`.`id` AS `b:a:id`, `b:a`.`a` AS `b:a:a`, `b:a`.`b` AS `b:a:b` FROM `Model` LEFT JOIN `Model` AS `b` ON(`b`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `b:a` ON(`b:a`.`id` = `Model`.`id`)', 'bindings'=>[]],
             ],
             $this->executedQueries
@@ -3342,7 +3342,7 @@ class SharQTest extends Unit
 
         $this->assertEquals(
             [
-                ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings'=>['Model']],
+                ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings'=>['Model']],
                 ['sql'=>'SELECT `Model`.`id` AS `id`, `b`.`id` AS `b:id`, `b:c`.`id` AS `b:c:id` FROM `Model` LEFT JOIN `Model` AS `b` ON(`b`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `b:c` ON(`b:c`.`id` = `Model`.`id`)', 'bindings'=>[]],
             ],
             $this->executedQueries
@@ -3398,7 +3398,7 @@ class SharQTest extends Unit
         $this->assertCount(2, $this->executedQueries);
         $this->assertEquals(
             [
-                ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings'=>['Model']],
+                ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings'=>['Model']],
                 ['sql'=>'SELECT `Model`.`id` AS `id`, `Model`.`b` AS `b`, `Model`.`c` AS `c`, `b`.`id` AS `b:id`, `b`.`b` AS `b:b`, `b`.`c` AS `b:c`, `b:c`.`id` AS `b:c:id`, `b:c`.`b` AS `b:c:b`, `b:c`.`c` AS `b:c:c`, `b:c:b`.`id` AS `b:c:b:id`, `b:c:b`.`b` AS `b:c:b:b`, `b:c:b`.`c` AS `b:c:b:c` FROM `Model` LEFT JOIN `Model` AS `b` ON(`b`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `b:c` ON(`b:c`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `b:c:b` ON(`b:c:b`.`id` = `Model`.`id`)', 'bindings'=>[]],
             ],
             $this->executedQueries
@@ -3723,9 +3723,9 @@ class SharQTest extends Unit
             ->run();
 
         $executedQueries = [
-            ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings'=>['M1']],
-            ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings'=>['M2']],
-            ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings'=>['M3']],
+            ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings'=>['M1']],
+            ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings'=>['M2']],
+            ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings'=>['M3']],
 
             ['sql'=>'SELECT `M1`.`id` AS `id`, `m2`.`id` AS `m2:id`, `m2:m3`.`id` AS `m2:m3:id` FROM `M1` LEFT JOIN `M2` AS `m2` ON(`m2`.`m1Id` = `M1`.`id`) LEFT JOIN `M3` AS `m2:m3` ON(`m2:m3`.`m2Id` = `M2`.`id`)', 'bindings'=>[]],
         ];
@@ -3839,7 +3839,7 @@ class SharQTest extends Unit
 
         $this->assertCount(2, $this->executedQueries);
         $this->assertEquals([
-            ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = current_schema()', 'bindings'=>['M1']],
+            ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings'=>['M1']],
             ['sql'=>'SELECT `M1`.`id` AS `id`, `M1`.`m1Id` AS `m1Id`, `someRel`.`id` AS `someRel:id`, `someRel`.`m1Id` AS `someRel:m1Id`, `someRel:someRel`.`id` AS `someRel:someRel:id`, `someRel:someRel`.`m1Id` AS `someRel:someRel:m1Id` FROM `M1` LEFT JOIN `M1` AS `someRel` ON(`someRel`.`m1Id` = `M1`.`id`) LEFT JOIN `M1` AS `someRel:someRel` ON(`someRel:someRel`.`m1Id` = `M1`.`id`)', 'bindings'=>[]],
         ], $this->executedQueries);
 

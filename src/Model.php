@@ -168,7 +168,7 @@ abstract class Model
             ->select('*')
             ->from('information_schema.columns')
             ->where('table_name', '=', $tableName)
-        ->andWhere('table_catalog', '=', new Raw('current_schema()'));
+            ->andWhere('table_catalog', '=', new Raw('DATABASE()'));
 
         if($schema !== null) $iQB->andWhere('table_schema', '=', $schema);
 
