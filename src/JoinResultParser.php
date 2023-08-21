@@ -119,10 +119,22 @@ class JoinResultParser
     {// 2023-07-31
         if($iTableNode->getParentNode())
         {
-            $iTableNode->getRelation()->isOneToOne()
-                ? $iParentModel->{$iTableNode->getRelationProperty()} = $iModel
-                : $iParentModel->{$iTableNode->getRelationProperty()}[] = $iModel;
-            
+            $iReflectionProperty = new \ReflectionProperty($iParentModel, $iTableNode->getRelationProperty());
+            $iReflectionProperty->setAccessible(true);
+
+            if($iTableNode->getRelation()->isOneToOne())
+            {
+                $iReflectionProperty->setValue($iParentModel, $iModel);
+            }
+            else
+            {
+                $value = $iReflectionProperty->getValue($iParentModel);
+
+                $value[] = $iModel;
+
+                $iReflectionProperty->setValue($iParentModel, $value);
+            }
+
             return;
         }
 
