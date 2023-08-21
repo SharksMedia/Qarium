@@ -6,73 +6,84 @@ A objectionjs inspired ORM for PHP
 <?php
 // src/index.php
 
+namespace Mmpa\TestQarium;
+
 require_once __DIR__.'/../vendor/autoload.php';
 
-use \Sharksmedia\QueryBuilder\Config;
-use \Sharksmedia\QueryBuilder\Client;
+use \Sharksmedia\SharQ\Config;
+use \Sharksmedia\SharQ\Client;
 
-use \Sharksmedia\QueryBuilder\QueryBuilder;
+use \Sharksmedia\Qarium\Qarium;
 
 function getClient(): Client
 {
-    $iConfig = (new Config(Config::CLIENT_MYSQL))
-        ->host('127.0.0.0')
-        ->port(3306)
+    $iConfig = (new Config(Client::TYPE_MYSQL))
+        ->host('0.0.0.0')
+        ->port('3306')
         ->user('user')
         ->password('password')
-        ->database('main_db')
+        ->database('db')
         ->charset('utf8mb4');
+
+    $iConfig->timeout(5);
 
     $iClient = Client::create($iConfig);
 
     return $iClient;
 }
 
-function qb(?Client $iClient=null): QueryBuilder
-{
-    $iClient = $iClient ?? getClient();
+// Create the client
+$iClient = getClient();
 
-    $iQueryBuilder = new QueryBuilder($iClient);
+// Iinitalize the driver
+$iClient->initializeDriver();
 
-    return $iQueryBuilder;
-}
+// Set the client for Objection
+Qarium::setClient($iClient);
 
-// SELECT `name` FROM `users` WHERE `id` = ?
-$usersQB = qb()->select('name')
-    ->from('users')
-    ->where('id', '=', 1);
+// Find a person by ID
+// SELECT `Persons`.* FROM `Persons` WHERE `Persons`.`personID` = ?
+$iPerson = Person::query()->findById(1)->run();
 
-// SELECT `name` FROM `users` WHERE `id` = ? OR `id` = ?
-$usersQB->orWhere('id', 2);
+// Query a person with relations joined
+// SELECT `Persons`.`personID` AS `personID`, `iPets`.`petID` AS `iPets:petID`, `iPets`.`ownerID` AS `iPets:ownerID` FROM `Persons` LEFT JOIN `Pets` AS `iPets` ON(`iPets`.`ownerID` = `Persons`.`personID`) WHERE `name` = ?
+$iPerson = Person::query()
+    ->withGraphJoined('iPets')
+    ->findById(1)
+    ->run();
 
-// use ->run() function to execute the query
-// $users = $usersQuery->run();
 
-$iQuery = $usersQB->toQuery();
+// Get a relation of an already fetched model
+// SELECT `Pets`.* FROM `Pets` WHERE `Pets`.`ownerID` IN(?)
+$iPets = $iPerson->lrelatedQuery('iPets')->run();
 
-$sql = $iQuery->getSQL();
-$bindings = $iQuery->getBindings();
+// Query a relation from a model
+// SELECT `Pets`.* FROM `Pets` WHERE `Pets`.`ownerID` IN(?) AND `species` = ? ORDER BY `name` ASC
+$iDogs = Person::relatedQuery('iPets')
+    ->for(1) // For person with ID 1
+    ->where('species', 'Dog')
+    ->orderBy('name', 'ASC')
+    ->run();
 
-print $sql.PHP_EOL;
-print_r($bindings);
+// Query a relation from a model with a where clause on the relation
+// SELECT `Persons`.`personID` AS `personID`, `iParents`.`personID` AS `iParents:personID`, `iPets`.`petID` AS `iPets:petID`, `iPets`.`ownerID` AS `iPets:ownerID`, `iPets`.`name` AS `iPets:name`, `iPets`.`species` AS `iPets:species` FROM `Persons` LEFT JOIN (SELECT `Persons`.* FROM `Persons` WHERE `name` = ?) AS `iParents` ON(`iParents`.`parentID` = `Persons`.`personID`) LEFT JOIN `Pets` AS `iPets` ON(`iPets`.`ownerID` = `Persons`.`personID`) WHERE `Persons`.`personID` = ?
+$iPerson = Person::query()
+    ->withGraphJoined('[iParents, iPets]')
+    ->modifyGraph('iParents', function ($iParentsQuery) {
+        $iParentsQuery->where('name', 'John');
+    })
+    ->findById(1)
+    ->run();
 ```
 
 ### Installation
 Add Sharksmedia repository
 ```bash
-composer config repositories.sharksmedia/query-builder vcs git@github.com:SharkMagnus/Objection.git
+composer config repositories.sharksmedia/sharq vcs git@github.com:SharkMagnus/SharQ.git
+composer config repositories.sharksmedia/qarium vcs git@github.com:SharkMagnus/Qarium.git
 ```
 
-Require the QueryBuilder
+Require Qarium
 ```bash
-composer require sharksmedia/query-builder:master
+composer require sharksmedia/qarium:master
 ```
-
-### Documentation
-Create the documentation with phpDocumenter
-
-```bash
-composer run-script phpdoc
-```
-
-You can now open the documentation pages in docs/
