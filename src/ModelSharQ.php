@@ -445,7 +445,7 @@ class ModelSharQ extends ModelSharQBase
         $tableReference = $this->getTableRef();
         $tableName = $this->getTableName();
 
-        return $this->everyOperation(function($operation) use($tableReference, $tableName)
+        $result = $this->everyOperation(function($operation) use($tableReference, $tableName)
         {
             if($operation instanceof SelectOperation)
             {
@@ -460,13 +460,15 @@ class ModelSharQ extends ModelSharQBase
             {
                 return $operation->getTable() === $tableName;
             }
-            else if(/* $operation->getName() === 'as' ||*/ $operation->is(FindOperation::class) || $operation->is(OnErrorOperation::class))
+            else if($operation->getName() === 'as' || $operation->is(FindOperation::class) || $operation->is(OnErrorOperation::class))
             {
                 return true;
             }
 
             return false;
         });
+
+        return $result;
     }
 
     public function clearWithGraph(): static

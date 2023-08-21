@@ -4191,6 +4191,16 @@ class SharQTest extends Unit
             {
                 $relationsMap =
                 [
+                    'iParents'=>
+                    [
+                        'relation'=>Model::HAS_MANY_RELATION,
+                        'modelClass'=>self::class,
+                        'join'=>
+                        [
+                            'from'=>'Persons.personID',
+                            'to'=>'Persons.parentID'
+                        ]
+                    ],
                     'iPets'=>
                     [
                         'relation'=>Model::HAS_MANY_RELATION,
@@ -4334,6 +4344,24 @@ class SharQTest extends Unit
         $this->assertEquals([
             'sql'=>'SELECT `Pets`.`petID` AS `petID`, `Pets`.`ownerID` AS `ownerID`, `Pets`.`name` AS `name`, `Pets`.`species` AS `species`, `iFavoriteFood`.`foodID` AS `iFavoriteFood:foodID`, `iFavoriteFood`.`name` AS `iFavoriteFood:name` FROM `Pets` LEFT JOIN `Foods` AS `iFavoriteFood` ON(`iFavoriteFood`.`foodID` = `Pets`.`favoriteFoodID`) WHERE `Pets`.`ownerID` IN(?) AND `species` = ? ORDER BY `name` ASC',
             'bindings'=>[1, 'Cat']
+        ],
+        [
+            'sql'=>$iQuery->getSQL(),
+            'bindings'=>$iQuery->getBindings()
+        ]);
+
+        $iPerson = $Person::query()
+            ->withGraphJoined('[iParents, iPets]')
+            ->modifyGraph('iParents', function ($iParentsQuery) {
+                $iParentsQuery->where('name', 'John');
+            })
+            ->findById(1);
+
+        $iQuery = $iPerson->toQuery();
+
+        $this->assertEquals([
+            'sql'=>'SELECT `Persons`.`personID` AS `personID`, `iParents`.`personID` AS `iParents:personID`, `iPets`.`petID` AS `iPets:petID`, `iPets`.`ownerID` AS `iPets:ownerID`, `iPets`.`name` AS `iPets:name`, `iPets`.`species` AS `iPets:species` FROM `Persons` LEFT JOIN (SELECT `Persons`.* FROM `Persons` WHERE `name` = ?) ON(`iParents`.`parentID` = `Persons`.`personID`) LEFT JOIN `Pets` AS `iPets` ON(`iPets`.`ownerID` = `Persons`.`personID`) WHERE `Persons`.`personID` = ?',
+            'bindings'=>['John', 1]
         ],
         [
             'sql'=>$iQuery->getSQL(),

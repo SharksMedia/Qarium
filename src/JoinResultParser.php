@@ -167,7 +167,10 @@ class JoinResultParser
 
         foreach($iTableNode->getChildNodes() as $iChildTableNode)
         {
-            $model->{$iChildTableNode->getRelationProperty()} = $iChildTableNode->getRelation()->isOneToOne() ? null : [];
+            $iReflectionProperty = new \ReflectionProperty($model, $iChildTableNode->getRelationProperty());
+            $iReflectionProperty->setAccessible(true);
+
+            $iReflectionProperty->setValue($model, $iChildTableNode->getRelation()->isOneToOne() ? null : []);
         }
 
         return $model;

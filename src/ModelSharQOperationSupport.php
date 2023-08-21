@@ -511,7 +511,7 @@ abstract class ModelSharQOperationSupport
 
         $this->forEachOperations($operationSelector, function($operation, $selectorResult) use(&$every)
         {
-            if($selectorResult) $every = false;
+            if(!$selectorResult) $every = false;
 
             return false;
         }, false);

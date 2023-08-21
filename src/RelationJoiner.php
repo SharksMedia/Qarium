@@ -445,7 +445,6 @@ class RelationJoiner
             return "$tableRef.$col";
         }, $selectedStrings);
 
-
         return $iBuilder->select($selectedStrings);
     }
 
