@@ -1791,7 +1791,7 @@ class ModelSharQ extends ModelSharQBase
         return $this->unrelateOperationFactory;
     }
 
-    public function __clone(): void
+    public function __clone()
     {
         foreach (get_object_vars($this) as $name => $value)
         {
