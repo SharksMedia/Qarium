@@ -234,7 +234,7 @@ class ModelSharQ extends ModelSharQBase
         return $this;
     }
 
-    public function setAliasFor(string $modelClassOrTableName, ?string $newTableName = null): static
+    public function setAliasFor(string $modelClassOrTableName, ?string $newTableName = null): self
     {
         return parent::setAliasFor(self::resolveTableName($modelClassOrTableName), $newTableName);
     }
@@ -262,12 +262,12 @@ class ModelSharQ extends ModelSharQBase
         return $this->getFullIdColumnFor($modelClass);
     }
 
-    public function withGraphFetched(string $relationExpression, array $options = []): static
+    public function withGraphFetched(string $relationExpression, array $options = []): self
     {
         throw new \Exception('withGraphFetched is not supported');
     }
 
-    public function withGraphJoined(string $relationExpression, array $options = []): static
+    public function withGraphJoined(string $relationExpression, array $options = []): self
     {
         return $this->_withGraph($relationExpression, $options, static::JOIN_EAGER_ALGORITHM);
     }
@@ -338,7 +338,7 @@ class ModelSharQ extends ModelSharQBase
         return $newEagerOperation;
     }
 
-    private function _withGraph(string $relationExpression, array $options, string $eagerAlgorithm): static
+    private function _withGraph(string $relationExpression, array $options, string $eagerAlgorithm): self
     {
         $eagerOperation   = &self::ensureEagerOperation($this, $eagerAlgorithm);
         $parsedExpression = self::parseRelationExpression($relationExpression);
@@ -360,7 +360,7 @@ class ModelSharQ extends ModelSharQBase
      * @param string|RelationExpression $expression
      * @return ModelSharQ
      */
-    public function allowGraph($expression): static
+    public function allowGraph($expression): self
     {
         $currentExpression = $this->allowedGraphExpression ?? RelationExpression::create();
 
@@ -398,7 +398,7 @@ class ModelSharQ extends ModelSharQBase
      * @param \Closure(SharQ|string|string[]) $modifier
      * @return ModelSharQ
      */
-    public function modifyGraph(string $path, \Closure $modifier): static
+    public function modifyGraph(string $path, \Closure $modifier): self
     {
         $eagerOperation = self::ensureEagerOperation($this);
 
@@ -517,35 +517,35 @@ class ModelSharQ extends ModelSharQBase
         return $result;
     }
 
-    public function clearWithGraph(): static
+    public function clearWithGraph(): self
     {
         $this->clear(EagerOperation::class);
 
         return $this;
     }
 
-    public function clearWithGraphFetched(): static
+    public function clearWithGraphFetched(): self
     {
         $this->clear(WhereInEagerOperation::class);
 
         return $this;
     }
 
-    public function clearReject(): static
+    public function clearReject(): self
     {
         $this->explicitRejectValue = null;
 
         return $this;
     }
 
-    public function clearAllowedGraph(): static
+    public function clearAllowedGraph(): self
     {
         $this->allowedGraphExpression = null;
 
         return $this;
     }
 
-    public function clearModifiers(): static
+    public function clearModifiers(): self
     {
         $this->modifiers = [];
 
@@ -557,14 +557,14 @@ class ModelSharQ extends ModelSharQBase
         return $this->modifiers;
     }
 
-    public function serModifiers(array $modifiers): static
+    public function serModifiers(array $modifiers): self
     {
         $this->modifiers = $modifiers;
 
         return $this;
     }
 
-    public function modifiers(?array $modifiers = null): static
+    public function modifiers(?array $modifiers = null): self
     {
         if ($modifiers !== null)
         {
@@ -578,7 +578,7 @@ class ModelSharQ extends ModelSharQBase
      * @param class-string<Model> $modelClass
      * @return ModelSharQ
      */
-    public function castTo(?string $modelClass): static
+    public function castTo(?string $modelClass): self
     {
         $this->resultModelClass = $modelClass;
 
@@ -633,7 +633,7 @@ class ModelSharQ extends ModelSharQBase
         return self::prebuildQuery($queryExecutorOperation->queryExecutor($iBuilder));
     }
 
-    private function addImplicitOperations(self &$iBuilder): static
+    private function addImplicitOperations(self &$iBuilder): self
     {
         if ($iBuilder->isFind())
         {
@@ -768,7 +768,7 @@ class ModelSharQ extends ModelSharQBase
         throw new \Exception('Invalid hook type');
     }
 
-    private static function callOnBuildHooks(self $iBuilder): static
+    private static function callOnBuildHooks(self $iBuilder): self
     {
         self::callOnBuildFuncs($iBuilder, $iBuilder->getContext()->getOnBuildCallback());
         self::callOnBuildFuncs($iBuilder, $iBuilder->getInternalContext()->getOnBuildCallback());
@@ -1016,7 +1016,7 @@ class ModelSharQ extends ModelSharQBase
     //  * @param mixed $data
     //  * @return ModelSharQ
     //  */
-    // private function throwIfNotFound($data): static
+    // private function throwIfNotFound($data): self
     // {
     //     return $this->runAfter(function($result)
     //     {
@@ -1147,7 +1147,7 @@ class ModelSharQ extends ModelSharQBase
         });
     }
 
-    public function page(int $page, int $pageSize): static
+    public function page(int $page, int $pageSize): self
     {
         if ($page < 0)
         {
@@ -1165,7 +1165,7 @@ class ModelSharQ extends ModelSharQBase
     /**
      * @param array $args
      */
-    public function columnInfo(...$args): static
+    public function columnInfo(...$args): self
     {
         $table = $args[0]['table'] ?? $this->getTableName();
 
@@ -1197,7 +1197,7 @@ class ModelSharQ extends ModelSharQBase
         return $columnInfoQuery;
     }
 
-    public function withSchema($schema): static
+    public function withSchema($schema): self
     {
         $internalOptions           = $this->getInternalOptions();
         $internalOptions['schema'] = $schema;
@@ -1216,7 +1216,7 @@ class ModelSharQ extends ModelSharQBase
         return $this;
     }
 
-    public function debug /* istanbul ignore next */(bool $doIt = true): static
+    public function debug /* istanbul ignore next */(bool $doIt = true): self
     {
         $internalOptions          = $this->getInternalOptions();
         $internalOptions['debug'] = $doIt;
@@ -1232,7 +1232,7 @@ class ModelSharQ extends ModelSharQBase
         return $this;
     }
 
-    public function returnError(bool $doIt = true): static
+    public function returnError(bool $doIt = true): self
     {
         $internalOptions                = $this->getInternalOptions();
         $internalOptions['returnError'] = $doIt;
@@ -1241,7 +1241,7 @@ class ModelSharQ extends ModelSharQBase
         return $this;
     }
 
-    private static function writeOperation(ModelSharQ $iBuilder, \Closure $callback): static
+    private static function writeOperation(ModelSharQ $iBuilder, \Closure $callback): self
     {
         if (!$iBuilder->isFind())
         {
@@ -1257,7 +1257,7 @@ class ModelSharQ extends ModelSharQBase
      * @param array<int, Model>|array<int, array> $modelsOrObjects
      * @return ModelSharQ
      */
-    public function insert($modelsOrObjects): static
+    public function insert($modelsOrObjects): self
     {
         return self::writeOperation($this, function() use ($modelsOrObjects)
         {
@@ -1273,7 +1273,7 @@ class ModelSharQ extends ModelSharQBase
      * @param array<int, Model>|array<int, array> $modelsOrObjects
      * @return ModelSharQ
      */
-    public function insertAndFetch($modelsOrObjects): static
+    public function insertAndFetch($modelsOrObjects): self
     {
         return self::writeOperation($this, function() use ($modelsOrObjects)
         {
@@ -1292,7 +1292,7 @@ class ModelSharQ extends ModelSharQBase
      * @param array $opt
      * @return ModelSharQ
      */
-    public function insertGraph($modelsOrObjects, $opt): static
+    public function insertGraph($modelsOrObjects, $opt): self
     {
         return self::writeOperation($this, function() use ($modelsOrObjects, $opt)
         {
@@ -1360,7 +1360,7 @@ class ModelSharQ extends ModelSharQBase
         });
     }
 
-    public function updateAndFetchById($id, $modelOrObject): static
+    public function updateAndFetchById($id, $modelOrObject): self
     {
         return self::writeOperation($this, function() use ($id, $modelOrObject)
         {
@@ -1374,7 +1374,7 @@ class ModelSharQ extends ModelSharQBase
         });
     }
 
-    public function upsertGraph($modelsOrObjects, $upsertOptions): static
+    public function upsertGraph($modelsOrObjects, $upsertOptions): self
     {
         return self::writeOperation($this, function() use ($modelsOrObjects, $upsertOptions)
         {
@@ -1384,7 +1384,7 @@ class ModelSharQ extends ModelSharQBase
         });
     }
 
-    public function upsertGraphAndFetch($modelsOrObjects, $upsertOptions): static
+    public function upsertGraphAndFetch($modelsOrObjects, $upsertOptions): self
     {
         return self::writeOperation($this, function() use ($modelsOrObjects, $upsertOptions)
         {
@@ -1396,7 +1396,7 @@ class ModelSharQ extends ModelSharQBase
         });
     }
 
-    public function patch($modelOrObject): static
+    public function patch($modelOrObject): self
     {
         return static::writeOperation($this, function() use ($modelOrObject)
         {
@@ -1412,7 +1412,7 @@ class ModelSharQ extends ModelSharQBase
      * @param Model|object $modelOrObject
      * @return ModelSharQ
      */
-    public function patchAndFetch($modelOrObject): static
+    public function patchAndFetch($modelOrObject): self
     {
         return self::writeOperation($this, function() use ($modelOrObject)
         {
@@ -1438,7 +1438,7 @@ class ModelSharQ extends ModelSharQBase
         });
     }
 
-    public function patchAndFetchById($id, $modelOrObject): static
+    public function patchAndFetchById($id, $modelOrObject): self
     {
         return self::writeOperation($this, function() use ($id, $modelOrObject)
         {
@@ -1452,7 +1452,7 @@ class ModelSharQ extends ModelSharQBase
         });
     }
 
-    public function delete(...$args): static
+    public function delete(...$args): self
     {
         return self::writeOperation($this, function() use ($args)
         {
@@ -1469,12 +1469,12 @@ class ModelSharQ extends ModelSharQBase
         });
     }
 
-    public function del(...$args): static
+    public function del(...$args): self
     {
         return $this->delete(...$args);
     }
 
-    public function relate(...$args): static
+    public function relate(...$args): self
     {
         return self::writeOperation($this, function() use ($args)
         {
@@ -1486,7 +1486,7 @@ class ModelSharQ extends ModelSharQBase
         });
     }
 
-    public function unrelate(...$args): static
+    public function unrelate(...$args): self
     {
         return self::writeOperation($this, function() use ($args)
         {
@@ -1503,7 +1503,7 @@ class ModelSharQ extends ModelSharQBase
         });
     }
 
-    public function increment($propertyName, $howMuch): static
+    public function increment($propertyName, $howMuch): self
     {
         /** @var Model $modelClass */
         $modelClass = $this->getModelClass();
@@ -1512,7 +1512,7 @@ class ModelSharQ extends ModelSharQBase
         return $this->patch([$columnName => new Raw('?? + ?', $columnName, $howMuch)]);
     }
 
-    public function decrement($propertyName, $howMuch): static
+    public function decrement($propertyName, $howMuch): self
     {
         /** @var Model $modelClass */
         $modelClass = $this->getModelClass();
@@ -1521,19 +1521,19 @@ class ModelSharQ extends ModelSharQBase
         return $this->patch([$columnName => new Raw('?? - ?', $columnName, $howMuch)]);
     }
 
-    public function findOne(...$args): static
+    public function findOne(...$args): self
     {
         return $this->where(...$args)->first();
     }
 
-    public function range(...$args): static
+    public function range(...$args): self
     {
         $this->clear(RangeOperation::class);
 
         return $this->addOperation(new RangeOperation('range'), $args);
     }
 
-    public function first(...$args): static
+    public function first(...$args): self
     {
         return $this->addOperation(new FirstOperation('first'), $args);
     }
@@ -1553,109 +1553,109 @@ class ModelSharQ extends ModelSharQBase
         return $operation;
     }
 
-    public function joinRelated($expression, $options): static
+    public function joinRelated($expression, $options): self
     {
         self::ensureJoinRelatedOperation($this, 'innerJoin')->addCall(['expression' => $expression, 'options' => $options]);
 
         return $this;
     }
 
-    public function innerJoinRelated($expression, $options): static
+    public function innerJoinRelated($expression, $options): self
     {
         self::ensureJoinRelatedOperation($this, 'innerJoin')->addCall(['expression' => $expression, 'options' => $options]);
 
         return $this;
     }
 
-    public function outerJoinRelated($expression, $options): static
+    public function outerJoinRelated($expression, $options): self
     {
         self::ensureJoinRelatedOperation($this, 'outerJoin')->addCall(['expression' => $expression, 'options' => $options]);
 
         return $this;
     }
 
-    public function fullOuterJoinRelated($expression, $options): static
+    public function fullOuterJoinRelated($expression, $options): self
     {
         self::ensureJoinRelatedOperation($this, 'fullOuterJoin')->addCall(['expression' => $expression, 'options' => $options]);
 
         return $this;
     }
 
-    public function leftJoinRelated($expression, $options): static
+    public function leftJoinRelated($expression, $options): self
     {
         self::ensureJoinRelatedOperation($this, 'leftJoin')->addCall(['expression' => $expression, 'options' => $options]);
 
         return $this;
     }
 
-    public function leftOuterJoinRelated($expression, $options): static
+    public function leftOuterJoinRelated($expression, $options): self
     {
         self::ensureJoinRelatedOperation($this, 'leftOuterJoin')->addCall(['expression' => $expression, 'options' => $options]);
 
         return $this;
     }
 
-    public function rightJoinRelated($expression, $options): static
+    public function rightJoinRelated($expression, $options): self
     {
         self::ensureJoinRelatedOperation($this, 'rightJoin')->addCall(['expression' => $expression, 'options' => $options]);
 
         return $this;
     }
 
-    public function rightOuterJoinRelated($expression, $options): static
+    public function rightOuterJoinRelated($expression, $options): self
     {
         self::ensureJoinRelatedOperation($this, 'rightOuterJoin')->addCall(['expression' => $expression, 'options' => $options]);
 
         return $this;
     }
 
-    public function deleteById($id): static
+    public function deleteById($id): self
     {
         return $this->findById($id)
             ->delete();
     }
 
-    public function findById(...$args): static
+    public function findById(...$args): self
     {
         return $this->addOperation(new FindByIdOperation('findById'), $args)->first();
     }
 
-    public function findByIds(...$args): static
+    public function findByIds(...$args): self
     {
         return $this->addOperation(new FindByIdsOperation('findByIds'), $args);
     }
 
-    public function runBefore(...$args): static
+    public function runBefore(...$args): self
     {
         return $this->addOperation(new RunBeforeOperation('runBefore'), $args);
     }
 
-    public function onBuild(...$args): static
+    public function onBuild(...$args): self
     {
         return $this->addOperation(new OnBuildOperation('onBuild'), $args);
     }
 
-    public function onBuildSharQ(...$args): static
+    public function onBuildSharQ(...$args): self
     {
         return $this->addOperation(new OnBuildSharQOperation('onBuildSharQ'), $args);
     }
 
-    public function runAfter(...$args): static
+    public function runAfter(...$args): self
     {
         return $this->addOperation(new RunAfterOperation('runAfter'), $args);
     }
 
-    public function onError(...$args): static
+    public function onError(...$args): self
     {
         return $this->addOperation(new OnErrorOperation('onError'), $args);
     }
 
-    public function from(...$args): static
+    public function from(...$args): self
     {
         return $this->addOperation(new FromOperation('from'), $args);
     }
 
-    public function table(...$args): static
+    public function table(...$args): self
     {
         return $this->addOperation(new FromOperation('table'), $args);
     }

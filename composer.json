@@ -46,6 +46,7 @@
         "kubawerlos/php-cs-fixer-custom-fixers": "^3.16"
     },
     "require": {
-        "sharksmedia/sharq": "master"
+        "sharksmedia/sharq": "master",
+        "php": ">=7.4"
     }
 }

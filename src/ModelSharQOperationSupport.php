@@ -109,7 +109,7 @@ abstract class ModelSharQOperationSupport
      * @param class-string<Model> $modelClass
      * @return ModelSharQOperationSupport|ModelSharQ
      */
-    public static function forClass(string $modelClass): static
+    public static function forClass(string $modelClass): self
     {
         return new static($modelClass);
     }
@@ -170,7 +170,7 @@ abstract class ModelSharQOperationSupport
         return $this;
     }
 
-    public function clearContext(): static
+    public function clearContext(): self
     {
         $context              = $this->context;
         $userContextClass     = static::QUERY_BUILDER_USER_CONTEXT;
@@ -212,7 +212,7 @@ abstract class ModelSharQOperationSupport
         return $this->isPartialQuery;
     }
 
-    public function setIsPartial(bool $isPartial): static
+    public function setIsPartial(bool $isPartial): self
     {
         $this->isPartialQuery = $isPartial;
 
@@ -226,7 +226,7 @@ abstract class ModelSharQOperationSupport
         return $internalOptions['isInternalQuery'] ?? false;
     }
 
-    public function setTableNameFor(string $tableName, string $newTableName): static
+    public function setTableNameFor(string $tableName, string $newTableName): self
     {
         $context = $this->getInternalContext();
 
@@ -242,7 +242,7 @@ abstract class ModelSharQOperationSupport
         return $context->tableMap[$tableName] ?? $tableName;
     }
 
-    public function setAliasFor(string $tableName, string $alias): static
+    public function setAliasFor(string $tableName, string $alias): self
     {
         $context = $this->getInternalContext();
 
@@ -263,7 +263,7 @@ abstract class ModelSharQOperationSupport
         return $this->getAliasFor($tableName) ?? $this->getTableNameFor($tableName);
     }
 
-    public function childQueryOf(ModelSharQOperationSupport $query, bool $isFork = false, bool $isInternalQuery = false): static
+    public function childQueryOf(ModelSharQOperationSupport $query, bool $isFork = false, bool $isInternalQuery = false): self
     {
         $currentContext = $this->context();
         $queryContext   = $query->getContext();
@@ -289,7 +289,7 @@ abstract class ModelSharQOperationSupport
         return $this;
     }
 
-    public function subQueryOf(ModelSharQOperationSupport $query): static
+    public function subQueryOf(ModelSharQOperationSupport $query): self
     {
         if ($this->isInternal())
         {
@@ -327,7 +327,7 @@ abstract class ModelSharQOperationSupport
         return $iSharQ;
     }
 
-    public function setSharQ(SharQ $iSharQ): static
+    public function setSharQ(SharQ $iSharQ): self
     {
         $this->context->iSharQ = $iSharQ;
 
@@ -349,7 +349,7 @@ abstract class ModelSharQOperationSupport
      * @param mixed $operationSelector
      * @return ModelSharQOperationSupport
      */
-    public function clear($operationSelector): static
+    public function clear($operationSelector): self
     {
         $operationsToRemove = [];
 
@@ -375,7 +375,7 @@ abstract class ModelSharQOperationSupport
     /**
      * @return ModelSharQOperationSupport
      */
-    public function toFindQuery(): static
+    public function toFindQuery(): self
     {
         $findQuery           = clone $this;
         $operationsToReplace = [];
@@ -414,17 +414,17 @@ abstract class ModelSharQOperationSupport
         return $findQuery;
     }
 
-    public function clearSelect(): static
+    public function clearSelect(): self
     {
         return $this->clear(self::SELECT_SELECTOR);
     }
 
-    public function clearWhere(): static
+    public function clearWhere(): self
     {
         return $this->clear(self::WHERE_SELECTOR);
     }
 
-    public function clearOrder(): static
+    public function clearOrder(): self
     {
         return $this->clear(self::ORDER_BY_SELECTOR);
     }
@@ -432,7 +432,7 @@ abstract class ModelSharQOperationSupport
      * @param Closure(): void $operationSelector
      * @return ModelSharQOperationSupport
      */
-    public function copyFrom(ModelSharQOperationSupport $iBuilder, $operationSelector, bool $debug = false): static
+    public function copyFrom(ModelSharQOperationSupport $iBuilder, $operationSelector, bool $debug = false): self
     {
         $operationsToAdd = [];
 
@@ -593,7 +593,7 @@ abstract class ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    public function addOperation(ModelSharQOperation $operation, $args): static
+    public function addOperation(ModelSharQOperation $operation, $args): self
     {
         return $this->addOperationUsingMethod('push', $operation, $args);
     }
@@ -648,7 +648,7 @@ abstract class ModelSharQOperationSupport
         return $this;
     }
 
-    public function removeOperation(ModelSharQOperation $operation): static
+    public function removeOperation(ModelSharQOperation $operation): self
     {
         if ($operation->getParentOperation() !== null)
         {
@@ -669,7 +669,7 @@ abstract class ModelSharQOperationSupport
         return $this;
     }
 
-    public function replaceOperation(ModelSharQOperation $operation, ModelSharQOperation $newOperation): static
+    public function replaceOperation(ModelSharQOperation $operation, ModelSharQOperation $newOperation): self
     {
         if ($operation->getParentOperation() !== null)
         {

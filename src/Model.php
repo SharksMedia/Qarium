@@ -120,7 +120,7 @@ abstract class Model
         return true;
     }
 
-    public function lset(object $iModel): static
+    public function lset(object $iModel): self
     {
         $props = get_object_vars($iModel);
 
@@ -696,7 +696,7 @@ abstract class Model
      * @param array<string, mixed> $result
      * @return Model
      */
-    public static function createFromDatabaseArray(array $result): static
+    public static function createFromDatabaseArray(array $result): self
     {
         $iModel = new static();
 
