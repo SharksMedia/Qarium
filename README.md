@@ -1,4 +1,4 @@
-# Objection
+# Qarium
 A objectionjs inspired ORM for PHP
 
 ### Usage
@@ -79,8 +79,8 @@ $iPerson = Person::query()
 ### Installation
 Add Sharksmedia repository
 ```bash
-composer config repositories.sharksmedia/sharq vcs git@github.com:SharkMagnus/SharQ.git
-composer config repositories.sharksmedia/qarium vcs git@github.com:SharkMagnus/Qarium.git
+composer config repositories.sharksmedia/sharq vcs git@github.com:SharksMedia/SharQ.git
+composer config repositories.sharksmedia/qarium vcs git@github.com:SharksMedia/Qarium.git
 ```
 
 Require Qarium
