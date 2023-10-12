@@ -373,7 +373,7 @@ abstract class Model
     private static function instanceQuery(self $instance, $iTransactionOrClient = null): ModelSharQ
     {
         /** @var \Model $modelClass */
-        $modelClass = $instance::class;
+        $modelClass = $instance;
 
         return $modelClass::query($iTransactionOrClient)
             ->findOperationFactory(function() use ($instance)
