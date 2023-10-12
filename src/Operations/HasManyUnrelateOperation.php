@@ -8,12 +8,12 @@ class HasManyUnrelateOperation extends UnrelateOperation
 {
     public function queryExecutor(ModelSharQOperationSupport $iBuilder): ?ModelSharQOperationSupport
     {
-        $patch = [];
+        $patch        = [];
         $iRelatedProp = $this->iRelation->getRelatedProp();
-        $ownerValues = $this->iOwner->getProperties($this->iRelation);
-        $relatedRefs = $iRelatedProp->refs($iBuilder);
+        $ownerValues  = $this->iOwner->getProperties($this->iRelation);
+        $relatedRefs  = $iRelatedProp->refs($iBuilder);
 
-        foreach($iRelatedProp->getReferences() as $i=>$_)
+        foreach ($iRelatedProp->getReferences() as $i => $_)
         {
             $iRelatedProp->patch($patch, $i, null);
         }

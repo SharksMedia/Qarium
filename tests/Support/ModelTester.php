@@ -10,12 +10,12 @@ use stdClass;
 
 class ModelTester
 {
-    private          $iClassObject;
-    private          $iObject;
+    private $iClassObject;
+    private $iObject;
 
     public function __construct(string $objectClass, ...$constructorArgs)
     {
-        $this->iObject = new $objectClass(...$constructorArgs);
+        $this->iObject      = new $objectClass(...$constructorArgs);
         $this->iClassObject = new ReflectionClass($objectClass);
     }
 

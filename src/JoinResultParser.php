@@ -43,14 +43,14 @@ class JoinResultParser
      * @param TableTree $iTableTree
      * @param array<int, string> $omitColumnAliases
      */
-    public function __construct(TableTree $iTableTree, array $omitColumnAliases=[])
+    public function __construct(TableTree $iTableTree, array $omitColumnAliases = [])
     {// 2023-07-31
-        $this->iTableTree = $iTableTree;
+        $this->iTableTree        = $iTableTree;
         $this->omitColumnAliases = $omitColumnAliases;
 
         $this->columnsByTableNode = [];
-        $this->parentMap = [];
-        $this->iRootModels = [];
+        $this->parentMap          = [];
+        $this->iRootModels        = [];
     }
 
     /**
@@ -58,7 +58,7 @@ class JoinResultParser
      * @param TableTree $iTableTree
      * @param array<int, string> $omitColumnAliases
      */
-    public static function create(TableTree $iTableTree, array $omitColumnAliases=[]): self
+    public static function create(TableTree $iTableTree, array $omitColumnAliases = []): self
     {// 2023-07-31
         return new static($iTableTree, $omitColumnAliases);
     }
@@ -70,13 +70,16 @@ class JoinResultParser
      */
     public function parse(array $flatRows): array
     {
-        if(count($flatRows) === 0) return $flatRows;
+        if (count($flatRows) === 0)
+        {
+            return $flatRows;
+        }
 
         $this->columnsByTableNode = $this->createColumns($flatRows[0]);
-        $this->parentMap = [];
-        $this->iRootModels = [];
+        $this->parentMap          = [];
+        $this->iRootModels        = [];
 
-        foreach($flatRows as $flatRow)
+        foreach ($flatRows as $flatRow)
         {
             $this->parseNode($this->iTableTree->getRootNode(), $flatRow);
         }
@@ -92,16 +95,19 @@ class JoinResultParser
      * @param Model $iParentModel
      * @param string|null $parentKey
      */
-    private function parseNode(TableNode $iTableNode, array $flatRow, Model $iParentModel=null, ?string $parentKey=null): void
+    private function parseNode(TableNode $iTableNode, array $flatRow, Model $iParentModel = null, ?string $parentKey = null): void
     {
         $id = $iTableNode->getIdFromFlatRow($flatRow);
 
-        if($id === null) return;
+        if ($id === null)
+        {
+            return;
+        }
 
-        $key = $this->getKey($parentKey, $id, $iTableNode);
+        $key    = $this->getKey($parentKey, $id, $iTableNode);
         $iModel = $this->parentMap[$key] ?? null;
 
-        if($iModel === null)
+        if ($iModel === null)
         {
             $iModel = $this->createModel($iTableNode, $flatRow);
 
@@ -109,7 +115,7 @@ class JoinResultParser
             $this->parentMap[$key] = $iModel;
         }
 
-        foreach($iTableNode->getChildNodes() as $iChildTableNode)
+        foreach ($iTableNode->getChildNodes() as $iChildTableNode)
         {
             $this->parseNode($iChildTableNode, $flatRow, $iModel, $key);
         }
@@ -117,12 +123,12 @@ class JoinResultParser
 
     private function addToParent(TableNode $iTableNode, Model $iModel, ?Model &$iParentModel): void
     {// 2023-07-31
-        if($iTableNode->getParentNode())
+        if ($iTableNode->getParentNode())
         {
             $iReflectionProperty = new \ReflectionProperty($iParentModel, $iTableNode->getRelationProperty());
             $iReflectionProperty->setAccessible(true);
 
-            if($iTableNode->getRelation()->isOneToOne())
+            if ($iTableNode->getRelation()->isOneToOne())
             {
                 $iReflectionProperty->setValue($iParentModel, $iModel);
             }
@@ -144,9 +150,12 @@ class JoinResultParser
 
     private function getKey(?string $parentKey, $id, TableNode $iTableNode): string
     {
-        if($parentKey !== null) return $parentKey . "/" . $iTableNode->getRelationProperty() . "/" . $id;
+        if ($parentKey !== null)
+        {
+            return $parentKey."/".$iTableNode->getRelationProperty()."/".$id;
+        }
 
-        return "/" . $id;
+        return "/".$id;
     }
 
     /**
@@ -157,14 +166,14 @@ class JoinResultParser
      */
     private function createModel(TableNode $iTableNode, array $flatRow): Model
     {
-        $row = [];
+        $row     = [];
         $columns = $this->columnsByTableNode[$iTableNode->getUUID()] ?? [];
 
-        if(count($columns) !== 0)
+        if (count($columns) !== 0)
         {
-            foreach($columns as $iColumn)
+            foreach ($columns as $iColumn)
             {
-                if(!isset($this->omitColumnAliases[$iColumn->getColumnAlias()]))
+                if (!isset($this->omitColumnAliases[$iColumn->getColumnAlias()]))
                 {
                     $row[$iColumn->getName()] = $flatRow[$iColumn->getColumnAlias()];
                 }
@@ -177,7 +186,7 @@ class JoinResultParser
         /** @var Model $model */
         $model = $modelClass::createFromDatabaseArray($row);
 
-        foreach($iTableNode->getChildNodes() as $iChildTableNode)
+        foreach ($iTableNode->getChildNodes() as $iChildTableNode)
         {
             $iReflectionProperty = new \ReflectionProperty($model, $iChildTableNode->getRelationProperty());
             $iReflectionProperty->setAccessible(true);
@@ -196,8 +205,8 @@ class JoinResultParser
     private function createColumns($row): array
     {
         $iTableTree = $this->iTableTree;
-        $iColumns = array_map(function(string $columnAlias) use ($iTableTree)
-            {
+        $iColumns   = array_map(function(string $columnAlias) use ($iTableTree)
+        {
             return JoinResultColumn::create($iTableTree, $columnAlias);
         }, array_keys($row));
 
@@ -208,7 +217,4 @@ class JoinResultParser
 
         return $groupedColumns;
     }
-
-
-
 }

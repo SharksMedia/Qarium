@@ -15,12 +15,12 @@ class RelationUpdateOperation extends UpdateOperation
     protected Relation $iRelation;
     protected RelationOwner $iOwner;
 
-    public function __construct($name, $options=[])
+    public function __construct($name, $options = [])
     {
         parent::__construct($name, $options);
 
         $this->iRelation = $this->options['iRelation'] ?? $this->options['relation'];
-        $this->iOwner = $this->options['iOwner'];
+        $this->iOwner    = $this->options['iOwner'];
     }
 
     public function onBuild(ModelSharQOperationSupport $iBuilder): void
@@ -34,8 +34,7 @@ class RelationUpdateOperation extends UpdateOperation
     {
         return new RelationFindOperation('find', [
             'iRelation' => $this->iRelation,
-            'iOwner' => $this->iOwner,
+            'iOwner'    => $this->iOwner,
         ]);
     }
-
 }

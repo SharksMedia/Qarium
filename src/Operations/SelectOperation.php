@@ -23,7 +23,7 @@ class SelectOperation extends QariumToSharQConvertingOperation
      */
     private $selections;
 
-    public function __construct(string $name, array $options=[])
+    public function __construct(string $name, array $options = [])
     {
         parent::__construct($name, $options);
         $this->selections = [];
@@ -33,14 +33,21 @@ class SelectOperation extends QariumToSharQConvertingOperation
     {
         $selections = Utilities::array_flatten($arguments);
 
-        if(count($selections) === 0 && preg_match(self::COUNT_REGEX, $this->name) !== 1) return false;
+        if (count($selections) === 0 && preg_match(self::COUNT_REGEX, $this->name) !== 1)
+        {
+            return false;
+        }
         
         $return = parent::onAdd($iBuilder, $selections);
 
-        foreach($selections as $selection) {
+        foreach ($selections as $selection)
+        {
             $iSelection = Selection::create($selection);
 
-            if($iSelection !== null) $this->selections[] = $iSelection;
+            if ($iSelection !== null)
+            {
+                $this->selections[] = $iSelection;
+            }
         }
 
         return $return;
@@ -53,7 +60,10 @@ class SelectOperation extends QariumToSharQConvertingOperation
      */
     public function onBuildSharQ(ModelSharQOperationSupport $iBuilder, $iSharQ)
     {
-        if($iSharQ !== null && !($iSharQ instanceof SharQ) && !($iSharQ instanceof Join))  throw new \Exception('Invalid SharQ type: '.get_class($iSharQ));
+        if ($iSharQ !== null && !($iSharQ instanceof SharQ) && !($iSharQ instanceof Join))
+        {
+            throw new \Exception('Invalid SharQ type: '.get_class($iSharQ));
+        }
 
         $arguments = $this->getArguments($iBuilder);
 
@@ -80,14 +90,19 @@ class SelectOperation extends QariumToSharQConvertingOperation
     {
         $selectionInstanceToFind = Selection::create($selectionToFind);
 
-        if($selectionInstanceToFind === null) return null;
-
-        foreach($this->selections as $selection)
+        if ($selectionInstanceToFind === null)
         {
-            if(Selection::doesSelect($iBuilder, $selection, $selectionInstanceToFind)) return $selection;
+            return null;
+        }
+
+        foreach ($this->selections as $selection)
+        {
+            if (Selection::doesSelect($iBuilder, $selection, $selectionInstanceToFind))
+            {
+                return $selection;
+            }
         }
 
         return null;
     }
-
 }

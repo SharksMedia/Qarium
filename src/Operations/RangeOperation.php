@@ -18,10 +18,13 @@ class RangeOperation extends ModelSharQOperation
      
     public function onAdd(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
-        if(count($arguments) !== 2) return true;
+        if (count($arguments) !== 2)
+        {
+            return true;
+        }
 
         $start = $arguments[0];
-        $end = $arguments[1];
+        $end   = $arguments[1];
 
         // Need to set these here instead of `onBuildKnex` so that they
         // don't end up in the resultSize query.
@@ -42,8 +45,8 @@ class RangeOperation extends ModelSharQOperation
         $resultSize = $this->resultSizeBuilder->resultSize();
 
         return [
-            'results'=>$result,
-            'total'=>$resultSize,
+            'results' => $result,
+            'total'   => $resultSize,
         ];
     }
 }

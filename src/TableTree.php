@@ -57,9 +57,9 @@ class TableTree
     public function __construct(RelationExpression $iRelationExpression, string $rootModelClass, ?string $rootTableAlias, array $options)
     {
         $this->iRelationExpression = $iRelationExpression;
-        $this->rootModelClass = $rootModelClass;
-        $this->rootTableAlias = $rootTableAlias;
-        $this->options = $options;
+        $this->rootModelClass      = $rootModelClass;
+        $this->rootTableAlias      = $rootTableAlias;
+        $this->options             = $options;
 
         $this->createNodes($iRelationExpression, $rootModelClass);
     }
@@ -100,12 +100,15 @@ class TableTree
         $rootNode = $this->createRootNode($iRelationExpression, $modelClass);
         $this->createChildNodes($iRelationExpression, $modelClass, $rootNode);
 
-        foreach($this->iTableNodes as $iTableNode) $this->nodesByAlias[$iTableNode->getAlias()] = $iTableNode;
+        foreach ($this->iTableNodes as $iTableNode)
+        {
+            $this->nodesByAlias[$iTableNode->getAlias()] = $iTableNode;
+        }
     }
 
     private function createChildNodes(RelationExpression $iRelationExpression, string $modelClass, TableNode $iParentTableNode)
     {
-        RelationExpression::forEachChildExpression($iRelationExpression, $modelClass, function(RelationExpression $iChildRelationExpression, Relations\Relation $iRelation) use($iParentTableNode)
+        RelationExpression::forEachChildExpression($iRelationExpression, $modelClass, function(RelationExpression $iChildRelationExpression, Relations\Relation $iRelation) use ($iParentTableNode)
         {
             $iTableNode = TableNode::create($this, $iRelation->getRelatedModelClass(), $iChildRelationExpression, $iParentTableNode, $iRelation);
 
@@ -117,24 +120,25 @@ class TableTree
 
     private function createRootNode(RelationExpression $iRelationExpression, string $modelClass): TableNode
     {
-        $iRootTableNode = TableNode::create($this, $modelClass, $iRelationExpression);
+        $iRootTableNode      = TableNode::create($this, $modelClass, $iRelationExpression);
         $this->iTableNodes[] = $iRootTableNode;
 
         return $iRootTableNode;
     }
 
-	public function getNodeForColumnAlias($columnAlias)
-	{
-    	$lastSepIndex = strrpos($columnAlias, $this->options['separator']);
+    public function getNodeForColumnAlias($columnAlias)
+    {
+        $lastSepIndex = strrpos($columnAlias, $this->options['separator']);
 
-    	if($lastSepIndex === false)
-		{
-        	return $this->getRootNode();
-    	}
-		else
-		{
-        	$tableAlias = substr($columnAlias, 0, $lastSepIndex);
-        	return $this->nodesByAlias[$tableAlias];
-    	}
-	}
+        if ($lastSepIndex === false)
+        {
+            return $this->getRootNode();
+        }
+        else
+        {
+            $tableAlias = substr($columnAlias, 0, $lastSepIndex);
+
+            return $this->nodesByAlias[$tableAlias];
+        }
+    }
 }

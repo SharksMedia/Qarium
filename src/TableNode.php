@@ -68,23 +68,26 @@ class TableNode
      */
     private string $uuid;
 
-    public function __construct(TableTree $iTableTree, string $modelClass, RelationExpression $iRelationExpression, ?TableNode $iParentTableNode=null, ?Relation $iRelation=null)
+    public function __construct(TableTree $iTableTree, string $modelClass, RelationExpression $iRelationExpression, ?TableNode $iParentTableNode = null, ?Relation $iRelation = null)
     {
-        $this->iTableTree = $iTableTree;
-        $this->modelClass = $modelClass;
+        $this->iTableTree          = $iTableTree;
+        $this->modelClass          = $modelClass;
         $this->iRelationExpression = $iRelationExpression;
-        $this->iParentTableNode = $iParentTableNode;
-        $this->iRelation = $iRelation;
+        $this->iParentTableNode    = $iParentTableNode;
+        $this->iRelation           = $iRelation;
 
-        $this->alias = $this->calculateAlias();
+        $this->alias    = $this->calculateAlias();
         $this->idGetter = $this->createIdGetter();
     }
 
-    public static function create(TableTree $iTableTree, string $modelClass, RelationExpression $iRelationExpression, ?TableNode $iParentTableNode=null, ?Relation $iRelation=null): self
+    public static function create(TableTree $iTableTree, string $modelClass, RelationExpression $iRelationExpression, ?TableNode $iParentTableNode = null, ?Relation $iRelation = null): self
     {
         $iTableNode = new self($iTableTree, $modelClass, $iRelationExpression, $iParentTableNode, $iRelation);
 
-        if($iTableNode->hasParent()) $iTableNode->iParentTableNode->iChildNodes[] = $iTableNode;
+        if ($iTableNode->hasParent())
+        {
+            $iTableNode->iParentTableNode->iChildNodes[] = $iTableNode;
+        }
 
         return $iTableNode;
     }
@@ -149,7 +152,10 @@ class TableNode
 
     public function getColumnAliasForColumn(string $column): string
     {
-        if($this->iParentTableNode !== null) return $this->alias.($this->getOptions()['seperator'] ?? ':').$column;
+        if ($this->iParentTableNode !== null)
+        {
+            return $this->alias.($this->getOptions()['seperator'] ?? ':').$column;
+        }
 
         return $column;
     }
@@ -159,7 +165,10 @@ class TableNode
         // FIXME: Use default options on relation joiner
         $lastSepIndex = strrpos($columnAlias, $this->getOptions()['seperator'] ?? ':');
 
-        if($lastSepIndex === false) return $columnAlias;
+        if ($lastSepIndex === false)
+        {
+            return $columnAlias;
+        }
 
         $alias = substr($columnAlias, $lastSepIndex + strlen($this->getOptions()['seperator'] ?? ':'));
 
@@ -180,7 +189,7 @@ class TableNode
 
     public function getJoinTableAlias(ModelSharQ $iBuilder): ?string
     {
-        if($this->iRelation instanceof ManyToMany)
+        if ($this->iRelation instanceof ManyToMany)
         {
             return $iBuilder->getAliasFor($this->iRelation->getRelatedModelClass()) ?? $this->modelClass::getJoinTableAlias($this->alias);
         }
@@ -190,16 +199,25 @@ class TableNode
 
     private function calculateAlias()
     {
-        if($this->iParentTableNode === null) return $this->iTableTree->getRootTableAlias();
+        if ($this->iParentTableNode === null)
+        {
+            return $this->iTableTree->getRootTableAlias();
+        }
 
         $options = $this->getOptions();
 
         $relationName = $this->iRelationExpression->getNode()->name;
-        $alias = $options['aliases'][$relationName] ?? $relationName;
+        $alias        = $options['aliases'][$relationName] ?? $relationName;
 
-        if($options['minimize']) return '_t'.$this->iTableTree->createNextUid();
+        if ($options['minimize'])
+        {
+            return '_t'.$this->iTableTree->createNextUid();
+        }
 
-        if($this->iParentTableNode->iParentTableNode !== null) return $this->iParentTableNode->alias.($options['seperator'] ?? ':').$alias;
+        if ($this->iParentTableNode->iParentTableNode !== null)
+        {
+            return $this->iParentTableNode->alias.($options['seperator'] ?? ':').$alias;
+        }
 
         return $alias;
     }
@@ -217,10 +235,13 @@ class TableNode
      */
     private function createIdGetter(): \Closure
     {
-        $idColumns = $this->modelClass::getIdColumnArray();
+        $idColumns     = $this->modelClass::getIdColumnArray();
         $columnAliases = array_map([$this, 'getColumnAliasForColumn'], $idColumns);
         
-        if(count($idColumns) === 1) return self::_createIdGetter($columnAliases);
+        if (count($idColumns) === 1)
+        {
+            return self::_createIdGetter($columnAliases);
+        }
 
         return self::_createCompositeIdGetter($columnAliases);
     }
@@ -234,7 +255,7 @@ class TableNode
     {
         $columnAlias = $columnAliases[0];
 
-        return function($flatRow) use($columnAlias)
+        return function($flatRow) use ($columnAlias)
         {
             $id = $flatRow[$columnAlias] ?? null;
 
@@ -249,7 +270,10 @@ class TableNode
      */
     private static function _createCompositeIdGetter(array $columnAliases): \Closure
     {
-        if(count($columnAliases) === 2) return self::_createTwoIdGetter($columnAliases);
+        if (count($columnAliases) === 2)
+        {
+            return self::_createTwoIdGetter($columnAliases);
+        }
 
         return self::_createMultiIdGetter($columnAliases);
     }
@@ -264,12 +288,15 @@ class TableNode
         $columnAlias1 = $columnAliases[0];
         $columnAlias2 = $columnAliases[1];
 
-        return function($flatRow) use($columnAlias1, $columnAlias2)
+        return function($flatRow) use ($columnAlias1, $columnAlias2)
         {
             $id1 = $flatRow[$columnAlias1] ?? null;
             $id2 = $flatRow[$columnAlias2] ?? null;
 
-            if($id1 === null || $id2 === null) return null;
+            if ($id1 === null || $id2 === null)
+            {
+                return null;
+            }
 
             return $id1.','.$id2;
         };
@@ -282,36 +309,28 @@ class TableNode
      */
     private static function _createMultiIdGetter(array $columnAliases): \Closure
     {
-        return function($flatRow) use($columnAliases)
+        return function($flatRow) use ($columnAliases)
         {
             $idStr = '';
 
-            foreach($columnAliases as $i=>$columnAlias)
+            foreach ($columnAliases as $i => $columnAlias)
             {
                 $id = $flatRow[$columnAlias] ?? null;
 
-                if($id === null) return null;
+                if ($id === null)
+                {
+                    return null;
+                }
 
                 $idStr .= $id;
 
-                if($i < count($columnAliases) - 1) $idStr .= ',';
+                if ($i < count($columnAliases) - 1)
+                {
+                    $idStr .= ',';
+                }
             }
 
             return $idStr;
         };
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }

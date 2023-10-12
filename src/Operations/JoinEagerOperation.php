@@ -20,7 +20,7 @@ class JoinEagerOperation extends EagerOperation
     {
         $iBuilder->setFindOption('callAfterFindDeeply', true);
 
-        $this->iJoiner = new RelationJoiner(['modelClass'=>$iBuilder->getModelClass()]);
+        $this->iJoiner = new RelationJoiner(['modelClass' => $iBuilder->getModelClass()]);
 
         return true;
     }

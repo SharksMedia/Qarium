@@ -13,11 +13,10 @@ use Sharksmedia\Qarium\Operations\SharQOperation;
 
 class JoinBuilder extends ModelSharQOperationSupport
 {
-    
     /**
      * @param mixed $args
      */
-    function using(...$args): self
+    public function using(...$args): self
     {
         return $this->addOperation(new SharQOperation('using'), $args);
     }
@@ -25,7 +24,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function on(...$args): self
+    public function on(...$args): self
     {
         return $this->addOperation(new SharQOperation('on'), $args);
     }
@@ -33,7 +32,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function orOn(...$args): self
+    public function orOn(...$args): self
     {
         return $this->addOperation(new SharQOperation('orOn'), $args);
     }
@@ -41,7 +40,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function onBetween(...$args): self
+    public function onBetween(...$args): self
     {
         return $this->addOperation(new SharQOperation('onBetween'), $args);
     }
@@ -49,7 +48,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function onNotBetween(...$args): self
+    public function onNotBetween(...$args): self
     {
         return $this->addOperation(new SharQOperation('onNotBetween'), $args);
     }
@@ -57,7 +56,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function orOnBetween(...$args): self
+    public function orOnBetween(...$args): self
     {
         return $this->addOperation(new SharQOperation('orOnBetween'), $args);
     }
@@ -65,7 +64,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function orOnNotBetween(...$args): self
+    public function orOnNotBetween(...$args): self
     {
         return $this->addOperation(new SharQOperation('orOnNotBetween'), $args);
     }
@@ -73,7 +72,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function onIn(...$args): self
+    public function onIn(...$args): self
     {
         return $this->addOperation(new SharQOperation('onIn'), $args);
     }
@@ -81,7 +80,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function onNotIn(...$args): self
+    public function onNotIn(...$args): self
     {
         return $this->addOperation(new SharQOperation('onNotIn'), $args);
     }
@@ -89,7 +88,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function orOnIn(...$args): self
+    public function orOnIn(...$args): self
     {
         return $this->addOperation(new SharQOperation('orOnIn'), $args);
     }
@@ -97,7 +96,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function orOnNotIn(...$args): self
+    public function orOnNotIn(...$args): self
     {
         return $this->addOperation(new SharQOperation('orOnNotIn'), $args);
     }
@@ -105,7 +104,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function onNull(...$args): self
+    public function onNull(...$args): self
     {
         return $this->addOperation(new SharQOperation('onNull'), $args);
     }
@@ -113,7 +112,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function orOnNull(...$args): self
+    public function orOnNull(...$args): self
     {
         return $this->addOperation(new SharQOperation('orOnNull'), $args);
     }
@@ -121,7 +120,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function onNotNull(...$args): self
+    public function onNotNull(...$args): self
     {
         return $this->addOperation(new SharQOperation('onNotNull'), $args);
     }
@@ -129,7 +128,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function orOnNotNull(...$args): self
+    public function orOnNotNull(...$args): self
     {
         return $this->addOperation(new SharQOperation('orOnNotNull'), $args);
     }
@@ -137,7 +136,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function onExists(...$args): self
+    public function onExists(...$args): self
     {
         return $this->addOperation(new SharQOperation('onExists'), $args);
     }
@@ -145,7 +144,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function orOnExists(...$args): self
+    public function orOnExists(...$args): self
     {
         return $this->addOperation(new SharQOperation('orOnExists'), $args);
     }
@@ -153,7 +152,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function onNotExists(...$args): self
+    public function onNotExists(...$args): self
     {
         return $this->addOperation(new SharQOperation('onNotExists'), $args);
     }
@@ -161,7 +160,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function orOnNotExists(...$args): self
+    public function orOnNotExists(...$args): self
     {
         return $this->addOperation(new SharQOperation('orOnNotExists'), $args);
     }
@@ -169,7 +168,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function type(...$args): self
+    public function type(...$args): self
     {
         return $this->addOperation(new SharQOperation('type'), $args);
     }
@@ -177,7 +176,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function andOn(...$args): self
+    public function andOn(...$args): self
     {
         return $this->addOperation(new SharQOperation('andOn'), $args);
     }
@@ -185,7 +184,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function andOnIn(...$args): self
+    public function andOnIn(...$args): self
     {
         return $this->addOperation(new SharQOperation('andOnIn'), $args);
     }
@@ -193,7 +192,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function andOnNotIn(...$args): self
+    public function andOnNotIn(...$args): self
     {
         return $this->addOperation(new SharQOperation('andOnNotIn'), $args);
     }
@@ -201,7 +200,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function andOnNull(...$args): self
+    public function andOnNull(...$args): self
     {
         return $this->addOperation(new SharQOperation('andOnNull'), $args);
     }
@@ -209,7 +208,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function andOnNotNull(...$args): self
+    public function andOnNotNull(...$args): self
     {
         return $this->addOperation(new SharQOperation('andOnNotNull'), $args);
     }
@@ -217,7 +216,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function andOnExists(...$args): self
+    public function andOnExists(...$args): self
     {
         return $this->addOperation(new SharQOperation('andOnExists'), $args);
     }
@@ -225,7 +224,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function andOnNotExists(...$args): self
+    public function andOnNotExists(...$args): self
     {
         return $this->addOperation(new SharQOperation('andOnNotExists'), $args);
     }
@@ -233,7 +232,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function andOnBetween(...$args): self
+    public function andOnBetween(...$args): self
     {
         return $this->addOperation(new SharQOperation('andOnBetween'), $args);
     }
@@ -241,7 +240,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function andOnNotBetween(...$args): self
+    public function andOnNotBetween(...$args): self
     {
         return $this->addOperation(new SharQOperation('andOnNotBetween'), $args);
     }
@@ -249,7 +248,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function andOnJsonPathEquals(...$args): self
+    public function andOnJsonPathEquals(...$args): self
     {
         return $this->addOperation(new SharQOperation('andOnJsonPathEquals'), $args);
     }
@@ -257,7 +256,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function onVal(...$args): self
+    public function onVal(...$args): self
     {
         return $this->addOperation(new SharQOperation('onVal'), $args);
     }
@@ -265,7 +264,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function andOnVal(...$args): self
+    public function andOnVal(...$args): self
     {
         return $this->addOperation(new SharQOperation('andOnVal'), $args);
     }
@@ -273,7 +272,7 @@ class JoinBuilder extends ModelSharQOperationSupport
     /**
      * @param mixed $args
      */
-    function orOnVal(...$args): self
+    public function orOnVal(...$args): self
     {
         return $this->addOperation(new SharQOperation('orOnVal'), $args);
     }

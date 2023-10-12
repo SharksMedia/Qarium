@@ -16,7 +16,7 @@ class RelationExpression
 
     private string $expressionString;
 
-    public function __construct(?RelationNode $node=null)
+    public function __construct(?RelationNode $node = null)
     {
         $this->node = $node ?? self::newNode();
     }
@@ -25,14 +25,20 @@ class RelationExpression
      * @param string|RelationExpression|null $expression
      * @return RelationExpression
      */
-    public static function create($expression=null, array $options=[]): self
+    public static function create($expression = null, array $options = []): self
     {
-        if($expression === null) return new static();
+        if ($expression === null)
+        {
+            return new static();
+        }
 
-        if($expression instanceof RelationExpression) return $expression;
+        if ($expression instanceof RelationExpression)
+        {
+            return $expression;
+        }
         
 
-        if(is_string($expression))
+        if (is_string($expression))
         {
             $iExpression = new static(self::parse($expression, $options));
 
@@ -56,7 +62,10 @@ class RelationExpression
 
     public function getMaxRecursiveDepth(): int
     {
-        if(!$this->node->recursive) return 0;
+        if (!$this->node->recursive)
+        {
+            return 0;
+        }
 
         return PHP_INT_MAX;
     }
@@ -80,7 +89,10 @@ class RelationExpression
     {
         $iRelationExpression = self::create($relationExpression);
 
-        if($this->isEmpty()) return $iRelationExpression;
+        if ($this->isEmpty())
+        {
+            return $iRelationExpression;
+        }
 
         return new static(self::mergeNodes($this->getNode(), $iRelationExpression->getNode()));
     }
@@ -95,24 +107,32 @@ class RelationExpression
     {
         $node = clone $node1;
 
-        $node->modify = Utilities::array_union($node1->modify, $node2->modify);
+        $node->modify    = Utilities::array_union($node1->modify, $node2->modify);
         $node->recursive = $node1->recursive || $node2->recursive;
 
         $childNodes = [];
-        if(!$node->recursive && !$node->allRecursive)
+
+        if (!$node->recursive && !$node->allRecursive)
         {
             $childNode1Map = [];
             $childNode2Map = [];
 
-            foreach($node1->iChildNodes ?? [] as $childNode1) $childNode1Map[$childNode1->name] = $childNode1;
-            foreach($node2->iChildNodes ?? [] as $childNode2) $childNode2Map[$childNode2->name] = $childNode2;
+            foreach ($node1->iChildNodes ?? [] as $childNode1)
+            {
+                $childNode1Map[$childNode1->name] = $childNode1;
+            }
+
+            foreach ($node2->iChildNodes ?? [] as $childNode2)
+            {
+                $childNode2Map[$childNode2->name] = $childNode2;
+            }
 
             $childNodes = array_merge($node1->iChildNodes ?? [], $node2->iChildNodes ?? []);
             $childNames = array_unique(array_column($childNodes, 'name'));
 
-            foreach($childNames as $name)
+            foreach ($childNames as $name)
             {
-                if(isset($childNode1Map[$name]) && isset($childNode2Map[$name]))
+                if (isset($childNode1Map[$name]) && isset($childNode2Map[$name]))
                 {
                     $childNodes[$name] = self::mergeNodes($childNode1Map[$name], $childNode2Map[$name]);
                 }
@@ -138,21 +158,37 @@ class RelationExpression
      */
     public function isSubExpression(RelationExpression $expression): bool
     {
-        if($this->node->allRecursive) return true;
-        if($expression->node->allRecursive) return true;
+        if ($this->node->allRecursive)
+        {
+            return true;
+        }
 
-        if($this->node->relationName !== $expression->node->relationName) return false;
+        if ($expression->node->allRecursive)
+        {
+            return true;
+        }
+
+        if ($this->node->relationName !== $expression->node->relationName)
+        {
+            return false;
+        }
 
         $maxRecursiveDepth = $expression->getMaxRecursiveDepth();
 
-        if($maxRecursiveDepth > 0) return $this->getMaxRecursiveDepth() >= $maxRecursiveDepth;
+        if ($maxRecursiveDepth > 0)
+        {
+            return $this->getMaxRecursiveDepth() >= $maxRecursiveDepth;
+        }
 
-        foreach($expression->node->iChildNodes ?? [] as $childNode)
+        foreach ($expression->node->iChildNodes ?? [] as $childNode)
         {
             $ownSubExpression = $this->childExpression($childNode->name);
-            $subExpression = $expression->childExpression($childNode->name);
+            $subExpression    = $expression->childExpression($childNode->name);
 
-            if($ownSubExpression === null || !$ownSubExpression->isSubExpression($subExpression)) return false;
+            if ($ownSubExpression === null || !$ownSubExpression->isSubExpression($subExpression))
+            {
+                return false;
+            }
         }
 
         return true;
@@ -166,29 +202,32 @@ class RelationExpression
      */
     public function childExpression(string $name): ?RelationExpression
     {
-        if($this->node->allRecursive || ($name === $this->node->name && $this->node->recursiveDepth < $this->getMaxRecursiveDepth() - 1))
+        if ($this->node->allRecursive || ($name === $this->node->name && $this->node->recursiveDepth < $this->getMaxRecursiveDepth() - 1))
         {
             return new static(self::newNode($name, true, $this->node->recursiveDepth + 1));
         }
 
         $child = $this->node->iChildNodes[$name] ?? null;
 
-        if($child === null) return null;
+        if ($child === null)
+        {
+            return null;
+        }
 
         return new static($child);
     }
 
-    public static function newNode(?string $name=null, bool $allRecursive=false, ?int $recursiveDepth=null): RelationNode
+    public static function newNode(?string $name = null, bool $allRecursive = false, ?int $recursiveDepth = null): RelationNode
     {
-        $node = new RelationNode();
-        $node->name = $name;
-        $node->allRecursive = $allRecursive;
+        $node                 = new RelationNode();
+        $node->name           = $name;
+        $node->allRecursive   = $allRecursive;
         $node->recursiveDepth = $recursiveDepth;
 
         return $node;
     }
 
-    public static function parse(string $expression, array $options=[]): RelationNode
+    public static function parse(string $expression, array $options = []): RelationNode
     {
         // static $expressionCache = [];
         //
@@ -207,13 +246,13 @@ class RelationExpression
      * 2023-08-16
      * @return array|null
      */
-    public static function parseRelationQuery(string $case, array $options=[]): ?array
+    public static function parseRelationQuery(string $case, array $options = []): ?array
     {
         $getAlias = function(string $relationName) use ($options)
         {
             $aliases = $options['alias'] ?? [];
 
-            if(is_array($aliases))
+            if (is_array($aliases))
             {
                 return $aliases[$relationName] ?? null;
             }
@@ -225,19 +264,23 @@ class RelationExpression
         
         preg_match_all($regex, $case, $m);
         
-        $topLevelNames = $m[1];
+        $topLevelNames   = $m[1];
         $recursiveGroups = $m[2];
         
         $iRelationNodes = [];
-        foreach(array_combine($topLevelNames, $recursiveGroups) as $name=>$caseToProcess)
+
+        foreach (array_combine($topLevelNames, $recursiveGroups) as $name => $caseToProcess)
         {
-            $node = new RelationNode();
+            $node               = new RelationNode();
             $node->relationName = $name;
-            $node->name = $getAlias($name) ?? $node->relationName;
+            $node->name         = $getAlias($name) ?? $node->relationName;
             
-            $node->iChildNodes = self::parseRelationQuery($caseToProcess, ['parentName'=>$name]);
+            $node->iChildNodes = self::parseRelationQuery($caseToProcess, ['parentName' => $name]);
             
-            if(empty($node->iChildNodes)) $node->iChildNodes = null;
+            if (empty($node->iChildNodes))
+            {
+                $node->iChildNodes = null;
+            }
             
             $iRelationNodes[$name] = $node;
         }
@@ -249,7 +292,7 @@ class RelationExpression
      * 2023-06-19
      * @return array|null
      */
-    public static function parseRelationQueryOld(string $case, array $options=[]): ?array
+    public static function parseRelationQueryOld(string $case, array $options = []): ?array
     {
         // $regex = '/(\w+)\.?(?<R>\[(?:[^\[\]]+|(?&R))*\])?/';
         $regex = '/(\w+)\.?(\[(?:[^\[\]]+|(?R))*\]|(?R))?/';
@@ -258,7 +301,7 @@ class RelationExpression
         {
             $aliases = $options['alias'] ?? null;
 
-            if(is_array($aliases))
+            if (is_array($aliases))
             {
                 return $aliases[$relationName] ?? null;
             }
@@ -268,8 +311,8 @@ class RelationExpression
 
         preg_match_all($regex, $case, $m);
         
-        $topLevelGroups = array_shift($m);
-        $topLevelNames = array_shift($m);
+        $topLevelGroups  = array_shift($m);
+        $topLevelNames   = array_shift($m);
         $recursiveGroups = array_shift($m);
         
         $groupsToProcess = (count($topLevelGroups) > 1)
@@ -278,18 +321,22 @@ class RelationExpression
 
         $groupsToProcess = array_filter($groupsToProcess, null);
         
-        if(count($groupsToProcess) === 0) return null;
+        if (count($groupsToProcess) === 0)
+        {
+            return null;
+        }
 
         $isArray = ($case[0] === '[');
         
         $iRelationNodes = [];
-        foreach(array_combine($topLevelNames, $groupsToProcess) as $name=>$caseToProcess)
-        {
-            $node = new RelationNode();
-            $node->relationName = $name;
-            $node->name = $getAlias($name) ?? $node->relationName;
 
-            $node->iChildNodes = self::parseRelationQuery($caseToProcess, ['parentName'=>$name]);
+        foreach (array_combine($topLevelNames, $groupsToProcess) as $name => $caseToProcess)
+        {
+            $node               = new RelationNode();
+            $node->relationName = $name;
+            $node->name         = $getAlias($name) ?? $node->relationName;
+
+            $node->iChildNodes = self::parseRelationQuery($caseToProcess, ['parentName' => $name]);
 
             $iRelationNodes[$name] = $node;
         }
@@ -299,19 +346,23 @@ class RelationExpression
 
     private static function findExpressionAtPath(RelationExpression $target, RelationExpression $path, &$results)
     {
-        if($path->isEmpty())
+        if ($path->isEmpty())
         {
             // Path leaf reached, add target node to result set.
             $results[] = $target;
+
             return $results;
         }
 
-        foreach($path->getNode()->iChildNodes as $iChildNode)
+        foreach ($path->getNode()->iChildNodes as $iChildNode)
         {
-            $pathChild = $path->childExpression($iChildNode->name);
+            $pathChild   = $path->childExpression($iChildNode->name);
             $targetChild = $target->childExpression($iChildNode->name);
 
-            if($targetChild !== null) self::findExpressionAtPath($targetChild, $pathChild, $results);
+            if ($targetChild !== null)
+            {
+                self::findExpressionAtPath($targetChild, $pathChild, $results);
+            }
         }
 
         return $results;
@@ -329,31 +380,34 @@ class RelationExpression
     {
         $maxRecursiveDepth = $this->getMaxRecursiveDepth();
 
-        if($this->node->allRecursive)
+        if ($this->node->allRecursive)
         {
-            foreach($modelClass::getRelationNames() as $relationName)
+            foreach ($modelClass::getRelationNames() as $relationName)
             {
-                $node = self::newNode($relationName, true);
-                $relation = $modelClass::getRelationUnsafe($relationName);
+                $node             = self::newNode($relationName, true);
+                $relation         = $modelClass::getRelationUnsafe($relationName);
                 $iChildExpression = new RelationExpression($node);
 
                 $callback($iChildExpression, $relation);
             }
         }
-        else if($this->recursiveDepth < $maxRecursiveDepth - 1)
+        else if ($this->recursiveDepth < $maxRecursiveDepth - 1)
         {
-            $relation = $modelClass::getRelationUnsafe($this->node->name);
+            $relation         = $modelClass::getRelationUnsafe($this->node->name);
             $iChildExpression = new RelationExpression($this->node, $this->recursiveDepth + 1);
 
             $callback($iChildExpression, $relation);
         }
-        else if($maxRecursiveDepth === 0)
+        else if ($maxRecursiveDepth === 0)
         {
-            foreach($this->node->iChildNodes as $iChildNode)
+            foreach ($this->node->iChildNodes as $iChildNode)
             {
                 $relation = $modelClass::getRelationUnsafe($iChildNode->name);
 
-                if($relation === null) throw new RelationDoesNotExistError($modelClass, $iChildNode->name);
+                if ($relation === null)
+                {
+                    throw new RelationDoesNotExistError($modelClass, $iChildNode->name);
+                }
 
                 $iChildExpression = new RelationExpression($iChildNode);
 
@@ -364,47 +418,50 @@ class RelationExpression
 
     public static function forEachChildExpression(RelationExpression $iRelationExpression, string $modelClass, \Closure $callback)
     {
-        $ID_LENGTH_LIMIT = 63;
+        $ID_LENGTH_LIMIT          = 63;
         $RELATION_RECURSION_LIMIT = 64;
 
-        if($iRelationExpression->node->allRecursive || $iRelationExpression->getMaxRecursiveDepth() > $RELATION_RECURSION_LIMIT)
+        if ($iRelationExpression->node->allRecursive || $iRelationExpression->getMaxRecursiveDepth() > $RELATION_RECURSION_LIMIT)
         {
             throw new \Exception('recursion depth of eager expression ${expr.toString()} too big for JoinEagerAlgorithm');
         }
 
         $iNode = $iRelationExpression->getNode();
 
-        foreach($iNode->iChildNodes ?? [] as $iChildNode)
+        foreach ($iNode->iChildNodes ?? [] as $iChildNode)
         {
-            if($iChildNode->allRecursive)
+            if ($iChildNode->allRecursive)
             {
-                foreach($modelClass::getRelationNames() as $relationName)
+                foreach ($modelClass::getRelationNames() as $relationName)
                 {
-                    $node = self::newNode($relationName, true);
-                    $relation = $modelClass::getRelationUnsafe($relationName);
+                    $node             = self::newNode($relationName, true);
+                    $relation         = $modelClass::getRelationUnsafe($relationName);
                     $iChildExpression = new RelationExpression($node);
 
                     $callback($iChildExpression, $relation);
                 }
             }
-            else if($iChildNode->recursiveDepth < $RELATION_RECURSION_LIMIT - 1)
+            else if ($iChildNode->recursiveDepth < $RELATION_RECURSION_LIMIT - 1)
             {
                 // $relation = $modelClass::getRelationUnsafe($iChildNode->relationName);
-                $relation = $modelClass::getRelation($iChildNode->relationName);
+                $relation         = $modelClass::getRelation($iChildNode->relationName);
                 $iChildExpression = new RelationExpression($iChildNode, $iChildNode->recursiveDepth + 1);
 
                 $callback($iChildExpression, $relation);
             }
-            else if($RELATION_RECURSION_LIMIT === 0)
+            else if ($RELATION_RECURSION_LIMIT === 0)
             {
                 $childNames = array_keys($iChildNode->iChildNodes);
 
-                foreach($childNames as $childName)
+                foreach ($childNames as $childName)
                 {
-                    $node = $iChildNode->iChildNodes[$childName];
+                    $node     = $iChildNode->iChildNodes[$childName];
                     $relation = $modelClass::getRelationUnsafe($childName);
 
-                    if($relation === null) throw new RelationDoesNotExistError($modelClass, $childName);
+                    if ($relation === null)
+                    {
+                        throw new RelationDoesNotExistError($modelClass, $childName);
+                    }
 
                     $iChildExpression = new RelationExpression($node->relationName);
 
@@ -412,7 +469,6 @@ class RelationExpression
                 }
             }
         }
-
     }
 }
 

@@ -17,7 +17,7 @@ class RelationDoesNotExistError extends \Exception
 
     public function __construct(string $modelClass, string $relationName, string $message = "", int $code = 0, \Throwable $previous = null)
     {
-        $this->modelClass = $modelClass;
+        $this->modelClass   = $modelClass;
         $this->relationName = $relationName;
 
         $message = 'Relation "'.$relationName.'" does not exist on model "'.$modelClass.'"';

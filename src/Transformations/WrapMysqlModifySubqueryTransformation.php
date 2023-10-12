@@ -9,7 +9,6 @@ use Sharksmedia\Qarium\Operations\SharQOperation;
 
 class WrapMysqlModifySubqueryTransformation extends QueryTransformation
 {
-
     /**
      * Mysql doesn't allow queries like this:
      *
@@ -32,19 +31,31 @@ class WrapMysqlModifySubqueryTransformation extends QueryTransformation
 
         // Cannot detect anything if, for whatever reason, a knex instance
         // or a transaction is not registered at this point.
-        if (!$iSharQ) return $iQuery;
+        if (!$iSharQ)
+        {
+            return $iQuery;
+        }
 
         // This transformation only applies to MySQL.
-        if(!($iSharQ->getClient() instanceof \Sharksmedia\SharQ\Client\MySQL)) return $iQuery;
+        if (!($iSharQ->getClient() instanceof \Sharksmedia\SharQ\Client\MySQL))
+        {
+            return $iQuery;
+        }
 
         // This transformation only applies to update and delete queries.
-        if(!$iBuilder->isUpdate() && !$iBuilder->isDelete()) return $iQuery;
+        if (!$iBuilder->isUpdate() && !$iBuilder->isDelete())
+        {
+            return $iQuery;
+        }
 
         $hasSameTableName = $iBuilder->getTableName() !== $iQuery->getTableName();
 
         // If the subquery is for another table and the query doesn't join the
         // parent query's table, we're good to go.
-        if($hasSameTableName && !self::hasJoinsToTable($iQuery, $iBuilder->getTableName())) return $iQuery;
+        if ($hasSameTableName && !self::hasJoinsToTable($iQuery, $iBuilder->getTableName()))
+        {
+            return $iQuery;
+        }
 
         /** @var class-string<\Sharksmedia\Qarium\Model> $getModelClass */
         $modelClass = $iQuery->getModelClass();
@@ -59,9 +70,11 @@ class WrapMysqlModifySubqueryTransformation extends QueryTransformation
         $iQuery->forEachOperations(ModelSharQ::JOIN_SELECTOR, function(SharQOperation $op) use ($tableName, &$found)
         {
             $arguemnts = $op->getArgumentsRaw();
-            if($arguemnts[0] === $tableName)
+
+            if ($arguemnts[0] === $tableName)
             {
                 $found = true;
+
                 return false;
             }
 
@@ -70,5 +83,4 @@ class WrapMysqlModifySubqueryTransformation extends QueryTransformation
 
         return $found;
     }
-
 }

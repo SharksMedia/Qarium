@@ -25,7 +25,10 @@ class OnBuildSharQOperation extends ModelSharQOperation
 
     public function onBuildSharQ(ModelSharQOperationSupport $iBuilder, $iSharQ)
     {
-        if($this->closure === null) return $iSharQ;
+        if ($this->closure === null)
+        {
+            return $iSharQ;
+        }
 
         $closure = $this->closure;
 

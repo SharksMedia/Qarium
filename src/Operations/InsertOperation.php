@@ -20,18 +20,18 @@ class InsertOperation extends ModelSharQOperation
     protected bool $isArray;
     protected array $modelOptions;
 
-    public function __construct(string $name, array $options=[])
+    public function __construct(string $name, array $options = [])
     {
         parent::__construct($name, $options);
 
-        $this->iModels = [];
-        $this->isArray = false;
+        $this->iModels      = [];
+        $this->isArray      = false;
         $this->modelOptions = array_merge([], $this->options['modelOptions'] ?? []);
     }
 
     public function onAdd(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
-        $array = $arguments[0];
+        $array      = $arguments[0];
         $modelClass = $iBuilder->getModelClass();
 
         $this->isArray = is_array($array);
@@ -42,7 +42,10 @@ class InsertOperation extends ModelSharQOperation
 
     public function onBefore2(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
-        if(count($this->iModels) > 1) throw new \Exception('Batch insert only works with Postgresql and SQL Server');
+        if (count($this->iModels) > 1)
+        {
+            throw new \Exception('Batch insert only works with Postgresql and SQL Server');
+        }
 
         self::callBeforeInsert($iBuilder, $this->iModels);
 
@@ -52,7 +55,7 @@ class InsertOperation extends ModelSharQOperation
 
     public function onBuildSharQ(ModelSharQOperationSupport $iBuilder, $iSharQ)
     {
-        return $iSharQ->insert(array_map(function(Model $iModel) use($iBuilder)
+        return $iSharQ->insert(array_map(function(Model $iModel) use ($iBuilder)
         {
             $data = $iModel->toDatabaseArray($iBuilder);
 
@@ -62,26 +65,29 @@ class InsertOperation extends ModelSharQOperation
 
     public function onAfter1(ModelSharQOperationSupport $iBuilder, &$result)
     {
-        if(!is_array($result) || count($result) === 0 || $result === $this->iModels)
+        if (!is_array($result) || count($result) === 0 || $result === $this->iModels)
         {
             // Early exit if there is nothing to do.
             return $this->iModels;
         }
 
-    // if (isObject(ret[0])) {
-    //   // If the user specified a `returning` clause the result may be an array of objects.
-    //   // Merge all values of the objects to our models.
-    //   for (let i = 0, l = this.models.length; i < l; ++i) {
+        // if (isObject(ret[0])) {
+        //   // If the user specified a `returning` clause the result may be an array of objects.
+        //   // Merge all values of the objects to our models.
+        //   for (let i = 0, l = this.models.length; i < l; ++i) {
     //     this.models[i].$setDatabaseJson(ret[i]);
-    //   }
+        //   }
     //     }
 
         // If the return value is not an array of objects, we assume it is an array of identifiers.
-        foreach($this->iModels as $i=>&$iModel)
+        foreach ($this->iModels as $i => &$iModel)
         {
             // Don't set the id if the model already has one. MySQL and Sqlite don't return the correct
             // primary key value if the id is not generated in db, but given explicitly.
-            if($iModel->getID() === null) $iModel->setID($result[$i]);
+            if ($iModel->getID() === null)
+            {
+                $iModel->setID($result[$i]);
+            }
         }
 
         return $this->iModels;
@@ -107,7 +113,7 @@ class InsertOperation extends ModelSharQOperation
      */
     private static function callBeforeInsert(ModelSharQ $iBuilder, array $iModels)
     {
-        foreach($iModels as $iModel)
+        foreach ($iModels as $iModel)
         {
             $iModel->lbeforeInsert($iBuilder->getContext());
         }
@@ -115,14 +121,14 @@ class InsertOperation extends ModelSharQOperation
         $modelClass = $iBuilder->getModelClass();
 
         $arguments = StaticHookArguments::create($iBuilder);
-        $result = $modelClass::beforeInsert($arguments);
+        $result    = $modelClass::beforeInsert($arguments);
 
         return $result;
     }
 
     private static function callAfterInsert(ModelSharQ $iBuilder, array $iModels, $iResult)
     {
-        foreach($iModels as $iModel)
+        foreach ($iModels as $iModel)
         {
             $iModel->lafterInsert($iBuilder->getContext()->userContext);
         }
@@ -130,14 +136,8 @@ class InsertOperation extends ModelSharQOperation
         $modelClass = $iBuilder->getModelClass();
 
         $arguments = StaticHookArguments::create($iBuilder, $iResult);
-        $result = $modelClass::afterInsert($arguments);
+        $result    = $modelClass::afterInsert($arguments);
 
         return $result;
     }
-
-
-
-
-
-
 }

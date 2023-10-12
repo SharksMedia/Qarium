@@ -114,12 +114,15 @@ class Relation
         // print_r($rawRelation);
         // print_r($modelClass);
 
-        $this->name = $relationName;
+        $this->name            = $relationName;
         $this->ownerModelClass = $ownerModelClass;
 
         $relatedModelClass = $rawRelation['modelClass'] ?? null;
 
-        if($relatedModelClass === null) throw new \LogicException("Model class is not defined or is null");
+        if ($relatedModelClass === null)
+        {
+            throw new \LogicException("Model class is not defined or is null");
+        }
 
         $this->relatedModelClass = $relatedModelClass;
     }
@@ -130,11 +133,14 @@ class Relation
      * @param class-string<Model> $modelClass
      * @return Relation
      */
-    public final static function create(string $relationName, array $rawRelation, string $modelClass): self
+    final public static function create(string $relationName, array $rawRelation, string $modelClass): self
     {
         $relationType = $rawRelation['relation'] ?? null;
 
-        if($relationType === null) throw new \Exception("\"relation\" is not defined on \"$relationName\" in model $modelClass");
+        if ($relationType === null)
+        {
+            throw new \Exception("\"relation\" is not defined on \"$relationName\" in model $modelClass");
+        }
 
         switch($relationType)
         {
@@ -155,7 +161,10 @@ class Relation
 
     public function getJoinTable(): ?string
     {// 2023-08-01
-        if($this->joinTableModelClass === null) return null;
+        if ($this->joinTableModelClass === null)
+        {
+            return null;
+        }
 
         /** @var \Model $modelClass */
         $modelClass = $this->joinTableModelClass;
@@ -196,7 +205,7 @@ class Relation
         return $this->ownerModelClass;
     }
 
-    public function getJoinTableAlias(?string $aliasPrefix=null): string
+    public function getJoinTableAlias(?string $aliasPrefix = null): string
     {// 2023-08-01
         $relationName = implode(':', array_filter([$aliasPrefix, $this->getName()]));
 
@@ -215,7 +224,7 @@ class Relation
 
     public function find($_, RelationOwner $iOwner): RelationFindOperation
     {
-        return new RelationFindOperation('find', ['relation'=>$this, 'iOwner'=>$iOwner]);
+        return new RelationFindOperation('find', ['relation' => $this, 'iOwner' => $iOwner]);
     }
 
     public function insert($_, RelationOwner $iOwner)
@@ -225,59 +234,59 @@ class Relation
 
     public function update($_, RelationOwner $iOwner)
     {
-        return new RelationUpdateOperation('update', ['relation'=>$this, 'iOwner'=>$iOwner]);
+        return new RelationUpdateOperation('update', ['relation' => $this, 'iOwner' => $iOwner]);
     }
 
     public function patch($_, RelationOwner $iOwner)
     {
-        return new RelationUpdateOperation('patch', ['relation'=>$this, 'iOwner'=>$iOwner]);
+        return new RelationUpdateOperation('patch', ['relation' => $this, 'iOwner' => $iOwner]);
     }
 
     public function delete($_, RelationOwner $iOwner)
     {
-        return new RelationDeleteOperation('delete', ['relation'=>$this, 'iOwner'=>$iOwner]);
+        return new RelationDeleteOperation('delete', ['relation' => $this, 'iOwner' => $iOwner]);
     }
 
     public function relate($_, RelationOwner $iOwner)
     {
-        return new RelationRelateOperation('relate', ['relation'=>$this, 'iOwner'=>$iOwner]);
+        return new RelationRelateOperation('relate', ['relation' => $this, 'iOwner' => $iOwner]);
     }
 
     public function unrelate($_, RelationOwner $iOwner)
     {
-        return new RelationUnrelateOperation('unrelate', ['relation'=>$this, 'iOwner'=>$iOwner]);
+        return new RelationUnrelateOperation('unrelate', ['relation' => $this, 'iOwner' => $iOwner]);
     }
 
-    public function join(ModelSharQ $iBuilder, ?string $joinOperation=null, ?string $relatedTableAlias=null, ?ModelSharQ $relatedJoinSelectQuery=null, ?string $relatedTable=null, ?string $ownerTable=null): ModelSharQ
+    public function join(ModelSharQ $iBuilder, ?string $joinOperation = null, ?string $relatedTableAlias = null, ?ModelSharQ $relatedJoinSelectQuery = null, ?string $relatedTable = null, ?string $ownerTable = null): ModelSharQ
     {
-        $relatedModelClass = $this->getRelatedModelClass();
-        $joinOperation = $joinOperation ?? 'join';
-        $relatedTableAlias = $relatedTableAlias ?? $iBuilder->getTableRefFor($relatedModelClass);
+        $relatedModelClass      = $this->getRelatedModelClass();
+        $joinOperation          = $joinOperation          ?? 'join';
+        $relatedTableAlias      = $relatedTableAlias      ?? $iBuilder->getTableRefFor($relatedModelClass);
         $relatedJoinSelectQuery = $relatedJoinSelectQuery ?? $relatedModelClass::query()->childQueryOf($iBuilder);
-        $relatedTable = $relatedTable ?? $iBuilder->getTableNameFor($relatedModelClass);
-        $ownerTable = $ownerTable ?? $iBuilder->getTableNameFor($this->ownerModelClass);
+        $relatedTable           = $relatedTable           ?? $iBuilder->getTableNameFor($relatedModelClass);
+        $ownerTable             = $ownerTable             ?? $iBuilder->getTableNameFor($this->ownerModelClass);
 
         $relatedJoinSelect = $this->applyModify($relatedJoinSelectQuery)->as($relatedTableAlias);
 
-        if($relatedJoinSelect->isSelectAll())
+        if ($relatedJoinSelect->isSelectAll())
         {
             // No need to join a subquery if the query is `select * from "RelatedTable"`.
             $relatedJoinSelect = $this->aliasedTableName($relatedTable, $relatedTableAlias);
         }
 
-        return $iBuilder->{$joinOperation}($relatedJoinSelect, function(JoinBuilder $iJoin) use($iBuilder, $relatedTableAlias, $ownerTable)
+        return $iBuilder->{$joinOperation}($relatedJoinSelect, function(JoinBuilder $iJoin) use ($iBuilder, $relatedTableAlias, $ownerTable)
+        {
+            $iRelatedProperty = $this->iRelatedProperty;
+            $iOwnerProperty   = $this->iOwnerProperty;
+
+            foreach ($iRelatedProperty->getReferences() as $i => $r)
             {
-                $iRelatedProperty = $this->iRelatedProperty;
-                $iOwnerProperty = $this->iOwnerProperty;
+                $relatedRef = $iRelatedProperty->ref($iBuilder, $i)->table($relatedTableAlias);
+                $ownerRef   = $iOwnerProperty->ref($iBuilder, $i)->table($ownerTable);
 
-                foreach($iRelatedProperty->getReferences() as $i=>$r)
-                {
-                    $relatedRef = $iRelatedProperty->ref($iBuilder, $i)->table($relatedTableAlias);
-                    $ownerRef = $iOwnerProperty->ref($iBuilder, $i)->table($ownerTable);
-
-                    $iJoin->on($relatedRef, $ownerRef);
-                }
-            });
+                $iJoin->on($relatedRef, $ownerRef);
+            }
+        });
     }
 
     protected function applyModify(ModelSharQ $iBuilder): ModelSharQ
@@ -287,25 +296,29 @@ class Relation
 
     protected function aliasedTableName(string $tableName, string $alias): string
     {// 2023-08-01
-        if($tableName === $alias) return $tableName;
+        if ($tableName === $alias)
+        {
+            return $tableName;
+        }
 
-        return $tableName . ' AS ' . $alias;
+        return $tableName.' AS '.$alias;
     }
 
     public function setMapping(array $rawRelation): void
     {
         $context = (object)
         [
-            'name'=>$this->name,
-            'mapping'=>$rawRelation,
-            'ownerModelClass'=>$this->ownerModelClass,
-            'relatedModelClass'=>$this->relatedModelClass,
-            'iRelatedProperty'=>null,
-            'iOwnerProperty'=>null,
-            'modify'=>null,
-            'beforeInsert'=>null,
-            'forbiddenMappingProperties'=>$this->getForbiddenMappingProperties(),
-            'createError'=>function(string $message){ return $this->createError($message); },
+            'name'                       => $this->name,
+            'mapping'                    => $rawRelation,
+            'ownerModelClass'            => $this->ownerModelClass,
+            'relatedModelClass'          => $this->relatedModelClass,
+            'iRelatedProperty'           => null,
+            'iOwnerProperty'             => null,
+            'modify'                     => null,
+            'beforeInsert'               => null,
+            'forbiddenMappingProperties' => $this->getForbiddenMappingProperties(),
+            'createError'                => function(string $message)
+            { return $this->createError($message); },
         ];
 
         $context = self::checkForbiddenProperties($context);
@@ -318,22 +331,28 @@ class Relation
         $context = self::parseBeforeInsert($context);
 
         $this->relatedModelClass = $context->relatedModelClass;
-        $this->iOwnerProperty = $context->iOwnerProperty;
-        $this->iRelatedProperty = $context->iRelatedProperty;
-        $this->modify = $context->modify;
-        $this->beforeInsert = $context->beforeInsert;
+        $this->iOwnerProperty    = $context->iOwnerProperty;
+        $this->iRelatedProperty  = $context->iRelatedProperty;
+        $this->modify            = $context->modify;
+        $this->beforeInsert      = $context->beforeInsert;
     }
 
     protected static function checkForbiddenProperties(object $context): object
     {// 2023-08-02
-        foreach($context->forbiddenMappingProperties as $prop)
+        foreach ($context->forbiddenMappingProperties as $prop)
         {
             $props = explode(".", $prop);
-            $val = $context->mapping;
+            $val   = $context->mapping;
 
-            foreach($props as $p) $val = $val[$p] ?? null;
+            foreach ($props as $p)
+            {
+                $val = $val[$p] ?? null;
+            }
 
-            if($val !== null) throw new \Exception("Property " . $prop . " is not supported for this relation type.");
+            if ($val !== null)
+            {
+                throw new \Exception("Property ".$prop." is not supported for this relation type.");
+            }
         }
 
         return $context;
@@ -341,7 +360,7 @@ class Relation
 
     protected static function checkOwnerModelClass(object $context): object
     {// 2023-08-02
-        if(!is_subclass_of($context->ownerModelClass, Model::class))
+        if (!is_subclass_of($context->ownerModelClass, Model::class))
         {
             throw new \Exception("Relation's owner is not a subclass of Model (".$context->ownerModelClass.")");
         }
@@ -351,7 +370,10 @@ class Relation
 
     protected static function checkRelatedModelClass(object $context): object
     {// 2023-08-02
-        if(!isset($context->mapping['modelClass'])) throw new \Exception('modelClass is not defined');
+        if (!isset($context->mapping['modelClass']))
+        {
+            throw new \Exception('modelClass is not defined');
+        }
 
         return $context;
     }
@@ -376,12 +398,12 @@ class Relation
 
     protected static function checkRelation(object $context): object
     {// 2023-08-02
-        if(!isset($context->mapping['relation']))
+        if (!isset($context->mapping['relation']))
         {
             throw new \Exception('relation is not defined');
         }
 
-        if(is_subclass_of($context->mapping['relation'], Relation::class))
+        if (is_subclass_of($context->mapping['relation'], Relation::class))
         {
             throw new \Exception('relation is not a subclass of Relation');
         }
@@ -393,25 +415,25 @@ class Relation
     {// 2023-08-02
         $mapping = $context->mapping;
 
-        if(!isset($mapping['join']) || !isset($mapping['join']['from']) || !isset($mapping['join']['to']))
+        if (!isset($mapping['join']) || !isset($mapping['join']['from']) || !isset($mapping['join']['to']))
         {
             throw new \Exception('join must be an object that maps the columns of the related models together. For example: {from: "SomeTable.id", to: "SomeOtherTable.someModelId"}');
         }
 
         $iFromProp = self::createRelationProperty($context, $mapping['join']['from'], 'join.from');
-        $iToProp = self::createRelationProperty($context, $mapping['join']['to'], 'join.to');
+        $iToProp   = self::createRelationProperty($context, $mapping['join']['to'], 'join.to');
 
-        $iOwnerProperty = null;
+        $iOwnerProperty   = null;
         $iRelatedProperty = null;
 
-        if($iFromProp->getModelClass()::getTableName() === $context->ownerModelClass::getTableName())
+        if ($iFromProp->getModelClass()::getTableName() === $context->ownerModelClass::getTableName())
         {
-            $iOwnerProperty = $iFromProp;
+            $iOwnerProperty   = $iFromProp;
             $iRelatedProperty = $iToProp;
         }
         else if ($iToProp->getModelClass()::getTableName() === $context->ownerModelClass::getTableName())
         {
-            $iOwnerProperty = $iToProp;
+            $iOwnerProperty   = $iToProp;
             $iRelatedProperty = $iFromProp;
         }
         else
@@ -419,17 +441,17 @@ class Relation
             throw new \Exception('join: either `from` or `to` must point to the owner model table.');
         }
 
-        if(in_array($context->name, $iOwnerProperty->getProperties()))
+        if (in_array($context->name, $iOwnerProperty->getProperties()))
         {
             throw new \Exception("join: relation name and join property '{$context->name}' cannot have the same name. If you cannot change one or the other, you can use \$parseDatabaseJson and \$formatDatabaseJson methods to convert the column name.");
         }
 
-        if($iRelatedProperty->getModelClass()::getTableName() !== $context->relatedModelClass::getTableName())
+        if ($iRelatedProperty->getModelClass()::getTableName() !== $context->relatedModelClass::getTableName())
         {
             throw new \Exception('join: either `from` or `to` must point to the related model table.');
         }
 
-        $context->iOwnerProperty = $iOwnerProperty;
+        $context->iOwnerProperty   = $iOwnerProperty;
         $context->iRelatedProperty = $iRelatedProperty;
 
         return $context;
@@ -437,20 +459,20 @@ class Relation
 
     protected static function parseModify(object $context): object
     {// 2023-08-02
-        $mapping = $context->mapping;
+        $mapping  = $context->mapping;
         $modifier = null;
-        $modify = null;
+        $modify   = null;
 
-        if(isset($mapping->modify))
+        if (isset($mapping->modify))
         {
             $modifier = $mapping->modify;
         }
-        else if(isset($mapping->filter))
+        else if (isset($mapping->filter))
         {
             $modifier = $mapping->filter;
         }
 
-        if($modifier)
+        if ($modifier)
         {
             $modify = self::createModifier($modifier, $context->relatedModelClass);
         }
@@ -464,13 +486,14 @@ class Relation
     {// 2023-08-02
         $beforeInsert = null;
 
-        if(is_callable($context->mapping['beforeInsert'] ?? null))
+        if (is_callable($context->mapping['beforeInsert'] ?? null))
         {
             $beforeInsert = $context->mapping['beforeInsert'];
         }
         else
         {
-            $beforeInsert = function($model) { return $model; };
+            $beforeInsert = function($model)
+            { return $model; };
         }
 
         $context->beforeInsert = $beforeInsert;
@@ -478,15 +501,15 @@ class Relation
         return $context;
     }
 
-    protected static function createRelationProperty(object &$context, string $refString, ?string $propName=null): RelationProperty
+    protected static function createRelationProperty(object &$context, string $refString, ?string $propName = null): RelationProperty
     {// 2023-08-02
         try
         {
-            $iRelationProperty = new RelationProperty($refString, function($table) use($context)
+            $iRelationProperty = new RelationProperty($refString, function($table) use ($context)
             {
-                foreach([$context->ownerModelClass, $context->relatedModelClass] as $it)
+                foreach ([$context->ownerModelClass, $context->relatedModelClass] as $it)
                 {
-                    if($it::getTableName() === $table)
+                    if ($it::getTableName() === $table)
                     {
                         return $it;
                     }
@@ -517,60 +540,70 @@ class Relation
      * @param array $modifiers
      * @return \Closure
      */
-    protected function createModifier(?string $modelClass=null, $modifier=null, array $modifiers=[]): \Closure
+    protected function createModifier(?string $modelClass = null, $modifier = null, array $modifiers = []): \Closure
     {
         $modelModifiers = $modelClass ? $modelClass::getModifiers() : [];
-        $modifier = is_array($modifier) ? $modifier : [$modifier];
+        $modifier       = is_array($modifier) ? $modifier : [$modifier];
 
         $modifierFunctions = array_map(function($modifier) use ($modelClass, $modifiers, $modelModifiers)
+        {
+            $modify = null;
+
+            if (is_string($modifier))
             {
-                $modify = null;
+                $modify = (isset($modifiers[$modifier]) ? $modifiers[$modifier] : null) ?? (isset($modelModifiers[$modifier]) ? $modelModifiers[$modifier] : null);
 
-                if(is_string($modifier))
+                if ($modify && !($modify instanceof \Closure))
                 {
-                    $modify = (isset($modifiers[$modifier]) ? $modifiers[$modifier] : null) ?? (isset($modelModifiers[$modifier]) ? $modelModifiers[$modifier] : null);
+                    return $this->createModifier($modelClass, $modify, $modifiers);
+                }
+            }
+            else if ($modifier instanceof \Closure)
+            {
+                $modify = $modifier;
+            }
+            else if (is_array($modifier))
+            {
+                $modify = function($builder) use ($modifier)
+                { return $builder->where($modifier); };
+            }
+            else
+            {
+                return $this->createModifier($modelClass, $modifier, $modifiers);
+            }
 
-                    if($modify && !($modify instanceof \Closure)) return $this->createModifier($modelClass, $modify, $modifiers);
-                }
-                else if($modifier instanceof \Closure)
-                {
-                    $modify = $modifier;
-                }
-                else if(is_array($modifier))
-                {
-                    $modify = function($builder) use ($modifier) { return $builder->where($modifier); };
-                }
-                else
-                {
-                    return $this->createModifier($modelClass, $modifier, $modifiers);
-                }
+            if (!$modify)
+            {
+                $modify = function($builder) use ($modelClass, $modifier)
+                { return $modelClass::modifierNotFound($builder, $modifier); };
+            }
 
-                if(!$modify)
-                {
-                    $modify = function($builder) use ($modelClass, $modifier) { return $modelClass::modifierNotFound($builder, $modifier); };
-                }
-
-                return $modify;
-            }, $modifier);
+            return $modify;
+        }, $modifier);
 
         return function($builder) use ($modifierFunctions)
+        {
+            $args = func_get_args();
+
+            foreach ($modifierFunctions as $modifier)
             {
-                $args = func_get_args();
-                foreach($modifierFunctions as $modifier) call_user_func_array($modifier, $args);
-            };
+                call_user_func_array($modifier, $args);
+            }
+        };
     }
 
     protected function createError(string $message): \Exception
     {// 2023-08-02
-        if($this->ownerModelClass && property_exists($this->ownerModelClass, 'name') && $this->name)
+        if ($this->ownerModelClass && property_exists($this->ownerModelClass, 'name') && $this->name)
         {
-            $name = $this->name;
+            $name  = $this->name;
             $class = $this->ownerModelClass;
+
             return new \Exception("$class::relationMappings::$name: $message");
         }
         else
         {
-            return new \Exception(get_class($this) . ": {$message}");
+            return new \Exception(get_class($this).": {$message}");
         }
     }
 

@@ -23,13 +23,12 @@ class CompositeQueryTransformation extends QueryTransformation
 
     public function onConvertSharQBase(ModelSharQ $iQuery, ModelSharQ $iBuilder): ModelSharQ
     {
-        foreach($this->iTransformations as $iTransformation)
+        foreach ($this->iTransformations as $iTransformation)
         {
             $iQuery = $iTransformation->onConvertSharQBase($iQuery, $iBuilder);
         }
 
         return $iQuery;
     }
-
 }
 

@@ -75,7 +75,7 @@ class ModelSharQContextUser
     {
         $context = new static($iBuilder);
 
-        foreach($obj as $key=>$value)
+        foreach ($obj as $key => $value)
         {
             $context->{$key} = $value;
         }
@@ -87,21 +87,21 @@ class ModelSharQContextUser
     {
         $context = new static($iBuilder);
 
-        foreach($this as $key=>$value)
+        foreach ($this as $key => $value)
         {
             $context->{$key} = $value;
         }
 
-        if($obj instanceof ModelSharQContextUser) $obj = $obj->getInternalData();
+        if ($obj instanceof ModelSharQContextUser)
+        {
+            $obj = $obj->getInternalData();
+        }
 
-        foreach($obj as $key=>$value)
+        foreach ($obj as $key => $value)
         {
             $context->{$key} = $value;
         }
 
         return $context;
     }
-
-    
-
 }

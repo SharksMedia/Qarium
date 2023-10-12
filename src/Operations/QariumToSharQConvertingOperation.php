@@ -29,7 +29,7 @@ class QariumToSharQConvertingOperation extends ModelSharQOperation
     protected $arguments;
     // protected $isModelSharQBase = true;
 
-    public function __construct(string $name, array $options=[])
+    public function __construct(string $name, array $options = [])
     {
         parent::__construct($name, $options);
         $this->arguments = null;
@@ -60,21 +60,21 @@ class QariumToSharQConvertingOperation extends ModelSharQOperation
 
     private function convertArgs(string $opName, ModelSharQOperationSupport $iBuilder, array $arguments): ?array
     {
-        return array_map(function($argument) use($opName, $iBuilder)
+        return array_map(function($argument) use ($opName, $iBuilder)
         {
-            if(self::hasToSharQRawMethod($argument))
+            if (self::hasToSharQRawMethod($argument))
             {
                 return self::convertToSharQRaw($argument, $iBuilder);
             }
-            else if(self::isModelSharQBase($argument))
+            else if (self::isModelSharQBase($argument))
             {
                 return self::convertSharQBase($argument, $iBuilder);
             }
-            else if(is_array($argument))
+            else if (is_array($argument))
             {
                 return $this->convertArray($argument, $iBuilder);
             }
-            else if($argument instanceof \Closure)
+            else if ($argument instanceof \Closure)
             {
                 return $this->convertFunction($argument, $iBuilder);
             }
@@ -82,7 +82,7 @@ class QariumToSharQConvertingOperation extends ModelSharQOperation
             // {
             //     return self::convertModel($argument);
             // }
-            else if(self::isObject($argument))
+            else if (self::isObject($argument))
             {
                 return self::convertPlainObject($argument, $iBuilder);
             }
@@ -135,13 +135,13 @@ class QariumToSharQConvertingOperation extends ModelSharQOperation
 
     private function convertArray(array $arr, ModelSharQOperationSupport $iBuilder): array
     {
-        return array_map(function($item) use($iBuilder)
+        return array_map(function($item) use ($iBuilder)
         {
-            if(self::hasToSharQRawMethod($item))
+            if (self::hasToSharQRawMethod($item))
             {
                 return self::convertToSharQRaw($item, $iBuilder);
             }
-            else if(self::isModelSharQBase($item))
+            else if (self::isModelSharQBase($item))
             {
                 return self::convertSharQBase($item, $iBuilder);
             }
@@ -154,15 +154,15 @@ class QariumToSharQConvertingOperation extends ModelSharQOperation
 
     private function convertFunction($func, ModelSharQOperationSupport $iBuilder)
     {
-        return function(...$args) use($func, $iBuilder)
+        return function(...$args) use ($func, $iBuilder)
         {
             $item = $args[0] ?? null;
 
-            if(self::isSharQ($item))
+            if (self::isSharQ($item))
             {
                 return self::convertSharQFunction($item, $func, $iBuilder);
             }
-            else if(self::isSharQJoinBuilder($item))
+            else if (self::isSharQJoinBuilder($item))
             {
                 return self::convertJoinBuilderFunction($item, $func, $iBuilder);
             }
@@ -200,19 +200,19 @@ class QariumToSharQConvertingOperation extends ModelSharQOperation
 
     private static function convertPlainObject($obj, ModelSharQ $iBuilder)
     {
-        return array_reduce(array_keys($obj), function($out, $key) use($obj, $iBuilder)
+        return array_reduce(array_keys($obj), function($out, $key) use ($obj, $iBuilder)
         {
             $item = $obj[$key];
 
-            if($item === null)
+            if ($item === null)
             {
                 return $out;
             }
-            else if(self::hasToSharQRawMethod($item))
+            else if (self::hasToSharQRawMethod($item))
             {
                 $out[$key] = self::convertToSharQRaw($item, $iBuilder);
             }
-            else if($this->_isModelSharQBase($item))
+            else if ($this->_isModelSharQBase($item))
             {
                 $out[$key] = self::convertSharQBase($item, $iBuilder);
             }

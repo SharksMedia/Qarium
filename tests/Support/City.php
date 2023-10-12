@@ -28,14 +28,14 @@ class City extends Model
     {// 2023-06-12
         $relations =
         [
-            'iCountry'=>
+            'iCountry' =>
             [
-                'relation'=>Model::HAS_ONE_RELATION,
-                'modelClass'=>Country::class,
-                'join'=>
+                'relation'   => Model::HAS_ONE_RELATION,
+                'modelClass' => Country::class,
+                'join'       =>
                 [
-                    'from'=>'Cities.countryID',
-                    'to'=>'Countries.countryID'
+                    'from' => 'Cities.countryID',
+                    'to'   => 'Countries.countryID'
                 ]
             ]
         ];

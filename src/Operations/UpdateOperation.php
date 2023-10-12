@@ -16,12 +16,11 @@ use Sharksmedia\Qarium\ModelSharQ;
 
 class UpdateOperation extends ModelSharQOperation
 {
-
-    protected ?Model $iModel = null;
+    protected ?Model $iModel    = null;
     protected array $updateData = [];
-    protected $modelOptions = [];
+    protected $modelOptions     = [];
 
-    public function __construct($name, $options=[])
+    public function __construct($name, $options = [])
     {
         parent::__construct($name, $options);
 
@@ -32,11 +31,11 @@ class UpdateOperation extends ModelSharQOperation
     {
         $data = $arguments[0];
 
-        if(is_array($data))
+        if (is_array($data))
         {
             $this->updateData = $data;
         }
-        else if($data instanceof Model)
+        else if ($data instanceof Model)
         {
             $this->updateData = [];
         }
@@ -68,11 +67,14 @@ class UpdateOperation extends ModelSharQOperation
      */
     public function onBefore3(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
-        if($this->iModel === null) return true;
+        if ($this->iModel === null)
+        {
+            return true;
+        }
         
         $row = $this->iModel->toDatabaseArray($iBuilder);
 
-        if(count($row) === 0)
+        if (count($row) === 0)
         {
             // Resolve the query if there is nothing to update.
             $iBuilder->resolve(0);
@@ -109,7 +111,10 @@ class UpdateOperation extends ModelSharQOperation
 
     private function callInstanceBeforeUpdate(ModelSharQ $iBuilder, ?Model $iModel, $modelOptions)
     {
-        if($iModel === null) return null;
+        if ($iModel === null)
+        {
+            return null;
+        }
 
         return $iModel->lbeforeUpdate($iBuilder->getContext());
     }
@@ -127,6 +132,7 @@ class UpdateOperation extends ModelSharQOperation
     private function callAfterUpdate(ModelSharQ $iBuilder, ?Model $iModel, $modelOptions, $result)
     {
         $this->callInstanceAfterUpdate($iBuilder, $iModel, $modelOptions);
+
         return $this->callStaticAfterUpdate($iBuilder, $result);
     }
 
@@ -152,11 +158,13 @@ class UpdateOperation extends ModelSharQOperation
         // You need to implement or find a suitable library for ref() function or its equivalent in PHP.
         // Similar changes will be required for isKnexSharQ() and isKnexRaw() functions.
 
-        $iSharQ = $iBuilder->getSharQ();
+        $iSharQ        = $iBuilder->getSharQ();
         $convertedJson = [];
 
-        foreach ($json as $key => $val) {
-            if (strpos($key, ':') !== false) {
+        foreach ($json as $key => $val)
+        {
+            if (strpos($key, ':') !== false)
+            {
                 // The equivalent to JavaScript ref() function needs to be implemented
                 // $parsed = ref($key);
                 // $jsonRefs = '{' . join(',', $parsed['parsedExpr']['access']) . '}';
@@ -174,7 +182,9 @@ class UpdateOperation extends ModelSharQOperation
                 // );
 
                 // unset($iModel[$key]);
-            } else {
+            }
+            else
+            {
                 $convertedJson[$key] = $val;
             }
         }

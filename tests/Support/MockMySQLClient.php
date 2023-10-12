@@ -14,7 +14,7 @@ class MockMySQLClient extends MySQL
 
     public function __construct(Config $iConfig, \Closure $executor)
     {// 2023-05-08
-        $this->iConfig = $iConfig;
+        $this->iConfig  = $iConfig;
         $this->executor = $executor;
     }
 
@@ -36,7 +36,7 @@ class MockMySQLClient extends MySQL
      * @return \PDOStatement
      * @throws \PDOException
      */
-    public function query(Query $iQuery, array $options=[]): \PDOStatement
+    public function query(Query $iQuery, array $options = []): \PDOStatement
     {
         $executor = $this->executor;
 

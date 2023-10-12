@@ -25,9 +25,13 @@ class OnErrorOperation extends ModelSharQOperation
 
     public function onError(ModelSharQ $iBuilder, ...$arguments)
     {
-        if($this->function === null) return;
+        if ($this->function === null)
+        {
+            return;
+        }
 
         $func = $this->function;
+
         return $func($iBuilder, ...$arguments);
     }
 }

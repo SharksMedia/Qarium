@@ -8,5 +8,4 @@ namespace Sharksmedia\Qarium;
 
 class GraphOptions
 {
-
 }

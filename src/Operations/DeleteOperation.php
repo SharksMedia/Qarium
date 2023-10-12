@@ -67,7 +67,10 @@ class DeleteOperation extends ModelSharQOperation
 
         $maybeResult = $modelClass::afterDelete($args);
 
-        if($maybeResult !== null) return $maybeResult;
+        if ($maybeResult !== null)
+        {
+            return $maybeResult;
+        }
 
         return $result;
     }

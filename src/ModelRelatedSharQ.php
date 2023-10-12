@@ -31,11 +31,17 @@ class ModelRelatedSharQ extends ModelSharQ
     {// 2023-06-12
         parent::__construct($modelClass, $iClient, $schema);
 
-        if(!is_subclass_of($parentModelClass, Model::class)) throw new \Exception('Model class must be an instance of Model.');
+        if (!is_subclass_of($parentModelClass, Model::class))
+        {
+            throw new \Exception('Model class must be an instance of Model.');
+        }
 
         $relationsGraph = self::parseRelationQuery($relationExpression);
 
-        if($this->allowGraph) self::_validateGraph($relationsGraph, $this->allowGraph);
+        if ($this->allowGraph)
+        {
+            self::_validateGraph($relationsGraph, $this->allowGraph);
+        }
 
         $this->parentModelClass = $parentModelClass;
     }

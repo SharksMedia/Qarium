@@ -23,11 +23,17 @@ class FirstOperation extends ModelSharQOperation
      */
     public function onBuildSharQ(ModelSharQOperationSupport $iBuilder, $iSharQ)
     {
-        if($iSharQ !== null && !($iSharQ instanceof SharQ) && !($iSharQ instanceof Join))  throw new \Exception('Invalid SharQ type: '.get_class($iSharQ));
+        if ($iSharQ !== null && !($iSharQ instanceof SharQ) && !($iSharQ instanceof Join))
+        {
+            throw new \Exception('Invalid SharQ type: '.get_class($iSharQ));
+        }
 
         $modelClass = $iBuilder->getModelClass();
 
-        if($iBuilder->isFind() && $modelClass::USE_LIMIT_IN_FIRST) $iSharQ->limit(1);
+        if ($iBuilder->isFind() && $modelClass::USE_LIMIT_IN_FIRST)
+        {
+            $iSharQ->limit(1);
+        }
 
         return $iSharQ;
     }
@@ -38,7 +44,10 @@ class FirstOperation extends ModelSharQOperation
      */
     public function onAfter3(ModelSharQOperationSupport $iBuilder, &$result)
     {
-        if(is_array($result)) return reset($result);
+        if (is_array($result))
+        {
+            return reset($result);
+        }
 
         return $result;
     }

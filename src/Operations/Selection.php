@@ -31,11 +31,11 @@ class Selection
      */
     private $alias;
 
-    public function __construct(?string $table, ?string $column, ?string $alias=null)
+    public function __construct(?string $table, ?string $column, ?string $alias = null)
     {
-        $this->table = $table;
+        $this->table  = $table;
         $this->column = $column;
-        $this->alias = $alias;
+        $this->alias  = $alias;
     }
 
     public function getTable(): ?string
@@ -61,16 +61,28 @@ class Selection
 
     public static function create($selection): ?self
     {
-        if(is_object($selection))
+        if (is_object($selection))
         {
-            if($selection instanceof Selection) return $selection;
-            else if($selection instanceof ReferenceBuilder) return self::createSelectionFromReference($selection);
-            else if($selection instanceof Raw) return self::createSelectionFromRaw($selection);
+            if ($selection instanceof Selection)
+            {
+                return $selection;
+            }
+            else if ($selection instanceof ReferenceBuilder)
+            {
+                return self::createSelectionFromReference($selection);
+            }
+            else if ($selection instanceof Raw)
+            {
+                return self::createSelectionFromRaw($selection);
+            }
 
             return null;
         }
 
-        if(is_string($selection)) return self::createSelectionFromString($selection);
+        if (is_string($selection))
+        {
+            return self::createSelectionFromString($selection);
+        }
 
         return null;
     }
@@ -78,18 +90,27 @@ class Selection
     public static function doesSelect($builder, $selectionInBuilder, $selectionToTest)
     {
         $iSelectionInBuilder = Selection::create($selectionInBuilder);
-        $iSelectionToTest = Selection::create($selectionToTest);
+        $iSelectionToTest    = Selection::create($selectionToTest);
 
-        if($iSelectionInBuilder->getColumn() === '*')
+        if ($iSelectionInBuilder->getColumn() === '*')
         {
-            if($iSelectionInBuilder->getTable() === null) return true;
+            if ($iSelectionInBuilder->getTable() === null)
+            {
+                return true;
+            }
 
-            if($iSelectionToTest->getColumn() === '*') return $iSelectionInBuilder->getTable() === $iSelectionToTest->getTable();
+            if ($iSelectionToTest->getColumn() === '*')
+            {
+                return $iSelectionInBuilder->getTable() === $iSelectionToTest->getTable();
+            }
 
             return $iSelectionToTest->getTable() === null || $iSelectionInBuilder->getTable() === $iSelectionToTest->getTable();
         }
 
-        if($selectionToTest->getColumn() === '*') return false;
+        if ($selectionToTest->getColumn() === '*')
+        {
+            return false;
+        }
 
         $selectionInBuilderTable = $iSelectionInBuilder->getTable() ?? $builder->getTableRef();
 
@@ -112,35 +133,37 @@ class Selection
 
     private static function createSelectionFromRaw($raw): ?self
     {
-        if($raw->alias) return new Selection(null, null, $raw->alias);
+        if ($raw->alias)
+        {
+            return new Selection(null, null, $raw->alias);
+        }
 
         return null;
     }
 
     private static function createSelectionFromString(string $selection): self
     {
-        $table = null;
+        $table  = null;
         $column = null;
-        $alias = null;
+        $alias  = null;
 
-        if(preg_match(self::ALIAS_REGEX, $selection) === 1)
+        if (preg_match(self::ALIAS_REGEX, $selection) === 1)
         {
-            $parts = preg_split(self::ALIAS_REGEX, $selection);
+            $parts     = preg_split(self::ALIAS_REGEX, $selection);
             $selection = trim($parts[0]);
-            $alias = trim($parts[1]);
+            $alias     = trim($parts[1]);
         }
 
         $column = $selection;
 
         $dotIdx = strrpos($selection, '.');
 
-        if($dotIdx !== false)
+        if ($dotIdx !== false)
         {
-            $table = substr($selection, 0, $dotIdx);
+            $table  = substr($selection, 0, $dotIdx);
             $column = substr($selection, $dotIdx + 1);
         }
 
         return new Selection($table, $column, $alias);
     }
-
 }

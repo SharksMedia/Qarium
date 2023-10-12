@@ -12,7 +12,6 @@ use Tests\Support\Person;
 
 class ExampleTest extends \Codeception\Test\Unit
 {
-
     protected IntegrationTester $tester;
 
     protected function _before()
@@ -39,7 +38,7 @@ class ExampleTest extends \Codeception\Test\Unit
 
 
         $iPersonQuery = Person::query()
-                        ->findByID(1);
+            ->findByID(1);
 
         $iQueryCompiler = new QueryCompiler($iClient, $iPersonQuery, []);
 

@@ -13,7 +13,7 @@ class MockPDOStatement extends \PDOStatement
         $this->results = $results;
     }
 
-    public function fetchAll(int $mode=\PDO::FETCH_BOTH, $fetch_argument=null, mixed ...$args): array
+    public function fetchAll(int $mode = \PDO::FETCH_BOTH, $fetch_argument = null, mixed ...$args): array
     {
         return $this->results;
     }

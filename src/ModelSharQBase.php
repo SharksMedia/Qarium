@@ -28,13 +28,19 @@ class ModelSharQBase extends ModelSharQOperationSupport
     {
         $func = $args[0] ?? null;
 
-        if($func === null) return $this;
-
-        if(is_array($func))
+        if ($func === null)
         {
-            foreach($func as $f)
+            return $this;
+        }
+
+        if (is_array($func))
+        {
+            foreach ($func as $f)
             {
-                if(is_string($f)) $f = $this->resolveModifier($f);
+                if (is_string($f))
+                {
+                    $f = $this->resolveModifier($f);
+                }
 
                 $this->modify($f, ...array_slice($args, 1));
             }
@@ -42,7 +48,10 @@ class ModelSharQBase extends ModelSharQOperationSupport
             return $this;
         }
 
-        if(is_string($func)) $func = $this->resolveModifier($func);
+        if (is_string($func))
+        {
+            $func = $this->resolveModifier($func);
+        }
 
         $args[0] = $this;
 
@@ -57,7 +66,10 @@ class ModelSharQBase extends ModelSharQOperationSupport
 
         $fn = $modifiers[$modifier] ?? null;
 
-        if($fn === null) $this->modelClass::modifierNotFound($this, $modifier);
+        if ($fn === null)
+        {
+            $this->modelClass::modifierNotFound($this, $modifier);
+        }
 
         return $fn;
     }
@@ -69,7 +81,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
     {
         $this->context->iClient = $trx;
 
-         return $this;
+        return $this;
     }
 
     /**
@@ -77,7 +89,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function select(...$args): static
     {
-         return $this->addOperation(new SelectOperation('select'), $args);
+        return $this->addOperation(new SelectOperation('select'), $args);
     }
 
     /**
@@ -85,7 +97,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function insert($modelsOrObjects): static
     {
-         return $this->addOperation(new SharQOperation('insert'), $args);
+        return $this->addOperation(new SharQOperation('insert'), $args);
     }
 
     /**
@@ -93,7 +105,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function update($modelOrObject): self
     {
-         return $this->addOperation(new SharQOperation('update'), [$modelOrObject]);
+        return $this->addOperation(new SharQOperation('update'), [$modelOrObject]);
     }
 
     /**
@@ -101,14 +113,14 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function delete(...$args): static
     {
-         return $this->addOperation(new SharQOperation('delete'), $args);
+        return $this->addOperation(new SharQOperation('delete'), $args);
     }
     /**
      * @param array $args
      */
     public function del(...$args): static
     {
-         return $this->delete(...$args);
+        return $this->delete(...$args);
     }
 
     /**
@@ -116,7 +128,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function forUpdate(...$args): static
     {
-         return $this->addOperation(new SharQOperation('forUpdate'), $args);
+        return $this->addOperation(new SharQOperation('forUpdate'), $args);
     }
 
     /**
@@ -124,7 +136,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function forShare(...$args): static
     {
-         return $this->addOperation(new SharQOperation('forShare'), $args);
+        return $this->addOperation(new SharQOperation('forShare'), $args);
     }
 
     /**
@@ -132,7 +144,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function forNoKeyUpdate(...$args): static
     {
-         return $this->addOperation(new SharQOperation('forNoKeyUpdate'), $args);
+        return $this->addOperation(new SharQOperation('forNoKeyUpdate'), $args);
     }
 
     /**
@@ -140,7 +152,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function forKeyShare(...$args): static
     {
-         return $this->addOperation(new SharQOperation('forKeyShare'), $args);
+        return $this->addOperation(new SharQOperation('forKeyShare'), $args);
     }
 
     /**
@@ -148,7 +160,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function skipLocked(...$args): static
     {
-         return $this->addOperation(new SharQOperation('skipLocked'), $args);
+        return $this->addOperation(new SharQOperation('skipLocked'), $args);
     }
 
     /**
@@ -156,7 +168,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function noWait(...$args): static
     {
-         return $this->addOperation(new SharQOperation('noWait'), $args);
+        return $this->addOperation(new SharQOperation('noWait'), $args);
     }
 
     /**
@@ -164,7 +176,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function as(...$args): static
     {
-         return $this->addOperation(new SharQOperation('as'), $args);
+        return $this->addOperation(new SharQOperation('as'), $args);
     }
 
     /**
@@ -172,7 +184,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function columns(...$args): static
     {
-         return $this->addOperation(new SelectOperation('columns'), $args);
+        return $this->addOperation(new SelectOperation('columns'), $args);
     }
 
     /**
@@ -180,7 +192,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function column(...$args): static
     {
-         return $this->addOperation(new SelectOperation('column'), $args);
+        return $this->addOperation(new SelectOperation('column'), $args);
     }
 
     /**
@@ -188,7 +200,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function from(...$args): static
     {
-         return $this->addOperation(new SharQOperation('from'), $args);
+        return $this->addOperation(new SharQOperation('from'), $args);
     }
 
     /**
@@ -196,7 +208,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function fromJS(...$args): static
     {
-         return $this->addOperation(new SharQOperation('fromJS'), $args);
+        return $this->addOperation(new SharQOperation('fromJS'), $args);
     }
 
     /**
@@ -204,7 +216,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function fromRaw(...$args): static
     {
-         return $this->addOperation(new SharQOperation('fromRaw'), $args);
+        return $this->addOperation(new SharQOperation('fromRaw'), $args);
     }
 
     /**
@@ -212,7 +224,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function into(...$args): static
     {
-         return $this->addOperation(new SharQOperation('into'), $args);
+        return $this->addOperation(new SharQOperation('into'), $args);
     }
 
     /**
@@ -220,7 +232,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function withSchema($schema): static
     {
-         return $this->addOperation(new SharQOperation('withSchema'), [$schema]);
+        return $this->addOperation(new SharQOperation('withSchema'), [$schema]);
     }
 
     /**
@@ -228,7 +240,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function table(...$args): static
     {
-         return $this->addOperation(new SharQOperation('table'), $args);
+        return $this->addOperation(new SharQOperation('table'), $args);
     }
 
     /**
@@ -236,7 +248,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function distinct(...$args): static
     {
-         return $this->addOperation(new SelectOperation('distinct'), $args);
+        return $this->addOperation(new SelectOperation('distinct'), $args);
     }
 
     /**
@@ -244,7 +256,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function distinctOn(...$args): static
     {
-         return $this->addOperation(new SelectOperation('distinctOn'), $args);
+        return $this->addOperation(new SelectOperation('distinctOn'), $args);
     }
 
     /**
@@ -252,7 +264,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function join(...$args): static
     {
-         return $this->addOperation(new SharQOperation('join'), $args);
+        return $this->addOperation(new SharQOperation('join'), $args);
     }
 
     /**
@@ -260,7 +272,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function joinRaw(...$args): static
     {
-         return $this->addOperation(new SharQOperation('joinRaw'), $args);
+        return $this->addOperation(new SharQOperation('joinRaw'), $args);
     }
 
     /**
@@ -268,7 +280,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function innerJoin(...$args): static
     {
-         return $this->addOperation(new SharQOperation('innerJoin'), $args);
+        return $this->addOperation(new SharQOperation('innerJoin'), $args);
     }
 
     /**
@@ -276,7 +288,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function leftJoin(...$args): static
     {
-         return $this->addOperation(new SharQOperation('leftJoin'), $args);
+        return $this->addOperation(new SharQOperation('leftJoin'), $args);
     }
 
     /**
@@ -284,7 +296,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function leftOuterJoin(...$args): static
     {
-         return $this->addOperation(new SharQOperation('leftOuterJoin'), $args);
+        return $this->addOperation(new SharQOperation('leftOuterJoin'), $args);
     }
 
     /**
@@ -292,7 +304,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function rightJoin(...$args): static
     {
-         return $this->addOperation(new SharQOperation('rightJoin'), $args);
+        return $this->addOperation(new SharQOperation('rightJoin'), $args);
     }
 
     /**
@@ -300,7 +312,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function rightOuterJoin(...$args): static
     {
-         return $this->addOperation(new SharQOperation('rightOuterJoin'), $args);
+        return $this->addOperation(new SharQOperation('rightOuterJoin'), $args);
     }
 
     /**
@@ -308,7 +320,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function outerJoin(...$args): static
     {
-         return $this->addOperation(new SharQOperation('outerJoin'), $args);
+        return $this->addOperation(new SharQOperation('outerJoin'), $args);
     }
 
     /**
@@ -316,7 +328,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function fullOuterJoin(...$args): static
     {
-         return $this->addOperation(new SharQOperation('fullOuterJoin'), $args);
+        return $this->addOperation(new SharQOperation('fullOuterJoin'), $args);
     }
 
     /**
@@ -324,7 +336,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function crossJoin(...$args): static
     {
-         return $this->addOperation(new SharQOperation('crossJoin'), $args);
+        return $this->addOperation(new SharQOperation('crossJoin'), $args);
     }
 
     /**
@@ -332,7 +344,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function where(...$args): static
     {
-         return $this->addOperation(new SharQOperation('where'), $args);
+        return $this->addOperation(new SharQOperation('where'), $args);
     }
 
     /**
@@ -340,7 +352,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function andWhere(...$args): static
     {
-         return $this->addOperation(new SharQOperation('andWhere'), $args);
+        return $this->addOperation(new SharQOperation('andWhere'), $args);
     }
 
     /**
@@ -348,7 +360,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function orWhere(...$args): static
     {
-         return $this->addOperation(new SharQOperation('orWhere'), $args);
+        return $this->addOperation(new SharQOperation('orWhere'), $args);
     }
 
     /**
@@ -356,7 +368,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function whereNot(...$args): static
     {
-         return $this->addOperation(new SharQOperation('whereNot'), $args);
+        return $this->addOperation(new SharQOperation('whereNot'), $args);
     }
 
     /**
@@ -364,7 +376,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
      */
     public function andWhereNot(...$args): static
     {
-         return $this->addOperation(new SharQOperation('andWhereNot'), $args);
+        return $this->addOperation(new SharQOperation('andWhereNot'), $args);
     }
 
     /**
@@ -978,7 +990,7 @@ class ModelSharQBase extends ModelSharQOperationSupport
     /**
      * @param array $args
      */
-    public function debug(bool $doIt=true): static
+    public function debug(bool $doIt = true): static
     {
         return $this->addOperation(new SharQOperation('debug'), [$doIt]);
     }

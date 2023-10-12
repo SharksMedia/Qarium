@@ -8,5 +8,4 @@ namespace Sharksmedia\Qarium\Relations;
 
 class HasOneThrough extends Relation
 {
-
 }

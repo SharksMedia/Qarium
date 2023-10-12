@@ -24,13 +24,13 @@ class WhereCompositeOperation extends QariumToSharQConvertingOperation
     {
         $arguments = $this->getArguments($iBuilder);
 
-        if(count($arguments) === 2)
+        if (count($arguments) === 2)
         {
             array_splice($arguments, 1, 0, '=');
         }
-        else if(count($arguments) !== 3)
+        else if (count($arguments) !== 3)
         {
-            throw new \Exception('Invalid number of arguments ' . count($arguments));
+            throw new \Exception('Invalid number of arguments '.count($arguments));
         }
 
         $whereArgs = $this->buildWhereArgs(...$arguments);
@@ -40,11 +40,11 @@ class WhereCompositeOperation extends QariumToSharQConvertingOperation
 
     private function buildWhereArgs($cols, string $op, $values): array
     {
-        if($this->isNormalWhere($cols, $values))
+        if ($this->isNormalWhere($cols, $values))
         {
             return $this->buildNormalWhereArgs($cols, $op, $values);
         }
-        else if($this->isCompositeWhere($cols, $values))
+        else if ($this->isCompositeWhere($cols, $values))
         {
             return $this->buildCompositeWhereArgs($cols, $op, $values);
         }
@@ -75,9 +75,9 @@ class WhereCompositeOperation extends QariumToSharQConvertingOperation
     private function buildCompositeWhereArgs($cols, string $op, $values): array
     {
         return [
-            function($builder) use($cols, $op, $values)
+            function($builder) use ($cols, $op, $values)
             {
-                for($i = 0, $l = count($cols); $i < $l; ++$i)
+                for ($i = 0, $l = count($cols); $i < $l; ++$i)
                 {
                     $builder->where($cols[$i], $op, $values[$i]);
                 }
@@ -89,5 +89,4 @@ class WhereCompositeOperation extends QariumToSharQConvertingOperation
     {
         return is_array($value) ? $value[0] : $value;
     }
-
 }

@@ -18,12 +18,16 @@ class RunBeforeOperation extends ModelSharQOperation
     public function onAdd(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
         $this->closure = $arguments[0];
+
         return true;
     }
 
     public function onBefore1(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
-        if($this->closure === null) return true;
+        if ($this->closure === null)
+        {
+            return true;
+        }
 
         $closure = $this->closure;
 

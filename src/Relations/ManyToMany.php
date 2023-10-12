@@ -52,9 +52,15 @@ class ManyToMany extends Relation
     {
         $alias = null;
 
-        if($iRelation->getJoinTable() !== null) $alias = $iBuilder->getTableRefFor($iRelation->getJoinTable());
+        if ($iRelation->getJoinTable() !== null)
+        {
+            $alias = $iBuilder->getTableRefFor($iRelation->getJoinTable());
+        }
 
-        if($alias === $iRelation->joinTableModelClass) return $iRelation->ownerModelClass::getJoinTableAlias($relatedTableAlias);
+        if ($alias === $iRelation->joinTableModelClass)
+        {
+            return $iRelation->ownerModelClass::getJoinTableAlias($relatedTableAlias);
+        }
 
         return $alias;
     }
@@ -65,18 +71,19 @@ class ManyToMany extends Relation
 
         $context = (object)
         [
-            'mapping'=>$rawRelation,
-            'ownerModelClass'=>$this->ownerModelClass,
-            'relatedModelClass'=>$this->relatedModelClass,
-            'iOwnerProperty'=>$this->iOwnerProperty,
-            'iRelatedProperty'=>$this->iRelatedProperty,
+            'mapping'           => $rawRelation,
+            'ownerModelClass'   => $this->ownerModelClass,
+            'relatedModelClass' => $this->relatedModelClass,
+            'iOwnerProperty'    => $this->iOwnerProperty,
+            'iRelatedProperty'  => $this->iRelatedProperty,
 
-            'joinTableModelClass'=>null,
-            'joinTableOwnerProp'=>null,
-            'joinTableRelatedProp'=>null,
-            'joinTableBeforeInsert'=>null,
-            'joinTableExtras'=>[],
-            'createError'=>function($msg) { return $this->createError($msg); },
+            'joinTableModelClass'   => null,
+            'joinTableOwnerProp'    => null,
+            'joinTableRelatedProp'  => null,
+            'joinTableBeforeInsert' => null,
+            'joinTableExtras'       => [],
+            'createError'           => function($msg)
+            { return $this->createError($msg); },
         ];
 
         $context = self::checkThroughObject($context);
@@ -87,11 +94,11 @@ class ManyToMany extends Relation
         $context = self::parseBeforeInsert($context);
         $context = self::finalizeJoinModelClass($context);
 
-        $this->joinTableExtras = $context->joinTableExtras;
-        $this->joinTableModify = $context->joinTableModify;
-        $this->joinTableModelClass = $context->joinTableModelClass;
-        $this->joinTableOwnerProp = $context->joinTableOwnerProp;
-        $this->joinTableRelatedProp = $context->joinTableRelatedProp;
+        $this->joinTableExtras       = $context->joinTableExtras;
+        $this->joinTableModify       = $context->joinTableModify;
+        $this->joinTableModelClass   = $context->joinTableModelClass;
+        $this->joinTableOwnerProp    = $context->joinTableOwnerProp;
+        $this->joinTableRelatedProp  = $context->joinTableRelatedProp;
         $this->joinTableBeforeInsert = $context->joinTableBeforeInsert;
     }
 
@@ -99,12 +106,12 @@ class ManyToMany extends Relation
     {
         $mapping = $context->mapping;
 
-        if(!isset($mapping['join']['through']))
+        if (!isset($mapping['join']['through']))
         {
             throw call_user_func($context->createError, 'join must have a `through` object that describes the join table.');
         }
 
-        if(!isset($mapping['join']['through']['from']) || !isset($mapping['join']['through']['to']))
+        if (!isset($mapping['join']['through']['from']) || !isset($mapping['join']['through']['to']))
         {
             throw call_user_func($context->createError, 'join.through must be an object that describes the join table. For example: {from: "JoinTable.someId", to: "JoinTable.someOtherId"}');
         }
@@ -124,37 +131,37 @@ class ManyToMany extends Relation
         $iFromProp = $iToProp = $iRelatedProp = $iOwnerProp = null;
 
         $iFromProp = self::createRelationProperty($context, $context->mapping['join']['through']['from'], 'join.through.from');
-        $iToProp = self::createRelationProperty($context, $context->mapping['join']['through']['to'], 'join.through.to');
+        $iToProp   = self::createRelationProperty($context, $context->mapping['join']['through']['to'], 'join.through.to');
 
-        if($iFromProp->getModelClass()::getTableName() !== $iToProp->getModelClass()::getTableName())
+        if ($iFromProp->getModelClass()::getTableName() !== $iToProp->getModelClass()::getTableName())
         {
             throw call_user_func($context->createError, 'join.through `from` and `to` must point to the same join table.');
         }
 
-        if($context->iRelatedProperty->getModelClass()::getTableName() === $iFromProp->getModelClass()::getTableName())
+        if ($context->iRelatedProperty->getModelClass()::getTableName() === $iFromProp->getModelClass()::getTableName())
         {
             $iRelatedProp = $iFromProp;
-            $iOwnerProp = $iToProp;
+            $iOwnerProp   = $iToProp;
         }
         else
         {
             $iRelatedProp = $iToProp;
-            $iOwnerProp = $iFromProp;
+            $iOwnerProp   = $iFromProp;
         }
 
-        $context->joinTableOwnerProp = $iOwnerProp;
+        $context->joinTableOwnerProp   = $iOwnerProp;
         $context->joinTableRelatedProp = $iRelatedProp;
 
         return $context;
     }
 
-    protected static function createRelationProperty(object &$context, string $refString, ?string $propName=null): RelationProperty
+    protected static function createRelationProperty(object &$context, string $refString, ?string $propName = null): RelationProperty
     {
         $joinTableModelClass = $context->joinTableModelClass;
 
         $resolveModelClass = function(string $table) use (&$joinTableModelClass, $context)
         {
-            if($joinTableModelClass === null)
+            if ($joinTableModelClass === null)
             {
                 // $joinTableModelClass = $this->inheritModel($this->getModel());
                 // $joinTableModelClass = Model::class;            // FIXME: This might be broken
@@ -162,8 +169,8 @@ class ManyToMany extends Relation
                 $joinTableModelClass = self::resolveModel($table, $context->mapping['join']['through']['modelClass'] ?? null);
 
                 // $joinTableModelClass::class;
-                $joinTableModelClass::$tableName = $table;
-                $joinTableModelClass::$idColumn = [];
+                $joinTableModelClass::$tableName   = $table;
+                $joinTableModelClass::$idColumn    = [];
                 $joinTableModelClass::$concurrency = $context->ownerModelClass::$concurrency;
             }
 
@@ -184,12 +191,12 @@ class ManyToMany extends Relation
         }
         catch(\Exception $error)
         {
-            if($error instanceof ModelNotFoundError)
+            if ($error instanceof ModelNotFoundError)
             {
                 throw call_user_func($context->createError, 'join.through `from` and `to` must point to the same join table.');
             }
 
-            throw call_user_func($context->createError, $messagePrefix . ' must have format JoinTable.columnName. For example "JoinTable.someId" or in case of composite key ["JoinTable.a", "JoinTable.b"].');
+            throw call_user_func($context->createError, $messagePrefix.' must have format JoinTable.columnName. For example "JoinTable.someId" or in case of composite key ["JoinTable.a", "JoinTable.b"].');
         }
     }
 
@@ -197,36 +204,43 @@ class ManyToMany extends Relation
     {
         $extraDef = $context->mapping['join']['through']['extras'] ?? null;
 
-        if($extraDef === null) return $context;
-
-        if(is_string($extraDef))
+        if ($extraDef === null)
         {
-            $extraDef = [$extraDef=>$extraDef];
+            return $context;
         }
-        else if(is_array($extraDef))
+
+        if (is_string($extraDef))
+        {
+            $extraDef = [$extraDef => $extraDef];
+        }
+        else if (is_array($extraDef))
         {
             $temp = [];
-            foreach($extraDef as $col) $temp[$col] = $col;
+
+            foreach ($extraDef as $col)
+            {
+                $temp[$col] = $col;
+            }
 
             $extraDef = $temp;
         }
 
         $joinTableExtras = array_map(function(string $key) use ($context, $extraDef)
-            {
-                $val = $extraDef[$key];
+        {
+            $val = $extraDef[$key];
 
-                $joinTableModelClass = $context->joinTableModelClass;
+            $joinTableModelClass = $context->joinTableModelClass;
 
-                $joinTableExtra = (object)
-                [
-                    'joinTableCol'=>$val,
-                    'joinTableProp'=>$joinTableModelClass ? $joinTableModelClass::columnNameToPropertyName($val) : null,
-                    'aliasCol'=>$key,
-                    'aliasProp'=>$joinTableModelClass ? $joinTableModelClass::columnNameToPropertyName($key) : null,
-                ];
+            $joinTableExtra = (object)
+            [
+                'joinTableCol'  => $val,
+                'joinTableProp' => $joinTableModelClass ? $joinTableModelClass::columnNameToPropertyName($val) : null,
+                'aliasCol'      => $key,
+                'aliasProp'     => $joinTableModelClass ? $joinTableModelClass::columnNameToPropertyName($key) : null,
+            ];
 
-                return $joinTableExtra;
-            }, array_keys($extraDef));
+            return $joinTableExtra;
+        }, array_keys($extraDef));
 
         $context->joinTableExtras = $joinTableExtras;
 
@@ -235,13 +249,13 @@ class ManyToMany extends Relation
 
     protected static function parseModify(object $context): object
     {
-        $mapping = $context->mapping['join']['through'];
-        $modifier = $mapping['modify'] ?? $mapping['filter'] ?? null;
+        $mapping         = $context->mapping['join']['through'];
+        $modifier        = $mapping['modify'] ?? $mapping['filter'] ?? null;
         $joinTableModify = null;
 
-        if($modifier !== null)
+        if ($modifier !== null)
         {
-            $joinTableModify = self::createModifier(['modifier'=>$modifier, 'modelClass'=>$context->relatedModelClass]);
+            $joinTableModify = self::createModifier(['modifier' => $modifier, 'modelClass' => $context->relatedModelClass]);
         }
         
         $context->joinTableModify = $joinTableModify;
@@ -252,13 +266,15 @@ class ManyToMany extends Relation
     protected static function parseBeforeInsert(object $context): object
     {
         $joinTableBeforeInsert = null;
-        if($context->mapping['join']['through']['beforeInsert'] ?? null instanceof \Closure)
+
+        if ($context->mapping['join']['through']['beforeInsert'] ?? null instanceof \Closure)
         {
             $joinTableBeforeInsert = $context->mapping['join']['through']['beforeInsert'];
         }
         else
         {
-            $joinTableBeforeInsert = function($model) { return $model;};
+            $joinTableBeforeInsert = function($model)
+            { return $model;};
         }
 
         $context->joinTableBeforeInsert = $joinTableBeforeInsert;
@@ -268,7 +284,7 @@ class ManyToMany extends Relation
 
     private static function finalizeJoinModelClass(object $context): object
     {
-        if($context->joinTableModelClass !== null && count($context->joinTableModelClass::getTableIDs()) === 0)
+        if ($context->joinTableModelClass !== null && count($context->joinTableModelClass::getTableIDs()) === 0)
         {
             $context->joinTableModelClass::$idColumn = $context->joinTableRelatedProp->getColumns();
         }
@@ -276,19 +292,19 @@ class ManyToMany extends Relation
         return $context;
     }
 
-    public function join(ModelSharQ $iBuilder, ?string $joinOperation=null, ?string $relatedTableAlias=null, ?ModelSharQ $relatedJoinSelectQuery=null, ?string $relatedTable=null, ?string $ownerTable=null): ModelSharQ
+    public function join(ModelSharQ $iBuilder, ?string $joinOperation = null, ?string $relatedTableAlias = null, ?ModelSharQ $relatedJoinSelectQuery = null, ?string $relatedTable = null, ?string $ownerTable = null): ModelSharQ
     {
-        $joinOperation = $joinOperation ?? self::defaultJoinOperation($this, $iBuilder);
-        $relatedTableAlias = $relatedTableAlias ?? self::defaultRelatedTableAlias($this, $iBuilder);
+        $joinOperation          = $joinOperation          ?? self::defaultJoinOperation($this, $iBuilder);
+        $relatedTableAlias      = $relatedTableAlias      ?? self::defaultRelatedTableAlias($this, $iBuilder);
         $relatedJoinSelectQuery = $relatedJoinSelectQuery ?? self::defaultRelatedJoinSelectQuery($this, $iBuilder);
-        $relatedTable = $relatedTable ?? self::defaultRelatedTable($this, $iBuilder);
-        $ownerTable = $ownerTable ?? self::defaultOwnerTable($this, $iBuilder);
+        $relatedTable           = $relatedTable           ?? self::defaultRelatedTable($this, $iBuilder);
+        $ownerTable             = $ownerTable             ?? self::defaultOwnerTable($this, $iBuilder);
 
         $joinTableAlias = self::defaultJoinTableAlias($this, $relatedTableAlias, $iBuilder);
 
         $relatedJoinSelect = $this->applyModify($relatedJoinSelectQuery)->as($relatedTableAlias);
 
-        if($relatedJoinSelect->isSelectAll())
+        if ($relatedJoinSelect->isSelectAll())
         {
             // No need to join a subquery if the query is `select * from "RelatedTable"`.
             $relatedJoinSelect = $this->aliasedTableName($relatedTable, $relatedTableAlias);
@@ -299,43 +315,45 @@ class ManyToMany extends Relation
             ->modify($this->joinTableModify)
             ->as($joinTableAlias);
 
-        if($joinTableSelect->isSelectAll())
+        if ($joinTableSelect->isSelectAll())
         {
             $joinTableSelect = $this->aliasedTableName($this->getJoinTable(), $joinTableAlias);
         }
 
-        return $iBuilder->{$joinOperation}($joinTableSelect, function(JoinBuilder $iJoin) use($iBuilder, $joinTableAlias, $ownerTable)
-            {
-                $iOwnerProperty = $this->iOwnerProperty;
-                $joinTableOwnerProp = $this->joinTableOwnerProp;
+        return $iBuilder->{$joinOperation}($joinTableSelect, function(JoinBuilder $iJoin) use ($iBuilder, $joinTableAlias, $ownerTable)
+        {
+            $iOwnerProperty     = $this->iOwnerProperty;
+            $joinTableOwnerProp = $this->joinTableOwnerProp;
 
-                foreach($iOwnerProperty->getReferences() as $i=>$r)
-                {
-                    $joinTableOwnerRef = $joinTableOwnerProp->ref($iBuilder, $i)->table($joinTableAlias);
-                    $ownerRef = $iOwnerProperty->ref($iBuilder, $i)->table($ownerTable);
-
-                    $iJoin->on($joinTableOwnerRef, $ownerRef);
-                }
-            })
-            ->{$joinOperation}($relatedJoinSelect, function(JoinBuilder $iJoin) use($iBuilder, $joinTableAlias, $relatedTableAlias)
+            foreach ($iOwnerProperty->getReferences() as $i => $r)
             {
-                $iRelatedProperty = $this->iRelatedProperty;
+                $joinTableOwnerRef = $joinTableOwnerProp->ref($iBuilder, $i)->table($joinTableAlias);
+                $ownerRef          = $iOwnerProperty->ref($iBuilder, $i)->table($ownerTable);
+
+                $iJoin->on($joinTableOwnerRef, $ownerRef);
+            }
+        })
+            ->{$joinOperation}($relatedJoinSelect, function(JoinBuilder $iJoin) use ($iBuilder, $joinTableAlias, $relatedTableAlias)
+            {
+                $iRelatedProperty     = $this->iRelatedProperty;
                 $joinTableRelatedProp = $this->joinTableRelatedProp;
 
-                foreach($iRelatedProperty->getReferences() as $i=>$r)
+                foreach ($iRelatedProperty->getReferences() as $i => $r)
                 {
                     $joinTableRelatedRef = $joinTableRelatedProp->ref($iBuilder, $i)->table($joinTableAlias);
-                    $relatedRef = $iRelatedProperty->ref($iBuilder, $i)->table($relatedTableAlias);
+                    $relatedRef          = $iRelatedProperty->ref($iBuilder, $i)->table($relatedTableAlias);
 
                     $iJoin->on($joinTableRelatedRef, $relatedRef);
                 }
-
             });
     }
 
-    private static function resolveModel(string $tableName, ?string $modelClass=null): string
+    private static function resolveModel(string $tableName, ?string $modelClass = null): string
     {
-        if($modelClass !== null) return $modelClass::class;
+        if ($modelClass !== null)
+        {
+            return $modelClass::class;
+        }
 
         $iModel = new class extends Model
         {

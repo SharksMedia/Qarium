@@ -29,7 +29,10 @@ class FindOperation extends ModelSharQOperation
     {
         $options = $iBuilder->getFindOptions();
 
-        if($options['dontCallFindHooks'] ?? false) return $result;
+        if ($options['dontCallFindHooks'] ?? false)
+        {
+            return $result;
+        }
 
         return $this->callAfterFind($iBuilder, $result);
     }
@@ -83,11 +86,17 @@ class FindOperation extends ModelSharQOperation
         // $firstResult = reset($results);
         $firstResult = &$results[0] ?? null;
 
-        if(is_bool($firstResult)) $firstResult = null;
-
-        if(is_array($results))
+        if (is_bool($firstResult))
         {
-            if(count($results) === 1) return $this->callAfterFindForOne($context, $firstResult, $results, $deep);
+            $firstResult = null;
+        }
+
+        if (is_array($results))
+        {
+            if (count($results) === 1)
+            {
+                return $this->callAfterFindForOne($context, $firstResult, $results, $deep);
+            }
 
             return $this->callAfterFindArray($context, $results, $deep);
         }
@@ -97,10 +106,14 @@ class FindOperation extends ModelSharQOperation
 
     public function callAfterFindArray($context, array &$results, $deep)
     {
-        if(count($results) === 0) return $results;
+        if (count($results) === 0)
+        {
+            return $results;
+        }
 
         $mapped = [];
-        foreach($results as $result)
+
+        foreach ($results as $result)
         {
             $mapped[] = $this->callAfterFindForOne($context, $result, $results, $deep);
         }
@@ -113,9 +126,10 @@ class FindOperation extends ModelSharQOperation
      */
     public function callAfterFindForOne($context, ?Model &$model, $results, $deep)
     {
-        if($deep)
+        if ($deep)
         {
             $this->callAfterFindForRelations($context, $model, $results);
+
             return $this->doCallAfterFind($context, $model, $results);
         }
 
@@ -124,18 +138,21 @@ class FindOperation extends ModelSharQOperation
 
     public function callAfterFindForRelations($context, ?Model &$model, array &$results)
     {
-        if($model === null) return false;
+        if ($model === null)
+        {
+            return false;
+        }
 
         $results = [];
-        foreach($model as $key=>$value)
+
+        foreach ($model as $key => $value)
         {
-            if($this->isRelation($value))
+            if ($this->isRelation($value))
             {
                 $result = $this->callInstanceAfterFind($context, $value, true);
 
                 $results[] = $result;
             }
-
         }
 
         return false;
@@ -148,7 +165,10 @@ class FindOperation extends ModelSharQOperation
 
     public function doCallAfterFind($context, ?Model &$model, array &$result)
     {
-        if($model === null) return $result;
+        if ($model === null)
+        {
+            return $result;
+        }
 
         $model->lafterFind($context->userContext);
 
@@ -157,11 +177,16 @@ class FindOperation extends ModelSharQOperation
 
     public function getAfterFindHook(Model &$model)
     {
-        if($model->hasAfterFind()) return [$model, 'lafterFind'];
-        if($model->hasAfterGet()) return [$model, 'lafterGet'];
+        if ($model->hasAfterFind())
+        {
+            return [$model, 'lafterFind'];
+        }
+
+        if ($model->hasAfterGet())
+        {
+            return [$model, 'lafterGet'];
+        }
 
         return null;
     }
-
-
 }

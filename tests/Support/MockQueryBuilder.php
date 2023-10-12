@@ -15,7 +15,7 @@ class MockQUeryBuilder
 
     public function __construct(SharQ $iSharQ, \Closure $mockExecutor)
     {
-        $this->iSharQ = $iSharQ;
+        $this->iSharQ       = $iSharQ;
         $this->mockExecutor = $mockExecutor;
 
         $this->mock = new \stdClass();
@@ -31,7 +31,7 @@ class MockQUeryBuilder
 
     private function initMockMethods(): void
     {
-        foreach($this->queryBuilderMethods as $methodName)
+        foreach ($this->queryBuilderMethods as $methodName)
         {
             $this->mock[$methodName] = function(...$args) use ($methodName)
             {
@@ -48,11 +48,14 @@ class MockQUeryBuilder
         {
             $value = $this->iSharQ->$key;
 
-            if(in_array($key, $this->queryBuilderMethods)) continue;
-
-            if(is_callable($value))
+            if (in_array($key, $this->queryBuilderMethods))
             {
-                $this->mock[$key] = function(...$args) use($value)
+                continue;
+            }
+
+            if (is_callable($value))
+            {
+                $this->mock[$key] = function(...$args) use ($value)
                 {
                     return call_user_func_array($value, $args);
                 };
@@ -76,7 +79,7 @@ class MockQUeryBuilder
 
     public function __call($methodName, $arguments)
     {
-        if(isset($this->mock[$methodName]) && is_callable($this->mock[$methodName]))
+        if (isset($this->mock[$methodName]) && is_callable($this->mock[$methodName]))
         {
             return call_user_func_array($this->mock[$methodName], $arguments);
         }

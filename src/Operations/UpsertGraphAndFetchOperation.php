@@ -6,5 +6,4 @@ namespace Sharksmedia\Qarium\Operations;
 
 class UpsertGraphAndFetchOperation extends ModelSharQOperation
 {
-
 }

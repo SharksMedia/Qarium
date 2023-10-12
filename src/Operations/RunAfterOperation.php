@@ -18,12 +18,16 @@ class RunAfterOperation extends ModelSharQOperation
     public function onAdd(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
         $this->closure = $arguments[0];
+
         return true;
     }
 
     public function onAfter3(ModelSharQOperationSupport $iBuilder, &$result)
     {
-        if($this->closure === null) return $result;
+        if ($this->closure === null)
+        {
+            return $result;
+        }
 
         $closure = $this->closure;
 

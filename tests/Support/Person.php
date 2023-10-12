@@ -17,8 +17,8 @@ class Person extends Model
      * @var array<int, Person>
      */
     protected array     $iChildren = [];
-    protected array     $iParents = [];
-    protected array     $iSchools = [];
+    protected array     $iParents  = [];
+    protected array     $iSchools  = [];
 
     protected ?Country  $iCountry = null;
 
@@ -44,55 +44,55 @@ class Person extends Model
     {// 2023-06-12
         $relations =
         [
-            'iChildren'=>
+            'iChildren' =>
             [
-                'relation'=>Model::HAS_MANY_RELATION,
-                'modelClass'=>Person::class,
-                'join'=>
+                'relation'   => Model::HAS_MANY_RELATION,
+                'modelClass' => Person::class,
+                'join'       =>
                 [
-                    'from'=>'Persons.parentID',
-                    'to'=>'Persons.personID'
+                    'from' => 'Persons.parentID',
+                    'to'   => 'Persons.personID'
                 ]
             ],
-            'iParents'=>
+            'iParents' =>
             [
-                'relation'=>Model::HAS_MANY_RELATION,
-                'modelClass'=>Person::class,
-                'join'=>
+                'relation'   => Model::HAS_MANY_RELATION,
+                'modelClass' => Person::class,
+                'join'       =>
                 [
-                    'from'=>'Persons.personID',
-                    'to'=>'Persons.parentID'
+                    'from' => 'Persons.personID',
+                    'to'   => 'Persons.parentID'
                 ]
             ],
-            'iSchools'=>
+            'iSchools' =>
             [
-                'relation'=>Model::MANY_TO_MANY_RELATION,
-                'modelClass'=>School::class,
-                'join'=>
+                'relation'   => Model::MANY_TO_MANY_RELATION,
+                'modelClass' => School::class,
+                'join'       =>
                 [
-                    'from'=>'Persons.personID',
-                    'through'=>
+                    'from'    => 'Persons.personID',
+                    'through' =>
                     [
-                        'from'=>'PersonsToSchools.personID',
-                        'to'=>'PersonsToSchools.schoolID',
-                        'extras'=>['role'],
+                        'from'   => 'PersonsToSchools.personID',
+                        'to'     => 'PersonsToSchools.schoolID',
+                        'extras' => ['role'],
                     ],
-                    'to'=>'Schools.schoolID'
+                    'to' => 'Schools.schoolID'
                 ]
             ],
-            'iCountry'=>
+            'iCountry' =>
             [
-                'relation'=>Model::HAS_ONE_THROUGH_RELATION,
-                'modelClass'=>Country::class,
-                'join'=>
+                'relation'   => Model::HAS_ONE_THROUGH_RELATION,
+                'modelClass' => Country::class,
+                'join'       =>
                 [
-                    'from'=>'Persons.personID',
-                    'through'=>
+                    'from'    => 'Persons.personID',
+                    'through' =>
                     [
-                        'from'=>'PersonsToCountries.personID',
-                        'to'=>'PersonsToCountries.countryID',
+                        'from' => 'PersonsToCountries.personID',
+                        'to'   => 'PersonsToCountries.countryID',
                     ],
-                    'to'=>'Countries.countryID'
+                    'to' => 'Countries.countryID'
                 ]
             ],
         ];

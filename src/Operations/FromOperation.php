@@ -34,6 +34,4 @@ class FromOperation extends ModelSharQOperation
     {
         return $this->alias;
     }
-
-
 }

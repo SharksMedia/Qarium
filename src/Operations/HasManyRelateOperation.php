@@ -29,11 +29,11 @@ class HasManyRelateOperation extends RelateOperation
 
     public function queryExecutor(ModelSharQOperationSupport $iBuilder): ?ModelSharQOperationSupport
     {
-        $patch = [];
+        $patch        = [];
         $iRelatedProp = $this->iRelation->getRelatedProp();
         $iOwnerValues = $this->iOwner->getSplitProps($iBuilder, $this->iRelation);
 
-        foreach($iRelatedProp as $i=>$_)
+        foreach ($iRelatedProp as $i => $_)
         {
             $iRelatedProp->patch($patch, $i, $iOwnerValues[0][$i]);
         }
@@ -62,11 +62,12 @@ class HasManyRelateOperation extends RelateOperation
 
         $isSharQ = $iOwner->getType() === RelationOwner::TYPE_QUERY_BUILDER;
 
-        if(!$isSingleModel && !$isSingleID && !$isSharQ) {
+        if (!$isSingleModel && !$isSingleID && !$isSharQ)
+        {
             throw new \Exception(
-                'Can only relate items for one parent at a time in case of HasManyRelation. ' .
-                'Otherwise multiple update queries would need to be created. ' .
-                'If you need to relate items for multiple parents, simply loop through them. ' .
+                'Can only relate items for one parent at a time in case of HasManyRelation. '.
+                'Otherwise multiple update queries would need to be created. '.
+                'If you need to relate items for multiple parents, simply loop through them. '.
                 'That\'s the most performant way.'
             );
         }

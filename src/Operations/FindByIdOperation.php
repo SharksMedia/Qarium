@@ -15,7 +15,7 @@ class FindByIdOperation extends ModelSharQOperation
 {
     private $id;
 
-    public function __construct(string $name, array $options=[])
+    public function __construct(string $name, array $options = [])
     {
         parent::__construct($name, $options);
 
@@ -24,7 +24,10 @@ class FindByIdOperation extends ModelSharQOperation
 
     public function onAdd(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
-        if($this->id === null) $this->id = $arguments[0];
+        if ($this->id === null)
+        {
+            $this->id = $arguments[0];
+        }
 
         return parent::onAdd($iBuilder, $arguments);
     }
@@ -33,5 +36,4 @@ class FindByIdOperation extends ModelSharQOperation
     {
         $iBuilder->whereComposite($iBuilder->getFullIdColumn(), $this->id);
     }
-
 }

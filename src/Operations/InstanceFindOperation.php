@@ -14,7 +14,7 @@ class InstanceFindOperation extends FindOperation
 {
     private Model $instance;
 
-    public function __construct(string $name, array $options=[])
+    public function __construct(string $name, array $options = [])
     {
         parent::__construct($name, $options);
 
@@ -28,7 +28,7 @@ class InstanceFindOperation extends FindOperation
      */
     public function onBuild(ModelSharQOperationSupport $iBuilder): void
     {
-        if(!$this->instance->lhasIDs())
+        if (!$this->instance->lhasIDs())
         {
             $idsStr = implode(',', $this->instance->getTableIDs());
 

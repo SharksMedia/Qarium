@@ -8,7 +8,6 @@ namespace Sharksmedia\Qarium;
 
 class ReferenceBuilder
 {
-
     /**
      * 2023-07-12
      * @var string
@@ -57,11 +56,14 @@ class ReferenceBuilder
      */
     private ?string $modelClass;
 
-    public function __construct(?string $expr=null)
+    public function __construct(?string $expr = null)
     {
         $this->expr = $expr;
 
-        if($expr !== null) $this->parseExpression($expr);
+        if ($expr !== null)
+        {
+            $this->parseExpression($expr);
+        }
     }
 
     public function getExpression(): ?string
@@ -117,10 +119,20 @@ class ReferenceBuilder
     public function fullColumn(ModelSharQOperationSupport $iBuilder)
     {
         $table = null;
-        if($this->getTableName() !== null) $table = $this->getTableName();
-        else if($this->modelClass !== null) $table = $iBuilder->getTableRefFor($this->modelClass);
 
-        if($table !== null) return $table.'.'.$this->column;
+        if ($this->getTableName() !== null)
+        {
+            $table = $this->getTableName();
+        }
+        else if ($this->modelClass !== null)
+        {
+            $table = $iBuilder->getTableRefFor($this->modelClass);
+        }
+
+        if ($table !== null)
+        {
+            return $table.'.'.$this->column;
+        }
 
         return $this->column;
     }
@@ -164,12 +176,14 @@ class ReferenceBuilder
     public function castJson(): self
     {
         $this->toJson = true;
+
         return $this;
     }
 
     public function castTo($sqlType): self
     {
         $this->cast = $sqlType;
+
         return $this;
     }
 
@@ -181,18 +195,21 @@ class ReferenceBuilder
     public function table($table)
     {
         $this->table = $table;
+
         return $this;
     }
 
     public function model(string $modelClass)
     {
         $this->modelClass = $modelClass;
+
         return $this;
     }
 
     public function as($alias)
     {
         $this->alias = $alias;
+
         return $this;
     }
 
@@ -204,14 +221,14 @@ class ReferenceBuilder
     public function parseExpression(string $expr)
     {
         $this->parsedExpr = Utilities::parseFieldExpression($expr);
-        $this->column = $this->parsedExpr->column;
-        $this->table = $this->parsedExpr->table;
+        $this->column     = $this->parsedExpr->column;
+        $this->table      = $this->parsedExpr->table;
     }
 
     public function createRawArgs(ModelSharQOperationSupport $iBuilder)
     {
         $bindings = [];
-        $sql = $this->createReferenceSql($iBuilder, $bindings);
+        $sql      = $this->createReferenceSql($iBuilder, $bindings);
 
         $sql = $this->maybeCast($sql, $bindings);
         $sql = $this->maybeToJsonb($sql, $bindings);
@@ -224,11 +241,12 @@ class ReferenceBuilder
     {
         $bindings[] = $this->fullColumn($iBuilder);
 
-        if(count($this->parsedExpr->access) > 0)
+        if (count($this->parsedExpr->access) > 0)
         {
             $extractor = $this->cast ? '#>>' : '#>';
 
-            $jsonFieldRef = implode(',', array_map(function($field) { return $field->ref; }, $this->parsedExpr->access));
+            $jsonFieldRef = implode(',', array_map(function($field)
+            { return $field->ref; }, $this->parsedExpr->access));
 
             return '??'.$extractor."'{{$jsonFieldRef}}'";
         }
@@ -238,24 +256,30 @@ class ReferenceBuilder
 
     private function maybeCast($sql, array &$bindings)
     {
-        if($this->cast !== null) $sql = 'CAST('.$sql.' AS '.$this->cast.')';
+        if ($this->cast !== null)
+        {
+            $sql = 'CAST('.$sql.' AS '.$this->cast.')';
+        }
 
         return $sql;
     }
 
     private function maybeToJsonb($sql, array &$bindings)
     {
-        if($this->toJson) return 'to_jsonb('.$sql.')';
+        if ($this->toJson)
+        {
+            return 'to_jsonb('.$sql.')';
+        }
 
         return $sql;
     }
 
     private function maybeAlias($sql, array &$bindings)
     {
-        if($this->alias !== null)
+        if ($this->alias !== null)
         {
             $bindings[] = $this->alias;
-            $sql = $sql.' AS ??';
+            $sql        = $sql.' AS ??';
         }
 
         return $sql;
@@ -263,9 +287,15 @@ class ReferenceBuilder
 
     private function shouldAlias()
     {
-        if($this->alias === null) return false;
+        if ($this->alias === null)
+        {
+            return false;
+        }
 
-        if($this->isPlainColumnRef()) return true;
+        if ($this->isPlainColumnRef())
+        {
+            return true;
+        }
 
         // No need to alias if we are dealing with a simple column reference
         // and the alias is the same as the column name.
@@ -274,14 +304,11 @@ class ReferenceBuilder
 
     public static function ref($reference): ReferenceBuilder
     {
-        if(is_object($reference) && $reference instanceof ReferenceBuilder) return $reference;
+        if (is_object($reference) && $reference instanceof ReferenceBuilder)
+        {
+            return $reference;
+        }
 
         return new ReferenceBuilder($reference);
     }
-
-
-
-
-
-
 }

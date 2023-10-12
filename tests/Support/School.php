@@ -30,30 +30,30 @@ class School extends Model
     {// 2023-06-12
         $relations =
         [
-            'iPersons'=>
+            'iPersons' =>
             [
-                'relation'=>Model::MANY_TO_MANY_RELATION,
-                'modelClass'=>Student::class,
-                'join'=>
+                'relation'   => Model::MANY_TO_MANY_RELATION,
+                'modelClass' => Student::class,
+                'join'       =>
                 [
-                    'from'=>'Schools.schoolID',
-                    'through'=>
+                    'from'    => 'Schools.schoolID',
+                    'through' =>
                     [
-                        'from'=>'PersonsToSchools.schoolID',
-                        'to'=>'PersonsToSchools.schoolID',
-                        'extras'=>['role'],
+                        'from'   => 'PersonsToSchools.schoolID',
+                        'to'     => 'PersonsToSchools.schoolID',
+                        'extras' => ['role'],
                     ],
-                    'to'=>'Persons.personID'
+                    'to' => 'Persons.personID'
                 ]
             ],
-            'iCity'=>
+            'iCity' =>
             [
-                'relation'=>Model::BELONGS_TO_ONE_RELATION,
-                'modelClass'=>City::class,
-                'join'=>
+                'relation'   => Model::BELONGS_TO_ONE_RELATION,
+                'modelClass' => City::class,
+                'join'       =>
                 [
-                    'from'=>'Schools.cityID',
-                    'to'=>'Cities.cityID'
+                    'from' => 'Schools.cityID',
+                    'to'   => 'Cities.cityID'
                 ]
             ]
         ];

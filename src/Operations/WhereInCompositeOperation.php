@@ -18,7 +18,7 @@ class WhereInCompositeOperation extends QariumToSharQConvertingOperation
 {
     private $prefix;
 
-    public function __construct(string $name, array $options=[])
+    public function __construct(string $name, array $options = [])
     {
         parent::__construct($name, $options);
 
@@ -34,14 +34,17 @@ class WhereInCompositeOperation extends QariumToSharQConvertingOperation
     {
         $whereInArgs = self::buildWhereInArgs($iBuilder->getSharQ(), ...$this->getArguments($iBuilder));
 
-        if($this->prefix === 'not') return $iSharQ->whereNotIn(...$whereInArgs);
+        if ($this->prefix === 'not')
+        {
+            return $iSharQ->whereNotIn(...$whereInArgs);
+        }
 
         return $iSharQ->whereIn(...$whereInArgs);
     }
 
     private static function buildWhereInArgs($iSharQ, $columns, $values)
     {
-        if(self::isCompositeKey($columns))
+        if (self::isCompositeKey($columns))
         {
             return self::buildCompositeArgs($iSharQ, $columns, $values);
         }
@@ -58,7 +61,7 @@ class WhereInCompositeOperation extends QariumToSharQConvertingOperation
 
     private static function buildCompositeArgs($iSharQ, $columns, $values)
     {
-        if(is_array($values))
+        if (is_array($values))
         {
             return self::buildCompositeValueArgs($columns, $values);
         }
@@ -70,7 +73,7 @@ class WhereInCompositeOperation extends QariumToSharQConvertingOperation
 
     private static function buildCompositeValueArgs($columns, $values)
     {
-        if(!is_array($values[0]))
+        if (!is_array($values[0]))
         {
             return [$columns, [$values]];
         }
@@ -83,18 +86,18 @@ class WhereInCompositeOperation extends QariumToSharQConvertingOperation
     private static function buildCompositeSubqueryArgs($iSharQ, $columns, $subquery)
     {
         // Might have to use ?? instead of ?
-        $sql = '(' . implode(',', array_fill(0, count($columns), '??')) . ')';
+        $sql = '('.implode(',', array_fill(0, count($columns), '??')).')';
 
         return [new Raw($sql, ...$columns), $subquery];
     }
 
     private static function buildNonCompositeArgs($columns, $values)
     {
-        if(is_array($values))
+        if (is_array($values))
         {
             $values = self::pickNonNull($values, []);
         }
-        else if(!($values instanceof SharQ))
+        else if (!($values instanceof SharQ))
         {
             $values = [$values];
         }
@@ -104,13 +107,13 @@ class WhereInCompositeOperation extends QariumToSharQConvertingOperation
 
     private static function pickNonNull(array $values, $output)
     {
-        foreach($values as $val)
+        foreach ($values as $val)
         {
-            if(is_array($val))
+            if (is_array($val))
             {
                 $output = self::pickNonNull($val, $output);
             }
-            else if($val !== null && $val !== '')
+            else if ($val !== null && $val !== '')
             {
                 $output[] = $val;
             }

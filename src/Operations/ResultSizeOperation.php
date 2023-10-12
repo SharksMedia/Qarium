@@ -21,10 +21,10 @@ class ResultSizeOperation extends ModelSharQOperation
         $iBuilder->clear(ModelSharQOperationSupport::ORDER_BY_SELECTOR);
 
         $iWrapperQueryBuiler->count('* AS count')
-            ->from(function($q) use($iBuilder)
-                {
-                    $iBuilder->toSharQ($q)->as('test');
-                });
+            ->from(function($q) use ($iBuilder)
+            {
+                $iBuilder->toSharQ($q)->as('test');
+            });
 
         return $iSharQ;
     }

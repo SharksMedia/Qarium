@@ -18,12 +18,16 @@ class OnBuildOperation extends ModelSharQOperation
     public function onAdd(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
     {
         $this->closure = $arguments[0];
+
         return true;
     }
 
     public function onBuild(ModelSharQOperationSupport $iBuilder): void
     {
-        if($this->closure === null) return;
+        if ($this->closure === null)
+        {
+            return;
+        }
 
         $closure = $this->closure;
 

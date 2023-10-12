@@ -6,5 +6,4 @@ namespace Sharksmedia\Qarium\Exceptions;
 
 class InvalidReferenceError extends \Exception
 {
-
 }

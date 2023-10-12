@@ -23,34 +23,37 @@ class RelationFindOperation extends FindOperation
     private $omitProps;
     private $alias;
 
-    public function __construct(string $name, array $options=[])
+    public function __construct(string $name, array $options = [])
     {
         parent::__construct($name, $options);
 
-        $this->iRelation = $options['iRelation'] ?? $options['relation'];
-        $this->iOwner = $options['iOwner'];
-        $this->alwaysReturnArray = false;
+        $this->iRelation           = $options['iRelation'] ?? $options['relation'];
+        $this->iOwner              = $options['iOwner'];
+        $this->alwaysReturnArray   = false;
         $this->assignResultToOwner = false;
-        $this->iRelationProperty = $options['iRelationProperty'] ?? $this->iRelation->getName();
-        $this->omitProps = $options['omitProps'] ?? [];
-        $this->alias = null;
+        $this->iRelationProperty   = $options['iRelationProperty'] ?? $this->iRelation->getName();
+        $this->omitProps           = $options['omitProps']         ?? [];
+        $this->alias               = null;
     }
 
     public function setAlwaysReturnArray(bool $alwaysReturnArray): self
     {
         $this->alwaysReturnArray = $alwaysReturnArray;
+
         return $this;
     }
 
     public function setAssignResultToOwner(bool $assignResultToOwner): self
     {
         $this->assignResultToOwner = $assignResultToOwner;
+
         return $this;
     }
 
     public function setAlias(?string $alias): self
     {
         $this->alias = $alias;
+
         return $this;
     }
 
@@ -59,7 +62,7 @@ class RelationFindOperation extends FindOperation
         $this->maybeApplyAlias($iBuilder, $this->iOwner);
         $this->iRelation->findQuery($iBuilder, $this->iOwner);
 
-        if($this->assignResultToOwner && $this->iOwner->isModels())
+        if ($this->assignResultToOwner && $this->iOwner->isModels())
         {
             $this->selectMissingJoinColumns($iBuilder);
         }
@@ -69,27 +72,27 @@ class RelationFindOperation extends FindOperation
     {
         $isOneToOne = $this->iRelation instanceof BelongsToOne;
 
-        if($this->assignResultToOwner && $this->iOwner->isModels())
+        if ($this->assignResultToOwner && $this->iOwner->isModels())
         {
-            $iOwners = $this->iOwner->getModels();
+            $iOwners           = $this->iOwner->getModels();
             $relationByOwnerId = [];
 
-            foreach($related as $rel)
+            foreach ($related as $rel)
             {
-                $key = $this->iRelation->getRelatedProp()->getPropKey($rel);
+                $key                     = $this->iRelation->getRelatedProp()->getPropKey($rel);
                 $relationByOwnerId[$key] = $relationByOwnerId[$key] ?? [];
 
                 $relationByOwnerId[$key][] = $rel;
             }
 
-            foreach($iOwners as $iOwner)
+            foreach ($iOwners as $iOwner)
             {
-                $key = $this->iRelation->getOwnerProp()->getPropKey($iOwner);
+                $key     = $this->iRelation->getOwnerProp()->getPropKey($iOwner);
                 $related = $relationByOwnerId[$key] ?? null;
 
                 $iOwner->$this->iRelationProperty = $isOneToOne
                    ? $related[0] ?? null
-                    : $related ?? [];
+                    : $related   ?? [];
             }
         }
 
@@ -98,15 +101,15 @@ class RelationFindOperation extends FindOperation
 
     public function onAfter3(ModelSharQOperationSupport $iBuilder, &$related)
     {
-        $isOneToOne = $this->iRelation instanceof BelongsToOne;
+        $isOneToOne      = $this->iRelation instanceof BelongsToOne;
         $internalOptions = $iBuilder->getInternalOptions();
 
-        if(!($internalOptions['keepImplicitJoinProps'] ?? false))
+        if (!($internalOptions['keepImplicitJoinProps'] ?? false))
         {
             $this->omitImplicitJoinProps($related);
         }
 
-        if(!$this->alwaysReturnArray && $isOneToOne && count($related) === 0)
+        if (!$this->alwaysReturnArray && $isOneToOne && count($related) === 0)
         {
             $related = $related[0] ?? null;
         }
@@ -119,20 +122,20 @@ class RelationFindOperation extends FindOperation
         $iRelatedProp = $this->iRelation->getRelatedProp();
         $addedSelects = [];
 
-        for($c=0, $lc = $iRelatedProp->getSize(); $c < $lc; ++$c)
+        for ($c = 0, $lc = $iRelatedProp->getSize(); $c < $lc; ++$c)
         {
             $fullColumn = $iRelatedProp->ref($iBuilder, $c)->getFullColumn($iBuilder);
-            $prop = $iRelatedProp->getProperties()[$c];
-            $col = $iRelatedProp->getColumns()[$c];
+            $prop       = $iRelatedProp->getProperties()[$c];
+            $col        = $iRelatedProp->getColumns()[$c];
 
-            if(!$iBuilder->hasSelectionAs($fullColumn, $col) && !in_array($fullColumn, $addedSelects))
+            if (!$iBuilder->hasSelectionAs($fullColumn, $col) && !in_array($fullColumn, $addedSelects))
             {
                 $this->omitProps[] = $prop;
-                $addedSelects[] = $fullColumn;
+                $addedSelects[]    = $fullColumn;
             }
         }
 
-        if(count($addedSelects) > 0)
+        if (count($addedSelects) > 0)
         {
             $iBuilder->select($addedSelects);
         }
@@ -140,7 +143,7 @@ class RelationFindOperation extends FindOperation
 
     private function maybeApplyAlias(ModelSharQ $iBuilder): void
     {
-        if($iBuilder->getAlias() === null && $this->alias !== null)
+        if ($iBuilder->getAlias() === null && $this->alias !== null)
         {
             $iBuilder->setAlias($this->alias);
         }
@@ -150,16 +153,22 @@ class RelationFindOperation extends FindOperation
     {
         $relatedModelClass = $this->iRelation->getRelatedModelClass();
 
-        if(count($this->omitProps) === 0 || !$related) return $related;
+        if (count($this->omitProps) === 0 || !$related)
+        {
+            return $related;
+        }
 
-        if(!is_array($related))
+        if (!is_array($related))
         {
             return $this->omitImplicitJoinPropsFromOne($relatedModelClass, $related);
         }
 
-        if(count($related) === 0) return $related;
+        if (count($related) === 0)
+        {
+            return $related;
+        }
 
-        foreach($related as $rel)
+        foreach ($related as $rel)
         {
             $this->omitImplicitJoinPropsFromOne($relatedModelClass, $rel);
         }
@@ -174,7 +183,7 @@ class RelationFindOperation extends FindOperation
      */
     private function omitImplicitJoinPropsFromOne($relatedModelClass, $model)
     {
-        for($c=0, $lc=count($this->omitProps); $c < $lc; ++$c)
+        for ($c = 0, $lc = count($this->omitProps); $c < $lc; ++$c)
         {
             $relatedModelClass::omitImpl($model, $this->omitProps[$c]);
         }

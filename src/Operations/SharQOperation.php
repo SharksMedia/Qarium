@@ -24,7 +24,10 @@ class SharQOperation extends QariumToSharQConvertingOperation
      */
     public function onBuildSharQ(ModelSharQOperationSupport $iBuilder, $iSharQ)
     {
-        if($iSharQ !== null && !($iSharQ instanceof SharQ) && !($iSharQ instanceof Join))  throw new \Exception('Invalid SharQ type: '.get_class($iSharQ));
+        if ($iSharQ !== null && !($iSharQ instanceof SharQ) && !($iSharQ instanceof Join))
+        {
+            throw new \Exception('Invalid SharQ type: '.get_class($iSharQ));
+        }
 
         $functionName = $this->getName();
 

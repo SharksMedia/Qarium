@@ -13,7 +13,7 @@ class InstanceInsertOperation extends InsertOperation
 {
     private Model $instance;
 
-    public function __construct(string $name, array $options=[])
+    public function __construct(string $name, array $options = [])
     {
         parent::__construct($name, $options);
 

@@ -37,7 +37,10 @@ class ModelSharQContext extends ModelSharQContextBase
     {
         return function(ModelSharQ $iBuilder)
         {
-            foreach($this->runBefore as $callback) $callback($iBuilder);
+            foreach ($this->runBefore as $callback)
+            {
+                $callback($iBuilder);
+            }
         };
     }
 
@@ -45,7 +48,10 @@ class ModelSharQContext extends ModelSharQContextBase
     {
         return function(ModelSharQ $iBuilder)
         {
-            foreach($this->runAfter as $callback) $callback($iBuilder);
+            foreach ($this->runAfter as $callback)
+            {
+                $callback($iBuilder);
+            }
         };
     }
 
@@ -53,7 +59,10 @@ class ModelSharQContext extends ModelSharQContextBase
     {
         return function(ModelSharQ $iBuilder)
         {
-            foreach($this->onBuild as $callback) $callback($iBuilder);
+            foreach ($this->onBuild as $callback)
+            {
+                $callback($iBuilder);
+            }
         };
     }
 }

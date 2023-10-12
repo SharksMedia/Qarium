@@ -14,7 +14,7 @@ class InstanceDeleteOperation extends DeleteOperation
 {
     private Model $instance;
 
-    public function __construct(string $name, array $options=[])
+    public function __construct(string $name, array $options = [])
     {
         parent::__construct($name, $options);
 
@@ -37,7 +37,7 @@ class InstanceDeleteOperation extends DeleteOperation
     {
         parent::onBuild($iBuilder);
 
-        if(!$this->instance->lhasIDs())
+        if (!$this->instance->lhasIDs())
         {
             $idsStr = implode(',', $this->instance->getTableIDs());
 
@@ -49,7 +49,10 @@ class InstanceDeleteOperation extends DeleteOperation
 
     public function onAfter2(ModelSharQOperationSupport $iBuilder, &$result)
     {
-        if(is_array($result)) $result = $result[0];
+        if (is_array($result))
+        {
+            $result = $result[0];
+        }
 
         $this->instance->lafterDelete($iBuilder->getContext());
 

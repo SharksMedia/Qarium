@@ -60,8 +60,8 @@ use Sharksmedia\SharQ\Statement\Raw;
 
 class ModelSharQ extends ModelSharQBase
 {
-    public const JOIN_EAGER_ALGORITHM = 'JOIN_EAGER_ALGORITHM';
-    public const NAIVE_EAGER_ALGORITHM = 'NAIVE_EAGER_ALGORITHM';
+    public const JOIN_EAGER_ALGORITHM     = 'JOIN_EAGER_ALGORITHM';
+    public const NAIVE_EAGER_ALGORITHM    = 'NAIVE_EAGER_ALGORITHM';
     public const WHERE_IN_EAGER_ALGORITHM = 'WHERE_IN_EAGER_ALGORITHM';
 
     /**
@@ -125,16 +125,23 @@ class ModelSharQ extends ModelSharQBase
         parent::__construct($modelClass);
 
         /** @var \Model $modelClass */
-        $this->resultModelClass = $modelClass;
+        $this->resultModelClass     = $modelClass;
         $this->findOperationOptions = $modelClass::getDefaultFindOptions();
 
-        $this->findOperationFactory = function() { return new FindOperation('find'); };
-        $this->insertOperationFactory = function() { return new InsertOperation('insert'); };
-        $this->updateOperationFactory = function() { return new UpdateOperation('update'); };
-        $this->patchOperationFactory = function() { return new UpdateOperation('patch', ['modelOptions'=>['patch'=>true]]); };
-        $this->deleteOperationFactory = function() { return new DeleteOperation('delete'); };
-        $this->relateOperationFactory = function() { throw new \BadMethodCallException('Relate operation not supported'); };
-        $this->unrelateOperationFactory = function() { throw new \BadMethodCallException('Unrelate operation not supported'); };
+        $this->findOperationFactory = function()
+        { return new FindOperation('find'); };
+        $this->insertOperationFactory = function()
+        { return new InsertOperation('insert'); };
+        $this->updateOperationFactory = function()
+        { return new UpdateOperation('update'); };
+        $this->patchOperationFactory = function()
+        { return new UpdateOperation('patch', ['modelOptions' => ['patch' => true]]); };
+        $this->deleteOperationFactory = function()
+        { return new DeleteOperation('delete'); };
+        $this->relateOperationFactory = function()
+        { throw new \BadMethodCallException('Relate operation not supported'); };
+        $this->unrelateOperationFactory = function()
+        { throw new \BadMethodCallException('Unrelate operation not supported'); };
     }
 
     public function getFindOptions(): array
@@ -165,12 +172,15 @@ class ModelSharQ extends ModelSharQBase
         /** @var EagerOperation|null $eagerOperation */
         $eagerOperation = $iBuilder->findOperation(EagerOperation::class);
 
-        if($eagerOperation === null) return;
+        if ($eagerOperation === null)
+        {
+            return;
+        }
 
-        $expression = $eagerOperation->getExpression();
+        $expression        = $eagerOperation->getExpression();
         $allowedExpression = $iBuilder->allowedGraphExpression();
 
-        if(!$expression->isEmpty() && $allowedExpression !== null && !$allowedExpression->isSubExpression($expression))
+        if (!$expression->isEmpty() && $allowedExpression !== null && !$allowedExpression->isSubExpression($expression))
         {
             throw new \InvalidArgumentException('Eager expression not allowed: '.$expression->getExpressionString());
         }
@@ -181,10 +191,11 @@ class ModelSharQ extends ModelSharQBase
         return parent::getTableNameFor(self::resolveTableName($modelClassOrTableName));
     }
 
-    public function getTableName(?string $newTableName=null): string
+    public function getTableName(?string $newTableName = null): string
     {
         /** @var \Model $modelClass */
         $modelClass = $this->getModelClass();
+
         return $this->getTableNameFor($modelClass::getTableName(), $newTableName);
     }
 
@@ -192,18 +203,20 @@ class ModelSharQ extends ModelSharQBase
     {
         /** @var class-string<\Model> $modelClass */
         $modelClass = $this->getModelClass();
+
         return $this->getTableRefFor($modelClass);
     }
 
-    public function getAliasFor(string $modelClassOrTableName, ?string $newTableName=null): ?string
+    public function getAliasFor(string $modelClassOrTableName, ?string $newTableName = null): ?string
     {
         return parent::getAliasFor(self::resolveTableName($modelClassOrTableName), $newTableName);
     }
 
-    public function getAlias(?string $alias=null): ?string
+    public function getAlias(?string $alias = null): ?string
     {
         /** @var \Model $modelClass */
         $modelClass = $this->getModelClass();
+
         return $this->getAliasFor($modelClass::getTableName(), $alias);
     }
 
@@ -221,7 +234,7 @@ class ModelSharQ extends ModelSharQBase
         return $this;
     }
 
-    public function setAliasFor(string $modelClassOrTableName, ?string $newTableName=null): static
+    public function setAliasFor(string $modelClassOrTableName, ?string $newTableName = null): static
     {
         return parent::setAliasFor(self::resolveTableName($modelClassOrTableName), $newTableName);
     }
@@ -234,7 +247,10 @@ class ModelSharQ extends ModelSharQBase
         /** @var \Model $modelClass */
         $idColumn = $modelClass::getTableIDs();
 
-        if(is_array($idColumn)) return array_map(fn($column) => $tableName.'.'.$column, $idColumn);
+        if (is_array($idColumn))
+        {
+            return array_map(fn($column) => $tableName.'.'.$column, $idColumn);
+        }
 
         return $tableName.'.'.$idColumn;
     }
@@ -242,15 +258,16 @@ class ModelSharQ extends ModelSharQBase
     public function getFullIdColumn()
     {
         $modelClass = $this->getModelClass();
+
         return $this->getFullIdColumnFor($modelClass);
     }
 
-    public function withGraphFetched(string $relationExpression, array $options=[]): static
+    public function withGraphFetched(string $relationExpression, array $options = []): static
     {
         throw new \Exception('withGraphFetched is not supported');
     }
 
-    public function withGraphJoined(string $relationExpression, array $options=[]): static
+    public function withGraphJoined(string $relationExpression, array $options = []): static
     {
         return $this->_withGraph($relationExpression, $options, static::JOIN_EAGER_ALGORITHM);
     }
@@ -260,29 +277,46 @@ class ModelSharQ extends ModelSharQBase
      */
     private static function getOperationClassForEagerAlgorithm(self $iBuilder, string $eagerAlgorithm): string
     {
-        if($eagerAlgorithm === static::JOIN_EAGER_ALGORITHM) return JoinEagerOperation::class;
-        if($eagerAlgorithm === static::NAIVE_EAGER_ALGORITHM) return NaiveEagerOperation::class;
-        if($eagerAlgorithm === static::WHERE_IN_EAGER_ALGORITHM) return WhereInEagerOperation::class;
+        if ($eagerAlgorithm === static::JOIN_EAGER_ALGORITHM)
+        {
+            return JoinEagerOperation::class;
+        }
+
+        if ($eagerAlgorithm === static::NAIVE_EAGER_ALGORITHM)
+        {
+            return NaiveEagerOperation::class;
+        }
+
+        if ($eagerAlgorithm === static::WHERE_IN_EAGER_ALGORITHM)
+        {
+            return WhereInEagerOperation::class;
+        }
 
         throw new \Exception('Unknown eager algorithm: '.$eagerAlgorithm);
     }
 
-    private static function &ensureEagerOperation(self $iBuilder, ?string $eagerAlgorithm=null): EagerOperation
+    private static function &ensureEagerOperation(self $iBuilder, ?string $eagerAlgorithm = null): EagerOperation
     {
         /** @var \Model $modelClass */
-        $modelClass = $iBuilder->getModelClass();
+        $modelClass          = $iBuilder->getModelClass();
         $defaultGraphOptions = $modelClass::getDefaultGraphOptions();
-        $eagerOperation = $iBuilder->findOperation(EagerOperation::class);
+        $eagerOperation      = $iBuilder->findOperation(EagerOperation::class);
 
-        if($eagerAlgorithm !== null)
+        if ($eagerAlgorithm !== null)
         {
             $eagerOperationClass = self::getOperationClassForEagerAlgorithm($iBuilder, $eagerAlgorithm);
 
-            if($eagerOperation instanceof $eagerOperationClass) return $eagerOperation;
+            if ($eagerOperation instanceof $eagerOperationClass)
+            {
+                return $eagerOperation;
+            }
 
             $newEagerOperation = new $eagerOperationClass('eager', ['defaultGraphOptions' => $defaultGraphOptions]);
 
-            if($eagerOperation !== null) $newEagerOperation = clone $eagerOperation; //$newEagerOperation->cloneFrom($eagerOperation);
+            if ($eagerOperation !== null)
+            {
+                $newEagerOperation = clone $eagerOperation;
+            } //$newEagerOperation->cloneFrom($eagerOperation);
 
             $iBuilder->clear(EagerOperation::class);
             $iBuilder->addOperation($newEagerOperation, []);
@@ -290,7 +324,10 @@ class ModelSharQ extends ModelSharQBase
             return $newEagerOperation;
         }
 
-        if($eagerOperation !== null) return $eagerOperation;
+        if ($eagerOperation !== null)
+        {
+            return $eagerOperation;
+        }
 
         $eagerOperationClass = self::getOperationClassForEagerAlgorithm($iBuilder, static::WHERE_IN_EAGER_ALGORITHM);
 
@@ -303,7 +340,7 @@ class ModelSharQ extends ModelSharQBase
 
     private function _withGraph(string $relationExpression, array $options, string $eagerAlgorithm): static
     {
-        $eagerOperation = &self::ensureEagerOperation($this, $eagerAlgorithm);
+        $eagerOperation   = &self::ensureEagerOperation($this, $eagerAlgorithm);
         $parsedExpression = self::parseRelationExpression($relationExpression);
 
         $expression = $eagerOperation->getExpression();
@@ -346,7 +383,10 @@ class ModelSharQ extends ModelSharQBase
         /** @var EagerOperation|null $eagerOperation */
         $eagerOperation = $this->findOperation(EagerOperation::class);
 
-        if($eagerOperation === null || $eagerOperation->getExpression()->isEmpty()) return null;
+        if ($eagerOperation === null || $eagerOperation->getExpression()->isEmpty())
+        {
+            return null;
+        }
 
         return $eagerOperation->getExpression();
     }
@@ -415,7 +455,7 @@ class ModelSharQ extends ModelSharQBase
 
     public function hasWheres(): bool
     {
-        $queryClone = clone $this;
+        $queryClone        = clone $this;
         $queryWithoutGraph = $queryClone->clearWithGraph();
 
         $prebuildQuery = self::prebuildQuery($queryWithoutGraph);
@@ -433,34 +473,40 @@ class ModelSharQ extends ModelSharQBase
         /** @var EagerOperation|null $iEagerOperation */
         $iEagerOperation = $this->findOperation(EagerOperation::class);
 
-        if($iEagerOperation === null) return false;
+        if ($iEagerOperation === null)
+        {
+            return false;
+        }
 
         return $iEagerOperation->hasExpression();
     }
 
     public function isSelectAll(): bool
     {
-        if(count($this->operations) === 0) return true;
+        if (count($this->operations) === 0)
+        {
+            return true;
+        }
 
         $tableReference = $this->getTableRef();
-        $tableName = $this->getTableName();
+        $tableName      = $this->getTableName();
 
-        $result = $this->everyOperation(function($operation) use($tableReference, $tableName)
+        $result = $this->everyOperation(function($operation) use ($tableReference, $tableName)
         {
-            if($operation instanceof SelectOperation)
+            if ($operation instanceof SelectOperation)
             {
                 // SelectOperations with zero selections are the ones that only have raw items or other non-trivial selections.
 
-                return $operation->hasSelections() && array_reduce($operation->getSelections(), function($carry, $selection) use($tableReference)
+                return $operation->hasSelections() && array_reduce($operation->getSelections(), function($carry, $selection) use ($tableReference)
                 {
                     return $carry && (!$selection->getTable() || $selection->getTable() === $tableReference) && $selection->getColumn() === '*';
                 }, true);
             }
-            else if($operation instanceof FromOperation)
+            else if ($operation instanceof FromOperation)
             {
                 return $operation->getTable() === $tableName;
             }
-            else if($operation->getName() === 'as' || $operation->is(FindOperation::class) || $operation->is(OnErrorOperation::class))
+            else if ($operation->getName() === 'as' || $operation->is(FindOperation::class) || $operation->is(OnErrorOperation::class))
             {
                 return true;
             }
@@ -518,9 +564,12 @@ class ModelSharQ extends ModelSharQBase
         return $this;
     }
 
-    public function modifiers(?array $modifiers=null): static
+    public function modifiers(?array $modifiers = null): static
     {
-        if($modifiers !== null) $this->modifiers = $modifiers;
+        if ($modifiers !== null)
+        {
+            $this->modifiers = $modifiers;
+        }
 
         return $this;
     }
@@ -538,13 +587,13 @@ class ModelSharQ extends ModelSharQBase
 
     public function resultSize(...$args): int
     {
-        $iSharQ = $this->getSharQ();
+        $iSharQ   = $this->getSharQ();
         $iBuilder = clone $this;
 
         $iBuilder->clear(self::LIMIT_SELECTOR);
         $iBuilder->clear(self::ORDER_BY_SELECTOR);
 
-        $countQuery = $iSharQ->count('* AS count')->from(function($q) use($iBuilder)
+        $countQuery = $iSharQ->count('* AS count')->from(function($q) use ($iBuilder)
         {
             $iBuilder->toSharQ($q)->as('temp');
         });
@@ -557,7 +606,7 @@ class ModelSharQ extends ModelSharQBase
     /**
      * @param SharQ|Join|null $iSharQ
      */
-    public function toSharQ($iSharQ=null): SharQ
+    public function toSharQ($iSharQ = null): SharQ
     {
         $iClonedBuilder = clone $this;
 
@@ -576,21 +625,30 @@ class ModelSharQ extends ModelSharQBase
 
         $queryExecutorOperation = self::findQueryExecutorOperation($iBuilder);
 
-        if($queryExecutorOperation === null) return $iBuilder;
+        if ($queryExecutorOperation === null)
+        {
+            return $iBuilder;
+        }
 
         return self::prebuildQuery($queryExecutorOperation->queryExecutor($iBuilder));
     }
 
     private function addImplicitOperations(self &$iBuilder): static
     {
-        if($iBuilder->isFind())
+        if ($iBuilder->isFind())
         {
             // If no write operations have been called at this point this query is a
             // find query and we need to call the custom find implementation.
-            if(!$iBuilder->has(FindOperation::class)) $this->addFindOperation($iBuilder);
+            if (!$iBuilder->has(FindOperation::class))
+            {
+                $this->addFindOperation($iBuilder);
+            }
         }
 
-        if($iBuilder->hasWithGraph()) self::moveEagerOperationToEnd($iBuilder);
+        if ($iBuilder->hasWithGraph())
+        {
+            self::moveEagerOperationToEnd($iBuilder);
+        }
 
         return $iBuilder;
     }
@@ -608,7 +666,10 @@ class ModelSharQ extends ModelSharQBase
     {
         $iEagerOperation = $iBuilder->findOperation(EagerOperation::class);
 
-        if($iEagerOperation === null) return;
+        if ($iEagerOperation === null)
+        {
+            return;
+        }
 
         $iBuilder->clear(EagerOperation::class);
 
@@ -619,7 +680,10 @@ class ModelSharQ extends ModelSharQBase
     {
         $iBuilder->forEachOperations(true, function(ModelSharQOperation $iOperation) use ($iBuilder, $hookName, &$results)
         {
-            if(!$iOperation->hasHook($hookName)) return;
+            if (!$iOperation->hasHook($hookName))
+            {
+                return;
+            }
 
             $results = $iBuilder->callOperationMethod($iOperation, $hookName, [$results]);
 
@@ -631,11 +695,14 @@ class ModelSharQ extends ModelSharQBase
 
     private static function chainHooks(ModelSharQ $iBuilder, $func)
     {
-        if($func instanceof \Closure) return $func($iBuilder);
-
-        if(is_array($func))
+        if ($func instanceof \Closure)
         {
-            foreach($func as $iFunc)
+            return $func($iBuilder);
+        }
+
+        if (is_array($func))
+        {
+            foreach ($func as $iFunc)
             {
                 $results = static::chainHooks($iBuilder, $iFunc);
             }
@@ -681,16 +748,19 @@ class ModelSharQ extends ModelSharQBase
 
     private static function callOnBuildFuncs(self $iBuilder, $func): void
     {
-        if($func instanceof \Closure)
+        if ($func instanceof \Closure)
         {
             $func($iBuilder);
 
             return;
         }
 
-        if(is_array($func))
+        if (is_array($func))
         {
-            foreach($func as $iFunc) self::callOnBuildFuncs($iBuilder, $iFunc);
+            foreach ($func as $iFunc)
+            {
+                self::callOnBuildFuncs($iBuilder, $iFunc);
+            }
 
             return;
         }
@@ -724,7 +794,7 @@ class ModelSharQ extends ModelSharQBase
      */
     private static function resolveTableName(string $modelClassOrTableName): string
     {
-        if(is_subclass_of($modelClassOrTableName, Model::class))
+        if (is_subclass_of($modelClassOrTableName, Model::class))
         {
             /** @var \Model $modelClassOrTableName */
             return $modelClassOrTableName::getTableName();
@@ -769,12 +839,15 @@ class ModelSharQ extends ModelSharQBase
 
     private static function setDefaultTable(self $iBuilder, SharQ $iSharQ): SharQ
     {
-        $table = $iBuilder->getTableName();
+        $table    = $iBuilder->getTableName();
         $tableRef = $iBuilder->getTableRef();
 
-        if($table === $tableRef) return $iSharQ->table($table);
+        if ($table === $tableRef)
+        {
+            return $iSharQ->table($table);
+        }
 
-        return $iSharQ->table([$tableRef=>$table]);
+        return $iSharQ->table([$tableRef => $table]);
     }
 
     private static function setDefaultSelect(self $iBuilder, SharQ $iSharQ): SharQ
@@ -784,7 +857,7 @@ class ModelSharQ extends ModelSharQBase
         return $iSharQ->select($tableRef.'.*');
     }
 
-    private static function buildSharQQuery(self $iBuilder, ?SharQ $iSharQ=null): SharQ
+    private static function buildSharQQuery(self $iBuilder, ?SharQ $iSharQ = null): SharQ
     {
         $iSharQ = $iSharQ ?? $iBuilder->getSharQ();
         $iBuilder->executeOnBuildSharQ($iSharQ);
@@ -792,16 +865,25 @@ class ModelSharQ extends ModelSharQBase
         /** @var FromOperation|null $fromOperation */
         $fromOperation = $iBuilder->findLastOperation(ModelSharQBase::FROM_SELECTOR);
 
-        if($iBuilder->getIsPartial()) return $iSharQ;
+        if ($iBuilder->getIsPartial())
+        {
+            return $iSharQ;
+        }
 
         // Set the table only if it hasn't been explicitly set yet.
-        if($fromOperation === null) $iSharQ = self::setDefaultTable($iBuilder, $iSharQ);
+        if ($fromOperation === null)
+        {
+            $iSharQ = self::setDefaultTable($iBuilder, $iSharQ);
+        }
 
         $hasFromTable = $fromOperation !== null && $fromOperation->getTable() === null;
-        $hasSelects = $iBuilder->hasSelects();
+        $hasSelects   = $iBuilder->hasSelects();
 
         // Only add `table.*` select if there are no explicit selects and `from` is a table name and not a subquery.
-        if(!$hasSelects && !$hasFromTable) $iSharQ = self::setDefaultSelect($iBuilder, $iSharQ);
+        if (!$hasSelects && !$hasFromTable)
+        {
+            $iSharQ = self::setDefaultSelect($iBuilder, $iSharQ);
+        }
 
         return $iSharQ;
     }
@@ -810,11 +892,14 @@ class ModelSharQ extends ModelSharQBase
     {
         self::callOnBuildHooks($iBuilder);
 
-        if($iBuilder->isExplicitlyResolvedOrRejected()) return $iBuilder->getExplicitResolveValue();
+        if ($iBuilder->isExplicitlyResolvedOrRejected())
+        {
+            return $iBuilder->getExplicitResolveValue();
+        }
 
         $queryExecutorOperation = self::findQueryExecutorOperation($iBuilder);
 
-        if($queryExecutorOperation !== null)
+        if ($queryExecutorOperation !== null)
         {
             $query = $queryExecutorOperation->queryExecutor($iBuilder);
 
@@ -836,25 +921,31 @@ class ModelSharQ extends ModelSharQBase
 
     private static function createModels($result, self $iBuilder): ?array
     {
-        if($result === null) return null;
+        if ($result === null)
+        {
+            return null;
+        }
 
         // results are applied to input models in `InsertOperation.onAfter1` instead.
-        if($iBuilder->isInsert()) return $result;
+        if ($iBuilder->isInsert())
+        {
+            return $result;
+        }
 
         $modelClass = $iBuilder->getResultModelClass();
 
-        if(is_array($result))
+        if (is_array($result))
         {
-            if(count($result) > 0 && self::shouldBeConvertedToModel($result[0], $modelClass))
+            if (count($result) > 0 && self::shouldBeConvertedToModel($result[0], $modelClass))
             {
-                foreach($result as &$re)
+                foreach ($result as &$re)
                 {
                     /** @var \Model $modelClass */
                     $re = $modelClass::createFromDatabaseArray($re);
                 }
             }
         }
-        else if(self::shouldBeConvertedToModel($result, $modelClass))
+        else if (self::shouldBeConvertedToModel($result, $modelClass))
         {
             /** @var \Model $modelClass */
             $result = $modelClass::createFromDatabaseArray($result);
@@ -874,14 +965,20 @@ class ModelSharQ extends ModelSharQBase
 
         $iBuilder->forEachOperations(self::ALL_SELECTOR, function(ModelSharQOperation $iOperation) use ($iBuilder, $exceptions, &$result)
         {
-            if(!$iOperation->hasOnError()) return;
+            if (!$iOperation->hasOnError())
+            {
+                return;
+            }
 
             $result = $iOperation->onError($iBuilder, $exceptions);
         });
 
         $internalOptions = $iBuilder->getInternalOptions();
 
-        if(!($internalOptions['returnError'] ?? false)) throw $exceptions;
+        if (!($internalOptions['returnError'] ?? false))
+        {
+            throw $exceptions;
+        }
 
         return $result;
     }
@@ -943,30 +1040,42 @@ class ModelSharQ extends ModelSharQBase
     //     });
     // }
 
-    private function findSelection($selection, bool $explicit=false): ?Selection
+    private function findSelection($selection, bool $explicit = false): ?Selection
     {
         $noSelectStatements = true;
-        $selectionInstance = null;
+        $selectionInstance  = null;
 
-        $this->forEachOperations(self::ALL_SELECTOR, function($operation) use(&$noSelectStatements, &$selectionInstance, $selection, $explicit)
+        $this->forEachOperations(self::ALL_SELECTOR, function($operation) use (&$noSelectStatements, &$selectionInstance, $selection, $explicit)
+        {
+            if (!($operation instanceof SelectOperation))
             {
-                if(!($operation instanceof SelectOperation)) return null;
-
-                $selectionInstance = $operation->findSelection($this, $selection);
-                $noSelectStatements = false;
-
-                if($selectionInstance === null) return false;
-
                 return null;
-            });
+            }
 
-        if($selectionInstance !== null) return $selectionInstance;
+            $selectionInstance  = $operation->findSelection($this, $selection);
+            $noSelectStatements = false;
 
-        if($noSelectStatements && !$explicit)
+            if ($selectionInstance === null)
+            {
+                return false;
+            }
+
+            return null;
+        });
+
+        if ($selectionInstance !== null)
+        {
+            return $selectionInstance;
+        }
+
+        if ($noSelectStatements && !$explicit)
         {
             $selectAll = new Selection($this->getTableRef(), '*');
 
-            if(Selection::doesSelect($this, $selectAll, $selection)) return $selectAll;
+            if (Selection::doesSelect($this, $selectAll, $selection))
+            {
+                return $selectAll;
+            }
 
             return null;
         }
@@ -975,12 +1084,15 @@ class ModelSharQ extends ModelSharQBase
     }
 
     public function findAllSelections(): array
-    { 
+    {
         $allSelections = [];
 
-        $this->forEachOperations(self::ALL_SELECTOR, function($operation) use(&$allSelections)
+        $this->forEachOperations(self::ALL_SELECTOR, function($operation) use (&$allSelections)
         {
-            if(!($operation instanceof SelectOperation)) return null;
+            if (!($operation instanceof SelectOperation))
+            {
+                return null;
+            }
 
             $allSelections = array_merge($allSelections, $operation->getSelections());
 
@@ -990,35 +1102,41 @@ class ModelSharQ extends ModelSharQBase
         return $allSelections;
     }
 
-    public function hasSelection($selection, bool $explicit=false): bool
-    { 
+    public function hasSelection($selection, bool $explicit = false): bool
+    {
         return $this->findSelection($selection, $explicit) !== null;
     }
 
-    public function hasSelectionAs($selection, $alias, bool $explicit=false): bool
-    { 
+    public function hasSelectionAs($selection, $alias, bool $explicit = false): bool
+    {
         /** @var Selection $selection */
         $selection = Selection::create($selection);
 
         /** @var Selection|null $foundSelection */
         $foundSelection = $this->findSelection($selection, $explicit);
 
-        if($foundSelection === null) return false;
+        if ($foundSelection === null)
+        {
+            return false;
+        }
 
-        if($foundSelection->getColumn() === '*') return $selection->getColumn() === $alias;
+        if ($foundSelection->getColumn() === '*')
+        {
+            return $selection->getColumn() === $alias;
+        }
 
         return $foundSelection->getName() === $alias;
     }
 
-    public function traverse($modelClass, $traverser=null)
+    public function traverse($modelClass, $traverser = null)
     {
-        if($traverser === null)
+        if ($traverser === null)
         {
-            $traverser = $modelClass;
+            $traverser  = $modelClass;
             $modelClass = null;
         }
 
-        return $this->runAfter(function($result) use($modelClass, $traverser)
+        return $this->runAfter(function($result) use ($modelClass, $traverser)
         {
             /** @var \Model $resultModelClass */
             $resultModelClass = $this->getResultModelClass();
@@ -1031,8 +1149,15 @@ class ModelSharQ extends ModelSharQBase
 
     public function page(int $page, int $pageSize): static
     {
-        if($page < 0) throw new \Exception('Page must be >= 0');
-        if($pageSize < 0) throw new \Exception('Page size must be >= 0');
+        if ($page < 0)
+        {
+            throw new \Exception('Page must be >= 0');
+        }
+
+        if ($pageSize < 0)
+        {
+            throw new \Exception('Page size must be >= 0');
+        }
 
         return $this->range($page * $pageSize, ($page + 1) * $pageSize - 1);
     }
@@ -1052,45 +1177,54 @@ class ModelSharQ extends ModelSharQBase
 
         // TODO: Implement columnInfo
         $columnInfoQuery = $iSharQ->table(end($tableParts))->columnInfo();
-        $schema = $internalOptions['schema'] ?? null;
+        $schema          = $internalOptions['schema'] ?? null;
 
-        if($schema === null && count($tableParts) > 1) $schema = $tableParts[0];
+        if ($schema === null && count($tableParts) > 1)
+        {
+            $schema = $tableParts[0];
+        }
 
-        if($schema !== null) $columnInfoQuery->withSchema($schema);
+        if ($schema !== null)
+        {
+            $columnInfoQuery->withSchema($schema);
+        }
 
-        if($internalOptions['debug'] ?? false) $columnInfoQuery->debug(true);
+        if ($internalOptions['debug'] ?? false)
+        {
+            $columnInfoQuery->debug(true);
+        }
 
         return $columnInfoQuery;
     }
 
     public function withSchema($schema): static
     {
-        $internalOptions = $this->getInternalOptions();
+        $internalOptions           = $this->getInternalOptions();
         $internalOptions['schema'] = $schema;
         $this->setInternalOptions($internalOptions);
 
         $context = $this->getInternalContext();
 
-        $context->addOnBuildCallback(function($iBuilder) use($schema)
+        $context->addOnBuildCallback(function($iBuilder) use ($schema)
+        {
+            if (!$iBuilder->has('/^withSchema$/'))
             {
-                if(!$iBuilder->has('/^withSchema$/'))
-                {
-                    $iBuilder->addOperationToFront(new SharQOperation('withSchema'), [$schema]);
-                }
-            });
+                $iBuilder->addOperationToFront(new SharQOperation('withSchema'), [$schema]);
+            }
+        });
 
         return $this;
     }
 
-    public function debug /* istanbul ignore next */(bool $doIt=true): static
+    public function debug /* istanbul ignore next */(bool $doIt = true): static
     {
-        $internalOptions = $this->getInternalOptions();
+        $internalOptions          = $this->getInternalOptions();
         $internalOptions['debug'] = $doIt;
         $this->setInternalOptions($internalOptions);
 
         $context = $this->getInternalContext();
 
-        $context->addOnBuildCallback(function($iBuilder) use($doIt)
+        $context->addOnBuildCallback(function($iBuilder) use ($doIt)
         {
             $iBuilder->addOperation(new SharQOperation('debug'), [$doIt]);
         });
@@ -1098,9 +1232,9 @@ class ModelSharQ extends ModelSharQBase
         return $this;
     }
 
-    public function returnError(bool $doIt=true): static
+    public function returnError(bool $doIt = true): static
     {
-        $internalOptions = $this->getInternalOptions();
+        $internalOptions                = $this->getInternalOptions();
         $internalOptions['returnError'] = $doIt;
         $this->setInternalOptions($internalOptions);
 
@@ -1109,7 +1243,7 @@ class ModelSharQ extends ModelSharQBase
 
     private static function writeOperation(ModelSharQ $iBuilder, \Closure $callback): static
     {
-        if(!$iBuilder->isFind())
+        if (!$iBuilder->isFind())
         {
             throw new \Exception('Double call to a write method. You can only call one of the write methods (insert, update, patch, delete, relate, unrelate, increment, decrement) and only once per query builder.');
         }
@@ -1125,7 +1259,7 @@ class ModelSharQ extends ModelSharQBase
      */
     public function insert($modelsOrObjects): static
     {
-        return self::writeOperation($this, function() use($modelsOrObjects)
+        return self::writeOperation($this, function() use ($modelsOrObjects)
         {
             $insertOperationFactory = $this->getInsertOperationFactory();
 
@@ -1141,13 +1275,13 @@ class ModelSharQ extends ModelSharQBase
      */
     public function insertAndFetch($modelsOrObjects): static
     {
-        return self::writeOperation($this, function() use($modelsOrObjects)
+        return self::writeOperation($this, function() use ($modelsOrObjects)
         {
             $insertOperationFactory = $this->getInsertOperationFactory();
 
             $iInsertOperation = $insertOperationFactory($this);
 
-            $insertAndFetchOperation = new InsertAndFetchOperation('insertAndFetch', ['delegate'=>$iInsertOperation]);
+            $insertAndFetchOperation = new InsertAndFetchOperation('insertAndFetch', ['delegate' => $iInsertOperation]);
 
             $this->addOperation($insertAndFetchOperation, [$modelsOrObjects]);
         });
@@ -1160,13 +1294,13 @@ class ModelSharQ extends ModelSharQBase
      */
     public function insertGraph($modelsOrObjects, $opt): static
     {
-        return self::writeOperation($this, function() use($modelsOrObjects, $opt)
+        return self::writeOperation($this, function() use ($modelsOrObjects, $opt)
         {
             $insertOperationFactory = $this->getInsertOperationFactory();
 
             $iInsertOperation = $insertOperationFactory($this);
 
-            $insertGraphOperation = new InsertGraphOperation('insertGraph', ['delegate'=>$iInsertOperation, 'options'=>$opt]);
+            $insertGraphOperation = new InsertGraphOperation('insertGraph', ['delegate' => $iInsertOperation, 'options' => $opt]);
 
             $this->addOperation($insertGraphOperation, [$modelsOrObjects]);
         });
@@ -1179,15 +1313,15 @@ class ModelSharQ extends ModelSharQBase
      */
     public function insertGraphAndFetch($modelsOrObjects, $opt): self
     {
-        return self::writeOperation($this, function() use($modelsOrObjects, $opt)
+        return self::writeOperation($this, function() use ($modelsOrObjects, $opt)
         {
             $insertOperationFactory = $this->getInsertOperationFactory();
 
             $iInsertOperation = $insertOperationFactory($this);
 
-            $insertGraphOperation = new InsertGraphOperation('insertGraph', ['delegate'=>$iInsertOperation, 'options'=>$opt]);
+            $insertGraphOperation = new InsertGraphOperation('insertGraph', ['delegate' => $iInsertOperation, 'options' => $opt]);
 
-            $insertGraphAndFetchOperation = new InsertGraphAndFetchOperation('insertGraphAndFetch', ['delegate'=>$insertGraphOperation]);
+            $insertGraphAndFetchOperation = new InsertGraphAndFetchOperation('insertGraphAndFetch', ['delegate' => $insertGraphOperation]);
 
             $this->addOperation($insertGraphAndFetchOperation, [$modelsOrObjects]);
         });
@@ -1195,7 +1329,7 @@ class ModelSharQ extends ModelSharQBase
 
     public function update($modelOrObject): self
     {
-        return self::writeOperation($this, function() use($modelOrObject)
+        return self::writeOperation($this, function() use ($modelOrObject)
         {
             $updateOperationFactory = $this->getUpdateOperationFactory();
 
@@ -1207,16 +1341,20 @@ class ModelSharQ extends ModelSharQBase
 
     public function updateAndFetch($modelOrObject): self
     {
-        return self::writeOperation($this, function() use($modelOrObject)
+        return self::writeOperation($this, function() use ($modelOrObject)
         {
             $updateOperationFactory = $this->getUpdateOperationFactory();
 
             $iUpdateOperation = $updateOperationFactory($this);
             
             $modelClass = $this->getModelClass();
-            if(!($iUpdateOperation instanceof $modelClass)) throw new \Exception('updateAndFetch can only be called for instance operations');
 
-            $updateAndFetchOperation = new UpdateAndFetchOperation('updateAndFetch', ['delegate'=>$iUpdateOperation]);
+            if (!($iUpdateOperation instanceof $modelClass))
+            {
+                throw new \Exception('updateAndFetch can only be called for instance operations');
+            }
+
+            $updateAndFetchOperation = new UpdateAndFetchOperation('updateAndFetch', ['delegate' => $iUpdateOperation]);
 
             $this->addOperation($updateAndFetchOperation, [$modelOrObject]);
         });
@@ -1224,13 +1362,13 @@ class ModelSharQ extends ModelSharQBase
 
     public function updateAndFetchById($id, $modelOrObject): static
     {
-        return self::writeOperation($this, function() use($id, $modelOrObject)
+        return self::writeOperation($this, function() use ($id, $modelOrObject)
         {
             $updateOperationFactory = $this->getUpdateOperationFactory();
 
             $iUpdateOperation = $updateOperationFactory($this);
             
-            $updateAndFetchOperation = new UpdateAndFetchOperation('updateAndFetch', ['delegate'=>$iUpdateOperation]);
+            $updateAndFetchOperation = new UpdateAndFetchOperation('updateAndFetch', ['delegate' => $iUpdateOperation]);
 
             $this->addOperation($updateAndFetchOperation, [$id, $modelOrObject]);
         });
@@ -1238,9 +1376,9 @@ class ModelSharQ extends ModelSharQBase
 
     public function upsertGraph($modelsOrObjects, $upsertOptions): static
     {
-        return self::writeOperation($this, function() use($modelsOrObjects, $upsertOptions)
+        return self::writeOperation($this, function() use ($modelsOrObjects, $upsertOptions)
         {
-            $upsertOperation = new UpsertGraphOperation('upsertGraph', ['upsertOptions'=>$upsertOptions]);
+            $upsertOperation = new UpsertGraphOperation('upsertGraph', ['upsertOptions' => $upsertOptions]);
 
             $this->addOperation($upsertOperation, [$modelsOrObjects]);
         });
@@ -1248,11 +1386,11 @@ class ModelSharQ extends ModelSharQBase
 
     public function upsertGraphAndFetch($modelsOrObjects, $upsertOptions): static
     {
-        return self::writeOperation($this, function() use($modelsOrObjects, $upsertOptions)
+        return self::writeOperation($this, function() use ($modelsOrObjects, $upsertOptions)
         {
-            $upsertOperation = new UpsertGraphOperation('upsertGraph', ['upsertOptions'=>$upsertOptions]);
+            $upsertOperation = new UpsertGraphOperation('upsertGraph', ['upsertOptions' => $upsertOptions]);
 
-            $upsertAndFetchOperation = new UpsertGraphAndFetchOperation('upsertGraphAndFetch', ['delegate'=>$upsertOperation]);
+            $upsertAndFetchOperation = new UpsertGraphAndFetchOperation('upsertGraphAndFetch', ['delegate' => $upsertOperation]);
 
             $this->addOperation($upsertAndFetchOperation, [$modelsOrObjects]);
         });
@@ -1260,7 +1398,7 @@ class ModelSharQ extends ModelSharQBase
 
     public function patch($modelOrObject): static
     {
-        return static::writeOperation($this, function() use($modelOrObject)
+        return static::writeOperation($this, function() use ($modelOrObject)
         {
             $patchOperationFactory = $this->getPatchOperationFactory();
 
@@ -1276,7 +1414,7 @@ class ModelSharQ extends ModelSharQBase
      */
     public function patchAndFetch($modelOrObject): static
     {
-        return self::writeOperation($this, function() use($modelOrObject)
+        return self::writeOperation($this, function() use ($modelOrObject)
         {
             $patchOperationFactory = $this->getPatchOperationFactory($this);
 
@@ -1284,9 +1422,13 @@ class ModelSharQ extends ModelSharQBase
             $iPatchOperation = $patchOperationFactory($this);
 
             $modelClass = $this->getModelClass();
-            if(!($iPatchOperation instanceof $modelClass)) throw new \Exception('patchAndFetch can only be called for instance operations');
 
-            $patchAndFetchOperation = new UpdateAndFetchOperation('patchAndFetch', ['delegate'=>$iPatchOperation]);
+            if (!($iPatchOperation instanceof $modelClass))
+            {
+                throw new \Exception('patchAndFetch can only be called for instance operations');
+            }
+
+            $patchAndFetchOperation = new UpdateAndFetchOperation('patchAndFetch', ['delegate' => $iPatchOperation]);
 
             //$iPatchOperation is an instance update operation that already adds the
             // required "where id = $" clause.
@@ -1298,13 +1440,13 @@ class ModelSharQ extends ModelSharQBase
 
     public function patchAndFetchById($id, $modelOrObject): static
     {
-        return self::writeOperation($this, function() use($id, $modelOrObject)
+        return self::writeOperation($this, function() use ($id, $modelOrObject)
         {
             $patchOperationFactory = $this->getPatchOperationFactory();
 
             $iPatchOperation = $patchOperationFactory($this);
 
-            $patchAndFetchOperation = new UpdateAndFetchOperation('patchAndFetch', ['delegate'=>$iPatchOperation]);
+            $patchAndFetchOperation = new UpdateAndFetchOperation('patchAndFetch', ['delegate' => $iPatchOperation]);
 
             $this->addOperation($patchAndFetchOperation, [$id, $modelOrObject]);
         });
@@ -1312,9 +1454,12 @@ class ModelSharQ extends ModelSharQBase
 
     public function delete(...$args): static
     {
-        return self::writeOperation($this, function() use($args)
+        return self::writeOperation($this, function() use ($args)
         {
-            if(count($args) !== 0) throw new \Exception("Don't pass arguments to delete(). You should use it like this: delete()->where('foo', 'bar')->andWhere(...)");
+            if (count($args) !== 0)
+            {
+                throw new \Exception("Don't pass arguments to delete(). You should use it like this: delete()->where('foo', 'bar')->andWhere(...)");
+            }
 
             $deleteOperationFactory = $this->getDeleteOperationFactory();
 
@@ -1331,7 +1476,7 @@ class ModelSharQ extends ModelSharQBase
 
     public function relate(...$args): static
     {
-        return self::writeOperation($this, function() use($args)
+        return self::writeOperation($this, function() use ($args)
         {
             $relateOperationFactory = $this->getRelateOperationFactory();
 
@@ -1343,9 +1488,12 @@ class ModelSharQ extends ModelSharQBase
 
     public function unrelate(...$args): static
     {
-        return self::writeOperation($this, function() use($args)
+        return self::writeOperation($this, function() use ($args)
         {
-            if(count($args) !== 0) throw new \Exception("Don't pass arguments to unrelate(). You should use it like this: unrelate()->where('foo', 'bar')->andWhere(...)");
+            if (count($args) !== 0)
+            {
+                throw new \Exception("Don't pass arguments to unrelate(). You should use it like this: unrelate()->where('foo', 'bar')->andWhere(...)");
+            }
 
             $unrelateOperationFactory = $this->getUnrelateOperationFactory();
 
@@ -1361,7 +1509,7 @@ class ModelSharQ extends ModelSharQBase
         $modelClass = $this->getModelClass();
         $columnName = $modelClass::propertyNameToColumnName($propertyName);
 
-        return $this->patch([$columnName=>new Raw('?? + ?', $columnName, $howMuch)]);
+        return $this->patch([$columnName => new Raw('?? + ?', $columnName, $howMuch)]);
     }
 
     public function decrement($propertyName, $howMuch): static
@@ -1370,7 +1518,7 @@ class ModelSharQ extends ModelSharQBase
         $modelClass = $this->getModelClass();
         $columnName = $modelClass::propertyNameToColumnName($propertyName);
 
-        return $this->patch([$columnName=>new Raw('?? - ?', $columnName, $howMuch)]);
+        return $this->patch([$columnName => new Raw('?? - ?', $columnName, $howMuch)]);
     }
 
     public function findOne(...$args): static
@@ -1396,9 +1544,9 @@ class ModelSharQ extends ModelSharQBase
 
         $operation = $iBuilder->findOperation($operationName);
 
-        if($operation === null)
+        if ($operation === null)
         {
-            $operation = new JoinRelatedOperation($operationName, ['joinOperation'=>$joinOperation]);
+            $operation = new JoinRelatedOperation($operationName, ['joinOperation' => $joinOperation]);
             $iBuilder->addOperation($operation, []);
         }
 
@@ -1407,56 +1555,56 @@ class ModelSharQ extends ModelSharQBase
 
     public function joinRelated($expression, $options): static
     {
-        self::ensureJoinRelatedOperation($this, 'innerJoin')->addCall(['expression'=>$expression, 'options'=>$options]);
+        self::ensureJoinRelatedOperation($this, 'innerJoin')->addCall(['expression' => $expression, 'options' => $options]);
 
         return $this;
     }
 
     public function innerJoinRelated($expression, $options): static
     {
-        self::ensureJoinRelatedOperation($this, 'innerJoin')->addCall(['expression'=>$expression, 'options'=>$options]);
+        self::ensureJoinRelatedOperation($this, 'innerJoin')->addCall(['expression' => $expression, 'options' => $options]);
 
         return $this;
     }
 
     public function outerJoinRelated($expression, $options): static
     {
-        self::ensureJoinRelatedOperation($this, 'outerJoin')->addCall(['expression'=>$expression, 'options'=>$options]);
+        self::ensureJoinRelatedOperation($this, 'outerJoin')->addCall(['expression' => $expression, 'options' => $options]);
 
         return $this;
     }
 
     public function fullOuterJoinRelated($expression, $options): static
     {
-        self::ensureJoinRelatedOperation($this, 'fullOuterJoin')->addCall(['expression'=>$expression, 'options'=>$options]);
+        self::ensureJoinRelatedOperation($this, 'fullOuterJoin')->addCall(['expression' => $expression, 'options' => $options]);
 
         return $this;
     }
 
     public function leftJoinRelated($expression, $options): static
     {
-        self::ensureJoinRelatedOperation($this, 'leftJoin')->addCall(['expression'=>$expression, 'options'=>$options]);
+        self::ensureJoinRelatedOperation($this, 'leftJoin')->addCall(['expression' => $expression, 'options' => $options]);
 
         return $this;
     }
 
     public function leftOuterJoinRelated($expression, $options): static
     {
-        self::ensureJoinRelatedOperation($this, 'leftOuterJoin')->addCall(['expression'=>$expression, 'options'=>$options]);
+        self::ensureJoinRelatedOperation($this, 'leftOuterJoin')->addCall(['expression' => $expression, 'options' => $options]);
 
         return $this;
     }
 
     public function rightJoinRelated($expression, $options): static
     {
-        self::ensureJoinRelatedOperation($this, 'rightJoin')->addCall(['expression'=>$expression, 'options'=>$options]);
+        self::ensureJoinRelatedOperation($this, 'rightJoin')->addCall(['expression' => $expression, 'options' => $options]);
 
         return $this;
     }
 
     public function rightOuterJoinRelated($expression, $options): static
     {
-        self::ensureJoinRelatedOperation($this, 'rightOuterJoin')->addCall(['expression'=>$expression, 'options'=>$options]);
+        self::ensureJoinRelatedOperation($this, 'rightOuterJoin')->addCall(['expression' => $expression, 'options' => $options]);
 
         return $this;
     }
@@ -1512,9 +1660,12 @@ class ModelSharQ extends ModelSharQBase
         return $this->addOperation(new FromOperation('table'), $args);
     }
 
-    public function for($relatedQueryFor=null)
+    public function for($relatedQueryFor = null)
     {
-        if($relatedQueryFor === null) return $this->relatedQueryFor;
+        if ($relatedQueryFor === null)
+        {
+            return $this->relatedQueryFor;
+        }
         
         $this->relatedQueryFor = $relatedQueryFor;
 
@@ -1642,9 +1793,12 @@ class ModelSharQ extends ModelSharQBase
 
     public function __clone(): void
     {
-        foreach(get_object_vars($this) as $name => $value)
+        foreach (get_object_vars($this) as $name => $value)
         {
-            if(is_object($value)) $this->{$name} = clone $value;
+            if (is_object($value))
+            {
+                $this->{$name} = clone $value;
+            }
         }
     }
 }

@@ -17,7 +17,7 @@ class RelationExpressionError extends \Exception
     {
         $this->iRelationExpression = $iRelationExpression;
 
-        $message = 'Invalid relation expression: ' . $message;
+        $message = 'Invalid relation expression: '.$message;
         parent::__construct($message, $code, $previous);
     }
 

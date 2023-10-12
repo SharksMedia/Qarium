@@ -8,5 +8,4 @@ namespace Sharksmedia\Qarium\Relations;
 
 class HasOne extends Relation
 {
-
 }

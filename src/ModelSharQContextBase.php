@@ -53,39 +53,49 @@ class ModelSharQContextBase
         return $this->internalData;
     }
 
-    public function __construct(?ModelSharQOperationSupport $iBuilder=null)
+    public function __construct(?ModelSharQOperationSupport $iBuilder = null)
     {
-        if($iBuilder === null) return;
+        if ($iBuilder === null)
+        {
+            return;
+        }
 
         $userContextClass = $iBuilder->getModelSharQUserContextClass();
 
-        if($iBuilder !== null) $this->userContext = new $userContextClass($iBuilder);
+        if ($iBuilder !== null)
+        {
+            $this->userContext = new $userContextClass($iBuilder);
+        }
 
         $this->options = $iBuilder->getInternalOptions();
     }
 
     public function getRunBeforeCallback(): callable
     {
-        return function(){};
+        return function()
+        {};
     }
 
     public function getRunAfterCallback(): callable
     {
-        return function(){};
+        return function()
+        {};
     }
 
     public function getOnBuildCallback(): callable
     {
-        return function(){};
+        return function()
+        {};
     }
 
     public function __clone(): void
     {
-        foreach(get_object_vars($this) as $name=>$value)
+        foreach (get_object_vars($this) as $name => $value)
         {
-            if(is_object($value)) $this->{$name} = clone $value;
+            if (is_object($value))
+            {
+                $this->{$name} = clone $value;
+            }
         }
     }
-
-
 }

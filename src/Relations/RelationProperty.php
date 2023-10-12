@@ -80,59 +80,57 @@ class RelationProperty
      */
     public function __construct($references, \Closure $modelClassResolver)
     {
-        $refs = $this->createReferences(is_array($references) ? $references : [$references]);
-        $paths = $this->createPaths($refs, $modelClassResolver);
+        $refs       = $this->createReferences(is_array($references) ? $references : [$references]);
+        $paths      = $this->createPaths($refs, $modelClassResolver);
         $modelClass = $this->resolveModelClass($paths);
 
         $this->references = array_map(function($ref) use ($modelClass)
-            {
-                return $ref->model($modelClass);
-            }, $refs);
+        {
+            return $ref->model($modelClass);
+        }, $refs);
 
         $this->modelClass = $modelClass;
 
         $this->properties = array_map(function($it)
-            {
-                return $it->path[0];
-            }, $paths);
+        {
+            return $it->path[0];
+        }, $paths);
 
         $this->columns = array_map(function($it)
-            {
-                return $it->getColumn();
-            }, $refs);
+        {
+            return $it->getColumn();
+        }, $refs);
 
         $this->propGetters = array_map(function($it)
-            {
-                return self::createGetter($it->path);
-            }, $paths);
+        {
+            return self::createGetter($it->path);
+        }, $paths);
 
         $this->propSetters = array_map(function($it)
-            {
-                return self::createSetter($it->path);
-            }, $paths);
+        {
+            return self::createSetter($it->path);
+        }, $paths);
 
         $this->propCheckers = array_map(function($it)
-            {
-                return self::createChecker($it->path);
-            }, $paths);
+        {
+            return self::createChecker($it->path);
+        }, $paths);
 
         $this->patchers = array_map(function($it, $path)
-            {
-                return self::createPatcher($it, $path->path);
-            }, $refs, $paths);
+        {
+            return self::createPatcher($it, $path->path);
+        }, $refs, $paths);
         
 
 
-    // this._propGetters = paths.map((it) => createGetter(it.path));
-    // this._propSetters = paths.map((it) => createSetter(it.path));
-    // this._patchers = refs.map((it, i) => createPatcher(it, paths[i].path));
-
-
+        // this._propGetters = paths.map((it) => createGetter(it.path));
+        // this._propSetters = paths.map((it) => createSetter(it.path));
+        // this._patchers = refs.map((it, i) => createPatcher(it, paths[i].path));
     }
 
     private static function createGetter($path): \Closure
     {
-        if(is_array($path) && count($path) === 1)
+        if (is_array($path) && count($path) === 1)
         {
             $prop = $path[0];
 
@@ -155,7 +153,7 @@ class RelationProperty
 
     private static function createSetter(array $path): \Closure
     {
-        if(count($path) === 1)
+        if (count($path) === 1)
         {
             $prop = $path[0];
 
@@ -173,7 +171,7 @@ class RelationProperty
 
     private static function createPatcher(ReferenceBuilder $ref, array $path): \Closure
     {
-        if($ref->isPlainColumnRef())
+        if ($ref->isPlainColumnRef())
         {
             return function(&$patch, $value) use ($path)
             {
@@ -190,7 +188,7 @@ class RelationProperty
 
     private static function createChecker($path): \Closure
     {
-        if(count($path) === 1)
+        if (count($path) === 1)
         {
             $prop = $path[0];
 
@@ -219,9 +217,10 @@ class RelationProperty
         try
         {
             $refs = [];
-            foreach($references as $reference)
+
+            foreach ($references as $reference)
             {
-                if(!is_object($reference) || !is_subclass_of($reference, ReferenceBuilder::class))
+                if (!is_object($reference) || !is_subclass_of($reference, ReferenceBuilder::class))
                 {
                     // $reference = is_array($reference) ? $reference : [$reference];
 
@@ -243,7 +242,10 @@ class RelationProperty
 
     private function createReference($reference): ReferenceBuilder
     {
-        if(is_object($reference) && is_subclass_of($reference, ReferenceBuilder::class)) return $reference;
+        if (is_object($reference) && is_subclass_of($reference, ReferenceBuilder::class))
+        {
+            return $reference;
+        }
 
         return new ReferenceBuilder($reference);
     }
@@ -257,29 +259,35 @@ class RelationProperty
     private function createPaths(array $iReferences, \Closure $modelClassResolver): array
     {
         return array_map(function(ReferenceBuilder $iReference) use ($modelClassResolver)
+        {
+            if ($iReference->getTableName() === null)
             {
-                if($iReference->getTableName() === null) throw new InvalidReferenceError();
+                throw new InvalidReferenceError();
+            }
 
-                /** @var Model $modelClass */
-                $modelClass = $modelClassResolver($iReference->getTableName(), $iReference->getColumn());
+            /** @var Model $modelClass */
+            $modelClass = $modelClassResolver($iReference->getTableName(), $iReference->getColumn());
 
-                if(!$modelClass) throw new ModelNotFoundError($iReference->getTableName());
+            if (!$modelClass)
+            {
+                throw new ModelNotFoundError($iReference->getTableName());
+            }
 
-                $prop = $modelClass::columnNameToPropertyName($iReference->getColumn());
+            $prop = $modelClass::columnNameToPropertyName($iReference->getColumn());
 
-                $jsonPath = array_map(function($it)
-                    {
-                        return $it->iReference;
-                    }, $iReference->getParsedExpression()->access);
+            $jsonPath = array_map(function($it)
+            {
+                return $it->iReference;
+            }, $iReference->getParsedExpression()->access);
 
-                $path = (object)
-                [
-                    'path'=>array_merge([$prop], $jsonPath),
-                    'modelClass'=>$modelClass,
-                ];
+            $path = (object)
+            [
+                'path'       => array_merge([$prop], $jsonPath),
+                'modelClass' => $modelClass,
+            ];
 
-                return $path;
-            }, $iReferences);
+            return $path;
+        }, $iReferences);
     }
 
     /**
@@ -290,13 +298,16 @@ class RelationProperty
     private function resolveModelClass(array $paths): string
     {
         $modelClasses = array_map(function($it)
-            {
-                return $it->modelClass;
-            }, $paths);
+        {
+            return $it->modelClass;
+        }, $paths);
 
         $uniqueModelClasses = array_unique($modelClasses, SORT_REGULAR);
 
-        if(count($uniqueModelClasses) !== 1) throw new InvalidReferenceError();
+        if (count($uniqueModelClasses) !== 1)
+        {
+            throw new InvalidReferenceError();
+        }
 
         return $modelClasses[0];
     }
@@ -342,7 +353,7 @@ class RelationProperty
     {
         $refs = [];
 
-        foreach($this->references as $index=>$reference)
+        foreach ($this->references as $index => $reference)
         {
             $refs[] = $this->ref($iBuilder, $index);
         }
@@ -355,7 +366,10 @@ class RelationProperty
     {
         $patcher = $this->patchers[$index] ?? null;
 
-        if(!$patcher) throw new \Exception('No patcher for index: '.$index);
+        if (!$patcher)
+        {
+            throw new \Exception('No patcher for index: '.$index);
+        }
 
         return $patcher($patch, $value);
     }
@@ -365,7 +379,10 @@ class RelationProperty
     {
         $setter = $this->propSetters[$index] ?? null;
 
-        if(!$setter) throw new \Exception('No setter for index: '.$index);
+        if (!$setter)
+        {
+            throw new \Exception('No setter for index: '.$index);
+        }
 
         return $setter($obj, $value);
     }
@@ -375,7 +392,10 @@ class RelationProperty
     {
         $getter = $this->propGetters[$index] ?? null;
 
-        if(!$getter) throw new \Exception('No getter for index: '.$index);
+        if (!$getter)
+        {
+            throw new \Exception('No getter for index: '.$index);
+        }
 
         return $getter($obj);
     }
@@ -384,9 +404,9 @@ class RelationProperty
     public function getProps(&$obj)
     {
         $props = [];
-        $size = $this->getSize();
+        $size  = $this->getSize();
 
-        for($i=0; $i<$size; ++$i)
+        for ($i = 0; $i < $size; ++$i)
         {
             $props[] = $this->getProp($obj, $i);
         }
@@ -397,13 +417,16 @@ class RelationProperty
     public function getPropKey(&$obj)
     {
         $size = $this->getSize();
-        $key = self::PROP_KEY_PREFIX;
+        $key  = self::PROP_KEY_PREFIX;
 
-        for($i = 0; $i < $size; ++$i)
+        for ($i = 0; $i < $size; ++$i)
         {
             $key .= self::propToStr($this->getProp($obj, $i));
 
-            if($i < $size - 1) $key .= ',';
+            if ($i < $size - 1)
+            {
+                $key .= ',';
+            }
         }
 
         return $key;
@@ -411,8 +434,15 @@ class RelationProperty
 
     private static function propToStr($value)
     {
-        if($value === null) return 'null';
-        if(is_object(($value))) return json_encode($value);
+        if ($value === null)
+        {
+            return 'null';
+        }
+
+        if (is_object(($value)))
+        {
+            return json_encode($value);
+        }
 
         return $value.'';
     }
@@ -421,7 +451,10 @@ class RelationProperty
     {
         $checker = $this->propCheckers[$index] ?? null;
 
-        if(!$checker) throw new \Exception('No getter for index: '.$index);
+        if (!$checker)
+        {
+            throw new \Exception('No getter for index: '.$index);
+        }
 
         return $checker($obj);
     }

@@ -20,14 +20,14 @@ class RelateOperation extends ModelSharQOperation
     protected $input;
     protected array $ids = [];
 
-    public function __construct(string $name, Relation $iRelation, RelationOwner $iOwner, array $options=[])
+    public function __construct(string $name, Relation $iRelation, RelationOwner $iOwner, array $options = [])
     {
         parent::__construct($name, $options);
 
         $this->iRelation = $iRelation;
-        $this->iOwner = $iOwner;
+        $this->iOwner    = $iOwner;
 
         $this->input = null;
-        $this->ids = [];
+        $this->ids   = [];
     }
 }

@@ -21,13 +21,13 @@ class StaticHookArguments
      */
     private $result;
 
-    public function __construct(ModelSharQ $iBuilder, $result=null)
+    public function __construct(ModelSharQ $iBuilder, $result = null)
     {
         $this->iBuilder = $iBuilder;
-        $this->result = $result;
+        $this->result   = $result;
     }
 
-    public static function create(ModelSharQ $iBuilder, $result=null): StaticHookArguments
+    public static function create(ModelSharQ $iBuilder, $result = null): StaticHookArguments
     {
         return new StaticHookArguments($iBuilder, $result);
     }
@@ -54,36 +54,52 @@ class StaticHookArguments
 
     public function getRelation(): Relation
     {
-        $operation = $this->iBuilder->findOperation(function($operation){ return self::_hasRelation($operation); });
+        $operation = $this->iBuilder->findOperation(function($operation)
+        { return self::_hasRelation($operation); });
 
-        if($operation === null) return null;
+        if ($operation === null)
+        {
+            return null;
+        }
 
         return self::_getRelation($operation);
     }
 
     public function getModelOptions()
     {
-        $operation = $this->iBuilder->findOperation(function($operation){ return self::_hasModelOptions($operation); });
+        $operation = $this->iBuilder->findOperation(function($operation)
+        { return self::_hasModelOptions($operation); });
 
-        if($operation === null) return null;
+        if ($operation === null)
+        {
+            return null;
+        }
 
         return self::_getModelOptions($operation);
     }
 
     public function getItems()
     {
-        $operation = $this->iBuilder->findOperation(function($operation){ return self::_hasItems($operation); });
+        $operation = $this->iBuilder->findOperation(function($operation)
+        { return self::_hasItems($operation); });
 
-        if($operation === null) return null;
+        if ($operation === null)
+        {
+            return null;
+        }
 
         return self::_getItems($operation);
     }
 
     public function getInputItems()
     {
-        $operation = $this->iBuilder->findOperation(function($operation){ return self::_hasInputItems($operation); });
+        $operation = $this->iBuilder->findOperation(function($operation)
+        { return self::_hasInputItems($operation); });
 
-        if($operation === null) return null;
+        if ($operation === null)
+        {
+            return null;
+        }
 
         return self::_getInputItems($operation);
     }
@@ -127,11 +143,4 @@ class StaticHookArguments
     {
         return self::_getInputItems($operation) !== null;
     }
-
-
-
-
-
-
-
 }

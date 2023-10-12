@@ -56,9 +56,9 @@ abstract class ModelSharQOperation
      * @param string $name
      * @param array $options
      */
-    public function __construct(string $name, array $options=[])
+    public function __construct(string $name, array $options = [])
     {
-        $this->name = $name;
+        $this->name    = $name;
         $this->options = $options;
 
         $this->setAdderHookName(null);
@@ -75,10 +75,13 @@ abstract class ModelSharQOperation
 
     protected static function funcHasBeenOverriden(string $function): bool
     {
-        $reflector = new \ReflectionMethod(static::class, $function);
+        $reflector    = new \ReflectionMethod(static::class, $function);
         $hasOverriden = ($reflector->getDeclaringClass()->getName() === static::class);
 
-        if(static::class === ModelSharQOperation::class) return false;
+        if (static::class === ModelSharQOperation::class)
+        {
+            return false;
+        }
 
         return $hasOverriden;
     }
@@ -121,23 +124,26 @@ abstract class ModelSharQOperation
     {
         $hookNameHashMethodMap =
         [
-            'onAdd'=>'hasOnAdd',
-            'onBefore1'=>'hasOnBefore1',
-            'onBefore2'=>'hasOnBefore2',
-            'onBefore3'=>'hasOnBefore3',
-            'onBuild'=>'hasOnBuild',
-            'onBuildKnex'=>'hasOnBuildKnex',
-            'onRawResult'=>'hasOnRawResult',
-            'queryExecutor'=>'hasQueryExecutor',
-            'onAfter1'=>'hasOnAfter1',
-            'onAfter2'=>'hasOnAfter2',
-            'onAfter3'=>'hasOnAfter3',
-            'onError'=>'hasOnError',
+            'onAdd'         => 'hasOnAdd',
+            'onBefore1'     => 'hasOnBefore1',
+            'onBefore2'     => 'hasOnBefore2',
+            'onBefore3'     => 'hasOnBefore3',
+            'onBuild'       => 'hasOnBuild',
+            'onBuildKnex'   => 'hasOnBuildKnex',
+            'onRawResult'   => 'hasOnRawResult',
+            'queryExecutor' => 'hasQueryExecutor',
+            'onAfter1'      => 'hasOnAfter1',
+            'onAfter2'      => 'hasOnAfter2',
+            'onAfter3'      => 'hasOnAfter3',
+            'onError'       => 'hasOnError',
         ];
 
         $hookNameHashMethod = $hookNameHashMethodMap[$hookName] ?? null;
 
-        if($hookNameHashMethod === null) throw new \Exception('Unknown hook name: '.$hookName);
+        if ($hookNameHashMethod === null)
+        {
+            throw new \Exception('Unknown hook name: '.$hookName);
+        }
 
         return $this->$hookNameHashMethod();
     }
@@ -151,9 +157,15 @@ abstract class ModelSharQOperation
      * @param array $arguments
      * @return bool
      */
-    public function onAdd(ModelSharQOperationSupport $iBuilder, ...$arguments): bool { return true; }
+    public function onAdd(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
+    {
+        return true;
+    }
 
-    public function hasOnAdd(): bool { return static::funcHasBeenOverriden('onAdd'); }
+    public function hasOnAdd(): bool
+    {
+        return static::funcHasBeenOverriden('onAdd');
+    }
 
     /**
      * 2023-07-04
@@ -166,17 +178,35 @@ abstract class ModelSharQOperation
      * @param array $arguments
      * @return bool
      */
-    public function onBefore1(ModelSharQOperationSupport $iBuilder, ...$arguments): bool { return true; }
+    public function onBefore1(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
+    {
+        return true;
+    }
 
-    public function hasOnBefore1(): bool { return static::funcHasBeenOverriden('onBefore1'); }
+    public function hasOnBefore1(): bool
+    {
+        return static::funcHasBeenOverriden('onBefore1');
+    }
 
-    public function onBefore2(ModelSharQOperationSupport $iBuilder, ...$arguments): bool { return true; }
+    public function onBefore2(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
+    {
+        return true;
+    }
 
-    public function hasOnBefore2(): bool { return static::funcHasBeenOverriden('onBefore2'); }
+    public function hasOnBefore2(): bool
+    {
+        return static::funcHasBeenOverriden('onBefore2');
+    }
 
-    public function onBefore3(ModelSharQOperationSupport $iBuilder, ...$arguments): bool { return true; }
+    public function onBefore3(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
+    {
+        return true;
+    }
 
-    public function hasOnBefore3(): bool { return static::funcHasBeenOverriden('onBefore3'); }
+    public function hasOnBefore3(): bool
+    {
+        return static::funcHasBeenOverriden('onBefore3');
+    }
     /**
      * 2023-07-04
      * This is called as the last thing when the query is executed but before
@@ -189,9 +219,14 @@ abstract class ModelSharQOperation
      * @param ModelSharQOperationSupport $iBuilder
      * @return bool
      */
-    public function onBuild(ModelSharQOperationSupport $iBuilder): void { }
+    public function onBuild(ModelSharQOperationSupport $iBuilder): void
+    {
+    }
 
-    public function hasOnBuild(): bool { return static::funcHasBeenOverriden('onBuild'); }
+    public function hasOnBuild(): bool
+    {
+        return static::funcHasBeenOverriden('onBuild');
+    }
 
     /**
      * 2023-07-04
@@ -207,9 +242,15 @@ abstract class ModelSharQOperation
      * @param SharQ|Join|null $iSharQ
      * @return SharQ|Join|null
      */
-    public function onBuildSharQ(ModelSharQOperationSupport $iBuilder, $iSharQ) { return $iSharQ; }
+    public function onBuildSharQ(ModelSharQOperationSupport $iBuilder, $iSharQ)
+    {
+        return $iSharQ;
+    }
 
-    public function hasOnBuildSharQ(): bool { return static::funcHasBeenOverriden('onBuildSharQ'); }
+    public function hasOnBuildSharQ(): bool
+    {
+        return static::funcHasBeenOverriden('onBuildSharQ');
+    }
 
     /**
      * 2023-07-04
@@ -222,9 +263,15 @@ abstract class ModelSharQOperation
      * @param SharQ $iSharkSharQ
      * @return array
      */
-    public function onRawResult(ModelSharQOperationSupport $iBuilder, array $rows) { return $rows; }
+    public function onRawResult(ModelSharQOperationSupport $iBuilder, array $rows)
+    {
+        return $rows;
+    }
 
-    public function hasOnRawResult(): bool { return static::funcHasBeenOverriden('onRawResult'); }
+    public function hasOnRawResult(): bool
+    {
+        return static::funcHasBeenOverriden('onRawResult');
+    }
 
     /**
      * 2023-07-04
@@ -238,25 +285,43 @@ abstract class ModelSharQOperation
      * @param array|Model|null $result
      * @return array|Model|null
      */
-    public function onAfter1(ModelSharQOperationSupport $iBuilder, &$result) { return $result; }
+    public function onAfter1(ModelSharQOperationSupport $iBuilder, &$result)
+    {
+        return $result;
+    }
 
-    public function hasOnAfter1(): bool { return static::funcHasBeenOverriden('onAfter1'); }
-
-    /**
-     * @param array|Model|null $result
-     * @return array|Model|null
-     */
-    public function onAfter2(ModelSharQOperationSupport $iBuilder, &$result) { return $result; }
-
-    public function hasOnAfter2(): bool { return static::funcHasBeenOverriden('onAfter2'); }
+    public function hasOnAfter1(): bool
+    {
+        return static::funcHasBeenOverriden('onAfter1');
+    }
 
     /**
      * @param array|Model|null $result
      * @return array|Model|null
      */
-    public function onAfter3(ModelSharQOperationSupport $iBuilder, &$result) { return $result; }
+    public function onAfter2(ModelSharQOperationSupport $iBuilder, &$result)
+    {
+        return $result;
+    }
 
-    public function hasOnAfter3(): bool { return static::funcHasBeenOverriden('onAfter3'); }
+    public function hasOnAfter2(): bool
+    {
+        return static::funcHasBeenOverriden('onAfter2');
+    }
+
+    /**
+     * @param array|Model|null $result
+     * @return array|Model|null
+     */
+    public function onAfter3(ModelSharQOperationSupport $iBuilder, &$result)
+    {
+        return $result;
+    }
+
+    public function hasOnAfter3(): bool
+    {
+        return static::funcHasBeenOverriden('onAfter3');
+    }
 
     /**
      * 2023-07-04
@@ -268,9 +333,15 @@ abstract class ModelSharQOperation
      * @param ModelSharQOperationSupport $iBuilder
      * @return ModelSharQOperationSupport
      */
-    public function queryExecutor(ModelSharQOperationSupport $iBuilder): ?ModelSharQOperationSupport { return null; }
+    public function queryExecutor(ModelSharQOperationSupport $iBuilder): ?ModelSharQOperationSupport
+    {
+        return null;
+    }
 
-    public function hasQueryExecutor(): bool { return static::funcHasBeenOverriden('queryExecutor'); }
+    public function hasQueryExecutor(): bool
+    {
+        return static::funcHasBeenOverriden('queryExecutor');
+    }
 
     /**
      * 2023-07-04
@@ -280,9 +351,14 @@ abstract class ModelSharQOperation
      * @param ModelSharQ $iBuilder
      * @param \Throwable $error
      */
-    public function onError(ModelSharQ $iBuilder, ...$arguments) { }
+    public function onError(ModelSharQ $iBuilder, ...$arguments)
+    {
+    }
 
-    public function hasOnError(): bool { return static::funcHasBeenOverriden('onError'); }
+    public function hasOnError(): bool
+    {
+        return static::funcHasBeenOverriden('onError');
+    }
 
     /**
      * 2023-07-04
@@ -295,9 +371,15 @@ abstract class ModelSharQOperation
      * @param SharQ $iSharkSharQ
      * @return ModelSharQOperation
      */
-    public function toFindOperation(ModelSharQOperationSupport $iBuilder): ?ModelSharQOperation { return $this; }
+    public function toFindOperation(ModelSharQOperationSupport $iBuilder): ?ModelSharQOperation
+    {
+        return $this;
+    }
 
-    public function hasToFindOperation(): bool { return false; }
+    public function hasToFindOperation(): bool
+    {
+        return false;
+    }
 
     /**
      *
@@ -309,16 +391,23 @@ abstract class ModelSharQOperation
     {
         $ancestor = $this->getParentOperation();
 
-        if($ancestor === null) return false;
-
-        $ancestorsSetHash = array_map(function(ModelSharQOperation $operation) { return $operation->_identifier; }, $ancestorsSet);
-
-        while($ancestor !== null)
+        if ($ancestor === null)
         {
-            $ancestorName = (new \ReflectionClass($ancestor))->getShortName();
+            return false;
+        }
+
+        $ancestorsSetHash = array_map(function(ModelSharQOperation $operation)
+        { return $operation->_identifier; }, $ancestorsSet);
+
+        while ($ancestor !== null)
+        {
+            $ancestorName    = (new \ReflectionClass($ancestor))->getShortName();
             $isAncestorInSet = in_array($ancestor->_identifier, $ancestorsSetHash, true);
 
-            if(in_array($ancestor->_identifier, $ancestorsSetHash, true)) return true;
+            if (in_array($ancestor->_identifier, $ancestorsSetHash, true))
+            {
+                return true;
+            }
 
             $ancestor = $ancestor->getParentOperation();
         }
@@ -365,7 +454,10 @@ abstract class ModelSharQOperation
     {
         $this->childOperations = array_map(function(ModelSharQOperation $childOperation) use ($oldOperation, $newOperation)
         {
-            if($childOperation === $oldOperation) return $newOperation;
+            if ($childOperation === $oldOperation)
+            {
+                return $newOperation;
+            }
 
             return $childOperation;
         }, $this->childOperations);
@@ -390,18 +482,23 @@ abstract class ModelSharQOperation
      */
     public function forEachDescendantOperation(callable $callback): bool
     {
-        foreach($this->childOperations as $childOperation)
+        foreach ($this->childOperations as $childOperation)
         {
             $result = $callback($childOperation);
 
-            if($result === false) return false;
+            if ($result === false)
+            {
+                return false;
+            }
 
             $descendantResult = $childOperation->forEachDescendantOperation($callback);
 
-            if($descendantResult === false) return false;
+            if ($descendantResult === false)
+            {
+                return false;
+            }
         }
 
         return true;
     }
-
 }

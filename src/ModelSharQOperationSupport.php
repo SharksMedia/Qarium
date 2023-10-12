@@ -17,17 +17,17 @@ use Sharksmedia\SharQ\Statement\Join;
 
 abstract class ModelSharQOperationSupport
 {
-    public const QUERY_BUILDER_CONTEXT = ModelSharQContextBase::class;
+    public const QUERY_BUILDER_CONTEXT      = ModelSharQContextBase::class;
     public const QUERY_BUILDER_USER_CONTEXT = ModelSharQContextUser::class;
 
-    public const ALL_SELECTOR = true;
-    public const SELECT_SELECTOR = '/^(select|columns|column|distinct|count|countDistinct|min|max|sum|sumDistinct|avg|avgDistinct)$/';
-    public const WHERE_SELECTOR = '/^(where|orWhere|andWhere|find\w+)/';
-    public const ON_SELECTOR = '/^(on|orOn|andOn)/';
+    public const ALL_SELECTOR      = true;
+    public const SELECT_SELECTOR   = '/^(select|columns|column|distinct|count|countDistinct|min|max|sum|sumDistinct|avg|avgDistinct)$/';
+    public const WHERE_SELECTOR    = '/^(where|orWhere|andWhere|find\w+)/';
+    public const ON_SELECTOR       = '/^(on|orOn|andOn)/';
     public const ORDER_BY_SELECTOR = '/^orderBy/';
-    public const JOIN_SELECTOR = '/(join|joinRaw|joinRelated)$/';
-    public const FROM_SELECTOR = '/^(from|into|table)$/';
-    public const LIMIT_SELECTOR = '/^(limit|offset)$/';
+    public const JOIN_SELECTOR     = '/(join|joinRaw|joinRelated)$/';
+    public const FROM_SELECTOR     = '/^(from|into|table)$/';
+    public const LIMIT_SELECTOR    = '/^(limit|offset)$/';
 
     /**
      * @var class-string<Model>
@@ -80,9 +80,9 @@ abstract class ModelSharQOperationSupport
 
         $queryBuilderContextClass = static::getModelSharQContextClass();
 
-        $instance->context = new $queryBuilderContextClass($instance);
-        $instance->parentQuery = null;
-        $instance->isPartialQuery = false;
+        $instance->context          = new $queryBuilderContextClass($instance);
+        $instance->parentQuery      = null;
+        $instance->isPartialQuery   = false;
         $instance->activeOperations = [];
     }
 
@@ -126,7 +126,7 @@ abstract class ModelSharQOperationSupport
      * @param mixed $obj
      * @return ModelSharQContextBase|ModelSharQContextUser
      */
-    public function getContext($obj=null)
+    public function getContext($obj = null)
     {
         return $this->context;
     }
@@ -158,9 +158,12 @@ abstract class ModelSharQOperationSupport
         return $this;
     }
 
-    public function context($obj=null)
+    public function context($obj = null)
     {
-        if($obj === null) return $this->getUserContext();
+        if ($obj === null)
+        {
+            return $this->getUserContext();
+        }
 
         $this->setUserContext($obj);
 
@@ -169,8 +172,8 @@ abstract class ModelSharQOperationSupport
 
     public function clearContext(): static
     {
-        $context = $this->context;
-        $userContextClass = static::QUERY_BUILDER_USER_CONTEXT;
+        $context              = $this->context;
+        $userContextClass     = static::QUERY_BUILDER_USER_CONTEXT;
         $context->userContext = new $userContextClass($this);
 
         return $this;
@@ -260,14 +263,17 @@ abstract class ModelSharQOperationSupport
         return $this->getAliasFor($tableName) ?? $this->getTableNameFor($tableName);
     }
 
-    public function childQueryOf(ModelSharQOperationSupport $query, bool $isFork=false, bool $isInternalQuery=false): static
+    public function childQueryOf(ModelSharQOperationSupport $query, bool $isFork = false, bool $isInternalQuery = false): static
     {
         $currentContext = $this->context();
-        $queryContext = $query->getContext();
+        $queryContext   = $query->getContext();
 
-        if($isFork) $queryContext = clone $queryContext;
+        if ($isFork)
+        {
+            $queryContext = clone $queryContext;
+        }
 
-        if($isInternalQuery)
+        if ($isInternalQuery)
         {
             $options = $this->getInternalOptions();
 
@@ -285,7 +291,7 @@ abstract class ModelSharQOperationSupport
 
     public function subQueryOf(ModelSharQOperationSupport $query): static
     {
-        if($this->isInternal())
+        if ($this->isInternal())
         {
             $context = $this->getInternalContext();
 
@@ -313,7 +319,10 @@ abstract class ModelSharQOperationSupport
     {
         $iSharQ = $this->getUnsafeSharQ();
 
-        if($iSharQ === null) throw new \Exception("no database connection available for a query. You need to bind the model class or the query to a shark builder instance.");
+        if ($iSharQ === null)
+        {
+            throw new \Exception("no database connection available for a query. You need to bind the model class or the query to a shark builder instance.");
+        }
 
         return $iSharQ;
     }
@@ -329,7 +338,10 @@ abstract class ModelSharQOperationSupport
     {
         $iSharQ = $this->context->iSharQ ?? $this->modelClass::getSharQ() ?? null;
 
-        if($iSharQ === null) return null;
+        if ($iSharQ === null)
+        {
+            return null;
+        }
 
         return clone $iSharQ;
     }
@@ -341,49 +353,63 @@ abstract class ModelSharQOperationSupport
     {
         $operationsToRemove = [];
 
-        $callback = function(ModelSharQOperation $operation, $selectorResult) use(&$operationsToRemove, $operationSelector)
+        $callback = function(ModelSharQOperation $operation, $selectorResult) use (&$operationsToRemove, $operationSelector)
         {
-            if($selectorResult && !$operation->isAncestorInSet($operationsToRemove)) $operationsToRemove[] = $operation;
+            if ($selectorResult && !$operation->isAncestorInSet($operationsToRemove))
+            {
+                $operationsToRemove[] = $operation;
+            }
 
             return null;
         };
 
         $this->forEachOperations($operationSelector, $callback);
 
-        foreach($operationsToRemove as $operation) $this->removeOperation($operation);
+        foreach ($operationsToRemove as $operation)
+        {
+            $this->removeOperation($operation);
+        }
 
         return $this;
-
     }
     /**
      * @return ModelSharQOperationSupport
      */
     public function toFindQuery(): static
     {
-        $findQuery = clone $this;
+        $findQuery           = clone $this;
         $operationsToReplace = [];
-        $operationsToRemove = [];
+        $operationsToRemove  = [];
 
-        $operationSelectorCallback = function($operation) { return $operation->hasToFindOperation(); };
-        $callback = function($operation) use(&$findQuery, &$operationsToReplace, &$operationsToRemove)
+        $operationSelectorCallback = function($operation)
+        { return $operation->hasToFindOperation(); };
+        $callback = function($operation) use (&$findQuery, &$operationsToReplace, &$operationsToRemove)
         {
             $findOperation = $operation->toFindOperation($findQuery);
 
-            if(!$findOperation)
+            if (!$findOperation)
             {
                 $operationsToRemove[] = $operation;
+
                 return null;
             }
 
-            $operationsToReplace[] = ['operation'=>$operation, 'findOperation'=>$findOperation];
+            $operationsToReplace[] = ['operation' => $operation, 'findOperation' => $findOperation];
 
             return null;
         };
 
         $findQuery->forEachOperations($operationSelectorCallback, $callback);
 
-        foreach($operationsToRemove as $operation) $findQuery->removeOperation($operation);
-        foreach($operationsToReplace as $operation) $findQuery->replaceOperation($operation['operation'], $operation['findOperation']);
+        foreach ($operationsToRemove as $operation)
+        {
+            $findQuery->removeOperation($operation);
+        }
+
+        foreach ($operationsToReplace as $operation)
+        {
+            $findQuery->replaceOperation($operation['operation'], $operation['findOperation']);
+        }
 
         return $findQuery;
     }
@@ -406,21 +432,24 @@ abstract class ModelSharQOperationSupport
      * @param Closure(): void $operationSelector
      * @return ModelSharQOperationSupport
      */
-    public function copyFrom(ModelSharQOperationSupport $iBuilder, $operationSelector, bool $debug=false): static
+    public function copyFrom(ModelSharQOperationSupport $iBuilder, $operationSelector, bool $debug = false): static
     {
         $operationsToAdd = [];
 
-        $callback = function(ModelSharQOperation $operation, $selectorResult) use(&$operationsToAdd, $debug)
+        $callback = function(ModelSharQOperation $operation, $selectorResult) use (&$operationsToAdd, $debug)
         {
             // If an ancestor operation has already been added, there is no need to add
-            if($selectorResult && $operation->isAncestorInSet($operationsToAdd) === false) $operationsToAdd[] = $operation;
+            if ($selectorResult && $operation->isAncestorInSet($operationsToAdd) === false)
+            {
+                $operationsToAdd[] = $operation;
+            }
 
             return null;
         };
 
         $iBuilder->forEachOperations($operationSelector, $callback);
 
-        foreach($operationsToAdd as $operation)
+        foreach ($operationsToAdd as $operation)
         {
             $operationClone = clone $operation;
 
@@ -445,27 +474,37 @@ abstract class ModelSharQOperationSupport
      * @param mixed $operationSelector
      * @param Closure(): void|string $callback
      */
-    public function forEachOperations($operationSelector, \Closure $callback, bool $match=true): ModelSharQOperationSupport
+    public function forEachOperations($operationSelector, \Closure $callback, bool $match = true): ModelSharQOperationSupport
     {
         $selector = self::buildFunctionForOperationSelector($operationSelector);
 
-        foreach($this->operations as $operation)
+        foreach ($this->operations as $operation)
         {
             $selectorResult = $selector($operation);
             $callbackResult = $callback($operation, $selectorResult);
-            if($selectorResult === $match && $callbackResult === false) break;
 
-            $childRes = $operation->forEachDescendantOperation(function($operation) use(&$selector, &$callback, &$match, $operationSelector)
+            if ($selectorResult === $match && $callbackResult === false)
+            {
+                break;
+            }
+
+            $childRes = $operation->forEachDescendantOperation(function($operation) use (&$selector, &$callback, &$match, $operationSelector)
             {
                 $selectorResult = $selector($operation);
                 $callbackResult = $callback($operation, $selectorResult);
 
-                if($selectorResult === $match && $callbackResult === false) return false;
+                if ($selectorResult === $match && $callbackResult === false)
+                {
+                    return false;
+                }
 
                 return true;
             });
 
-            if($childRes === false) break;
+            if ($childRes === false)
+            {
+                break;
+            }
         }
 
         return $this;
@@ -477,9 +516,12 @@ abstract class ModelSharQOperationSupport
     {
         $operation = null;
 
-        $this->forEachOperations($operationSelector, function($op, $selectionResult) use(&$operation)
+        $this->forEachOperations($operationSelector, function($op, $selectionResult) use (&$operation)
         {
-            if($selectionResult) $operation = $op;
+            if ($selectionResult)
+            {
+                $operation = $op;
+            }
 
             return false;
         });
@@ -493,9 +535,12 @@ abstract class ModelSharQOperationSupport
     {
         $operation = null;
 
-        $this->forEachOperations($operationSelector, function($op, $selectorResult) use(&$operation)
+        $this->forEachOperations($operationSelector, function($op, $selectorResult) use (&$operation)
         {
-            if($selectorResult) $operation = $op;
+            if ($selectorResult)
+            {
+                $operation = $op;
+            }
 
             return null;
         });
@@ -509,9 +554,12 @@ abstract class ModelSharQOperationSupport
     {
         $every = true;
 
-        $this->forEachOperations($operationSelector, function($operation, $selectorResult) use(&$every)
+        $this->forEachOperations($operationSelector, function($operation, $selectorResult) use (&$every)
         {
-            if(!$selectorResult) $every = false;
+            if (!$selectorResult)
+            {
+                $every = false;
+            }
 
             return false;
         }, false);
@@ -532,7 +580,7 @@ abstract class ModelSharQOperationSupport
             $this->activeOperations[] =
             [
                 'operation' => $operation,
-                'hookName' => $hookName,
+                'hookName'  => $hookName,
             ];
 
             return $operation->$hookName($this, ...$args);
@@ -563,9 +611,12 @@ abstract class ModelSharQOperationSupport
     {
         $shouldAdd = $this->callOperationMethod($operation, 'onAdd', $args);
 
-        if(!$shouldAdd) return $this;
+        if (!$shouldAdd)
+        {
+            return $this;
+        }
 
-        if(count($this->activeOperations) !== 0)
+        if (count($this->activeOperations) !== 0)
         {
             /** @var ModelSharQOperation $lastActiveOperation */
             $lastActiveOperation = end($this->activeOperations);
@@ -581,24 +632,37 @@ abstract class ModelSharQOperationSupport
             return $this;
         }
 
-        if($method === 'push') $this->operations[] = $operation;
-        else if($method === 'unshift') array_unshift($this->operations, $operation);
-        else throw new \Exception("Invalid method '$method'");
+        if ($method === 'push')
+        {
+            $this->operations[] = $operation;
+        }
+        else if ($method === 'unshift')
+        {
+            array_unshift($this->operations, $operation);
+        }
+        else
+        {
+            throw new \Exception("Invalid method '$method'");
+        }
 
         return $this;
     }
 
     public function removeOperation(ModelSharQOperation $operation): static
     {
-        if($operation->getParentOperation() !== null)
+        if ($operation->getParentOperation() !== null)
         {
             $operation->getParentOperation()->removeChildOperation($operation);
+
             return $this;
         }
 
         $index = array_search($operation, $this->operations, true);
 
-        if($index === false) return $this;
+        if ($index === false)
+        {
+            return $this;
+        }
 
         array_splice($this->operations, $index, 1);
 
@@ -607,15 +671,19 @@ abstract class ModelSharQOperationSupport
 
     public function replaceOperation(ModelSharQOperation $operation, ModelSharQOperation $newOperation): static
     {
-        if($operation->getParentOperation() !== null)
+        if ($operation->getParentOperation() !== null)
         {
             $operation->getParentOperation()->replaceChildOperation($operation, $newOperation);
+
             return $this;
         }
 
         $index = array_search($operation, $this->operations, true);
 
-        if($index === false) return $this;
+        if ($index === false)
+        {
+            return $this;
+        }
 
         $this->operations[$index] = $newOperation;
 
@@ -626,7 +694,7 @@ abstract class ModelSharQOperationSupport
      * @param SharQ|Join|null $iSharQ
      * @return SharQ|Join|null
      */
-    public function toSharQ($iSharQ=null)
+    public function toSharQ($iSharQ = null)
     {
         $iClonedBuilder = clone $this;
 
@@ -641,7 +709,10 @@ abstract class ModelSharQOperationSupport
     {
         $this->forEachOperations(self::ALL_SELECTOR, function($operation)
         {
-            if($operation->hasOnBuild()) $this->callOperationMethod($operation, 'onBuild', [$this]);
+            if ($operation->hasOnBuild())
+            {
+                $this->callOperationMethod($operation, 'onBuild', [$this]);
+            }
 
             return null;
         });
@@ -653,9 +724,9 @@ abstract class ModelSharQOperationSupport
      */
     public function executeOnBuildSharQ($iSharQ)
     {
-        $this->forEachOperations(self::ALL_SELECTOR, function($operation) use(&$iSharQ)
+        $this->forEachOperations(self::ALL_SELECTOR, function($operation) use (&$iSharQ)
         {
-            if($operation->hasOnBuildSharQ())
+            if ($operation->hasOnBuildSharQ())
             {
                 $iNewSharQ = $this->callOperationMethod($operation, 'onBuildSharQ', [$iSharQ]);
 
@@ -689,39 +760,56 @@ abstract class ModelSharQOperationSupport
      */
     private static function buildFunctionForOperationSelector($operationSelector): callable
     {
-        if($operationSelector === true) return function(){ return true; };
-        else if($operationSelector === false) return function(){ return false; };
-        else if(is_string($operationSelector) && preg_match('/^\/.+\/$/', $operationSelector) === 1) // Assuming it's a regex if the string starts and ends with a slash
+        if ($operationSelector === true)
         {
-            return function($operation) use(&$operationSelector)
+            return function()
+            { return true; };
+        }
+        else if ($operationSelector === false)
+        {
+            return function()
+            { return false; };
+        }
+        else if (is_string($operationSelector) && preg_match('/^\/.+\/$/', $operationSelector) === 1) // Assuming it's a regex if the string starts and ends with a slash
+        {
+            return function($operation) use (&$operationSelector)
             {
                 return preg_match($operationSelector, $operation->getName()) === 1;
             };
         }
-        else if(is_string($operationSelector) && preg_match('/\\\\/', $operationSelector) === 1)
+        else if (is_string($operationSelector) && preg_match('/\\\\/', $operationSelector) === 1)
         {
-            return function($operation) use(&$operationSelector)
+            return function($operation) use (&$operationSelector)
             {
                 return $operation instanceof $operationSelector;
             };
         }
-        else if(is_string($operationSelector))
+        else if (is_string($operationSelector))
         {
             return self::buildFunctionForOperationSelector('/^'.$operationSelector.'$/');
         }
-        else if(is_array($operationSelector))
+        else if (is_array($operationSelector))
         {
-            return function($operation) use(&$operationSelector)
+            return function($operation) use (&$operationSelector)
             {
-                foreach($operationSelector as $selector)
+                foreach ($operationSelector as $selector)
                 {
-                    if($selector($operation)) return true;
+                    if ($selector($operation))
+                    {
+                        return true;
+                    }
                 }
 
                 return false;
             };
         }
-        else if($operationSelector instanceof \Closure) return $operationSelector;
-        else throw new \Exception("Invalid operation selector");
+        else if ($operationSelector instanceof \Closure)
+        {
+            return $operationSelector;
+        }
+        else
+        {
+            throw new \Exception("Invalid operation selector");
+        }
     }
 }

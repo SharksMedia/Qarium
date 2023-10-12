@@ -34,7 +34,7 @@ class SharQTest extends Unit
     protected $tester;
     
     protected array $mockQueryResults = [];
-    protected array $executedQueries = [];
+    protected array $executedQueries  = [];
 
     protected function _before()
     {
@@ -48,7 +48,7 @@ class SharQTest extends Unit
 
         $iClient = new MockMySQLClient($iConfig, function(Query $iQuery, array $options)
         {
-            $sql = $iQuery->getSQL();
+            $sql      = $iQuery->getSQL();
             $bindings = $iQuery->getBindings();
 
             $iPDOStatement = new MockPDOStatement();
@@ -57,8 +57,8 @@ class SharQTest extends Unit
 
             $this->executedQueries[] =
             [
-                'sql'=>$sql,
-                'bindings'=>$bindings
+                'sql'      => $sql,
+                'bindings' => $bindings
             ];
 
             return $iPDOStatement;
@@ -79,7 +79,7 @@ class SharQTest extends Unit
         // You may initialize objects here if necessary
 
         $this->mockQueryResults = [];
-        $this->executedQueries = [];
+        $this->executedQueries  = [];
 
         $iModelReflectionClass = new \ReflectionClass(Model::class);
         $iModelReflectionClass->setStaticPropertyValue('metadataCache', []);
@@ -93,7 +93,7 @@ class SharQTest extends Unit
     protected function _after()
     {
         $this->mockQueryResults = [];
-        $this->executedQueries = [];
+        $this->executedQueries  = [];
         
         parent::_after();
     }
@@ -115,9 +115,15 @@ class SharQTest extends Unit
         {
             public ?array $whereObject = null;
 
-            public function onBefore2(ModelSharQOperationSupport $builder, ...$arguments): bool { return true; }
+            public function onBefore2(ModelSharQOperationSupport $builder, ...$arguments): bool
+            {
+                return true;
+            }
 
-            public function onAfter2(ModelSharQOperationSupport $builder, &$result) { return $result; }
+            public function onAfter2(ModelSharQOperationSupport $builder, &$result)
+            {
+                return $result;
+            }
 
             public function onBuildSharQ($iBuilder, $iSharQ)
             {
@@ -138,11 +144,20 @@ class SharQTest extends Unit
         {
             public array $insertData = [];
 
-            public function onBefore2(ModelSharQOperationSupport $builder, ...$arguments): bool { return true; }
+            public function onBefore2(ModelSharQOperationSupport $builder, ...$arguments): bool
+            {
+                return true;
+            }
 
-            public function onBefore3(ModelSharQOperationSupport $builder, ...$arguments): bool { return true; }
+            public function onBefore3(ModelSharQOperationSupport $builder, ...$arguments): bool
+            {
+                return true;
+            }
 
-            public function onAfter2(ModelSharQOperationSupport $iBuilder, &$result) { return $result; }
+            public function onAfter2(ModelSharQOperationSupport $iBuilder, &$result)
+            {
+                return $result;
+            }
 
             public function onAdd(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
             {
@@ -184,11 +199,20 @@ class SharQTest extends Unit
         {
             public $testUpdateData = [];
 
-            public function onBefore2(ModelSharQOperationSupport $builder, ...$arguments): bool { return true; }
+            public function onBefore2(ModelSharQOperationSupport $builder, ...$arguments): bool
+            {
+                return true;
+            }
 
-            public function onBefore3(ModelSharQOperationSupport $builder, ...$arguments): bool { return true; }
+            public function onBefore3(ModelSharQOperationSupport $builder, ...$arguments): bool
+            {
+                return true;
+            }
 
-            public function onAfter2(ModelSharQOperationSupport $iBuilder, &$result) { return $result; }
+            public function onAfter2(ModelSharQOperationSupport $iBuilder, &$result)
+            {
+                return $result;
+            }
 
             public function onAdd(ModelSharQOperationSupport $iBuilder, ...$arguments): bool
             {
@@ -228,7 +252,10 @@ class SharQTest extends Unit
         {
             public array $whereObject = [];
 
-            public function onAfter2(ModelSharQOperationSupport $iBuilder, &$result) { return $result; }
+            public function onAfter2(ModelSharQOperationSupport $iBuilder, &$result)
+            {
+                return $result;
+            }
 
             public function onBuildSharQ($iBuilder, $iSharQ)
             {
@@ -246,7 +273,9 @@ class SharQTest extends Unit
     // Tests
     public function testShouldHaveSharQMethods(): void
     {
-        $TestModel = new class extends \Sharksmedia\Qarium\Model { };
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
+        {
+        };
         
         $ignoreMethods =
         [
@@ -288,30 +317,35 @@ class SharQTest extends Unit
         // $missingFunctions = [];
 
         $queryBuilderMethods = get_class_methods(SharQ::class);
-        foreach($queryBuilderMethods as $qbMethodName)
+
+        foreach ($queryBuilderMethods as $qbMethodName)
         {
-            if(!in_array($qbMethodName, $ignoreMethods, true))
+            if (!in_array($qbMethodName, $ignoreMethods, true))
             {
                 // if(!method_exists($builder, $qbMethodName)) $missingFunctions[] = $qbMethodName;
 
-                $this->assertTrue(method_exists($builder, $qbMethodName), "SharQ method '" . $qbMethodName . "' is missing from ModelSharQ");
+                $this->assertTrue(method_exists($builder, $qbMethodName), "SharQ method '".$qbMethodName."' is missing from ModelSharQ");
             }
         }
     }
 
     public function testModelClassShouldReturnTheModelClass(): void
     {
-        $TestModel = new class extends \Sharksmedia\Qarium\Model { };
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
+        {
+        };
 
         $this->assertEquals($TestModel::class, ModelSharQ::forClass($TestModel::class)->getModelClass());
     }
 
     public function testModifyShouldExecuteTheGivenFunctionAndPassTheBuilderToIt(): void
     {
-        $TestModel = new class extends \Sharksmedia\Qarium\Model { };
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
+        {
+        };
 
         $builder = ModelSharQ::forClass($TestModel::class);
-        $called = false;
+        $called  = false;
 
         $builder->modify(function($b) use ($builder, &$called)
         {
@@ -324,14 +358,16 @@ class SharQTest extends Unit
 
     public function testShouldBeAbleToPassArgumentsToModify(): void
     {
-        $TestModel = new class extends \Sharksmedia\Qarium\Model { };
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
+        {
+        };
 
         $builder = ModelSharQ::forClass($TestModel::class);
         $called1 = false;
         $called2 = false;
 
         // Should accept a single function.
-        $builder->modify(function($query, $arg1, $arg2) use($builder, &$called1)
+        $builder->modify(function($query, $arg1, $arg2) use ($builder, &$called1)
         {
             $called1 = true;
             $this->assertSame($builder, $query);
@@ -345,23 +381,23 @@ class SharQTest extends Unit
 
         // Should accept an array of functions.
         $builder->modify(
-        [
-            function($query, $arg1, $arg2) use($builder, &$called1)
-            {
-                $called1 = true;
-                $this->assertSame($builder, $query);
-                $this->assertEquals('foo', $arg1);
-                $this->assertEquals(1, $arg2);
-            },
+            [
+                function($query, $arg1, $arg2) use ($builder, &$called1)
+                {
+                    $called1 = true;
+                    $this->assertSame($builder, $query);
+                    $this->assertEquals('foo', $arg1);
+                    $this->assertEquals(1, $arg2);
+                },
 
-            function($query, $arg1, $arg2) use($builder, &$called2)
-            {
-                $called2 = true;
-                $this->assertSame($builder, $query);
-                $this->assertEquals('foo', $arg1);
-                $this->assertEquals(1, $arg2);
-            },
-        ], 'foo', 1);
+                function($query, $arg1, $arg2) use ($builder, &$called2)
+                {
+                    $called2 = true;
+                    $this->assertSame($builder, $query);
+                    $this->assertEquals('foo', $arg1);
+                    $this->assertEquals(1, $arg2);
+                },
+            ], 'foo', 1);
 
         $this->assertTrue($called1);
         $this->assertTrue($called2);
@@ -375,7 +411,7 @@ class SharQTest extends Unit
             {// 2023-08-02
                 return
                 [
-                    'modifier1'=>function($query, $arg1, $arg2, $context, $markCalledFunc, &$builder)
+                    'modifier1' => function($query, $arg1, $arg2, $context, $markCalledFunc, &$builder)
                     {
                         $markCalledFunc();
                         $context->assertSame($builder, $query);
@@ -383,7 +419,7 @@ class SharQTest extends Unit
                         $context->assertEquals(1, $arg2);
                     },
 
-                    'modifier2'=>function($query, $arg1, $arg2, $context, $markCalledFunc, &$builder)
+                    'modifier2' => function($query, $arg1, $arg2, $context, $markCalledFunc, &$builder)
                     {
                         $markCalledFunc();
                         $context->assertSame($builder, $query);
@@ -400,11 +436,13 @@ class SharQTest extends Unit
         $builder = ModelSharQ::forClass($TestModel::class);
 
         // Should accept a single modifier.
-        $builder->modify('modifier1', 'foo', 1, $this, function() use(&$called1){ $called1 = true; }, $builder);
+        $builder->modify('modifier1', 'foo', 1, $this, function() use (&$called1)
+        { $called1 = true; }, $builder);
         $this->assertTrue($called1);
 
         // Should accept an array of modifiers.
-        $builder->modify(['modifier1', 'modifier2'], 'foo', 1, $this, function() use(&$called2){ $called2 = true; }, $builder);
+        $builder->modify(['modifier1', 'modifier2'], 'foo', 1, $this, function() use (&$called2)
+        { $called2 = true; }, $builder);
 
         $this->assertTrue($called1);
         $this->assertTrue($called2);
@@ -412,7 +450,9 @@ class SharQTest extends Unit
 
     public function testShouldThrowIfAnUnknownModifierIsSpecified(): void
     {
-        $TestModel = new class extends \Sharksmedia\Qarium\Model { };
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
+        {
+        };
 
         $builder = ModelSharQ::forClass($TestModel::class);
 
@@ -424,10 +464,12 @@ class SharQTest extends Unit
 
     public function testModifyShouldDoNothingWhenReceivingUndefined(): void
     {
-        $TestModel = new class extends \Sharksmedia\Qarium\Model { };
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
+        {
+        };
 
         $builder = ModelSharQ::forClass($TestModel::class);
-        $res = null;
+        $res     = null;
 
         $res = $builder->modify(null);
 
@@ -436,12 +478,20 @@ class SharQTest extends Unit
 
     public function testModifyAcceptAListOfStringsAndCallTheCorrespondingModifiers(): void
     {
-        $TestModel = new class extends \Sharksmedia\Qarium\Model 
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function getModifiers(): array
             {
-                $a = function($qb, &$builder, $markACalledFunc, $markBCalledFunc) { $called = $qb === $builder; $markACalledFunc($called); };
-                $b = function($qb, &$builder, $markACalledFunc, $markBCalledFunc) { $called = $qb === $builder; $markBCalledFunc($called); };
+                $a = function($qb, &$builder, $markACalledFunc, $markBCalledFunc)
+                {
+                    $called = $qb === $builder;
+                    $markACalledFunc($called);
+                };
+                $b = function($qb, &$builder, $markACalledFunc, $markBCalledFunc)
+                {
+                    $called = $qb === $builder;
+                    $markBCalledFunc($called);
+                };
 
                 $modifiers =
                 [
@@ -459,8 +509,10 @@ class SharQTest extends Unit
         $aCalled = false;
         $bCalled = false;
 
-        $markACalled = function($called) use(&$aCalled){ $aCalled = $called; };
-        $markBCalled = function($called) use(&$bCalled){ $bCalled = $called; };
+        $markACalled = function($called) use (&$aCalled)
+        { $aCalled = $called; };
+        $markBCalled = function($called) use (&$bCalled)
+        { $bCalled = $called; };
 
         $builder->modify('a', $builder, $markACalled, $markBCalled);
         $this->assertTrue($aCalled);
@@ -494,7 +546,7 @@ class SharQTest extends Unit
     public function testModifyCallsTheModifierNotFoundHookForUnknownModifiers(): void
     {
         $caughtModifiers = [];
-        $TestModel = new class extends \Sharksmedia\Qarium\Model 
+        $TestModel       = new class extends \Sharksmedia\Qarium\Model
         {
             // public static function modifierNotFound($qb, $modifier)
             // {
@@ -512,7 +564,6 @@ class SharQTest extends Unit
                     'd' => ['c', 'b']
                 ];
             }
-
         };
 
         $builder = ModelSharQ::forClass($TestModel::class);
@@ -550,7 +601,7 @@ class SharQTest extends Unit
 
     public function testShouldStillThrowIfModifierNotFoundDelegateToTheDefinitionInTheSuperClass(): void
     {
-        $TestModel = new class extends \Sharksmedia\Qarium\Model 
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
             public static function modifierNotFound(ModelSharQ $iBuilder, string $modifierName): void
             {
@@ -596,7 +647,10 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $iModelSharQ = ModelSharQ::forClass($TestModel::class);
@@ -609,7 +663,10 @@ class SharQTest extends Unit
         // Doesn't test all the methods. Just enough to make sure the method calls are correctly
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $this->executedQueries = [];
@@ -624,7 +681,7 @@ class SharQTest extends Unit
             ->where('id', 10)
             ->where('height', '>', 180)
             ->where(['name' => 'test'])
-        ->orWhere(function(ModelSharQBase $queryBuilder)
+            ->orWhere(function(ModelSharQBase $queryBuilder)
             {
                 // The builder passed to these functions should be a SharQBase instead of
                 // a raw query builder.
@@ -635,14 +692,14 @@ class SharQTest extends Unit
         // Assert.
         $this->assertEquals(
             implode(' ',
-            [
-                'SELECT `name`, `id`, `age` FROM `Model`',
-                'INNER JOIN `AnotherTable` ON(`AnotherTable`.`modelId` = `Model`.`id`)',
-                'WHERE `id` = ?',
-                'AND `height` > ?',
-                'AND `name` = ?',
-                'OR (`age` < ? AND `eyeColor` = ?)',
-            ]),
+                [
+                    'SELECT `name`, `id`, `age` FROM `Model`',
+                    'INNER JOIN `AnotherTable` ON(`AnotherTable`.`modelId` = `Model`.`id`)',
+                    'WHERE `id` = ?',
+                    'AND `height` > ?',
+                    'AND `name` = ?',
+                    'OR (`age` < ? AND `eyeColor` = ?)',
+                ]),
             $queryBuilder->toSQL()
         );
     }
@@ -651,7 +708,10 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $builder = ModelSharQ::forClass($TestModel::class)->timeout(3000);
@@ -667,7 +727,10 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $query = ModelSharQ::forClass($TestModel::class)
@@ -684,7 +747,10 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $query = ModelSharQ::forClass($TestModel::class)
@@ -704,7 +770,10 @@ class SharQTest extends Unit
 
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         ModelSharQ::forClass($TestModel::class)
@@ -716,7 +785,10 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $query = ModelSharQ::forClass($TestModel::class)
@@ -738,7 +810,10 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $query = ModelSharQ::forClass($TestModel::class)
@@ -758,7 +833,10 @@ class SharQTest extends Unit
 
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         ModelSharQ::forClass($TestModel::class)
@@ -770,7 +848,10 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $query = ModelSharQ::forClass($TestModel::class)
@@ -787,7 +868,10 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $query = ModelSharQ::forClass($TestModel::class)
@@ -804,7 +888,10 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $query = ModelSharQ::forClass($TestModel::class)
@@ -825,7 +912,10 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $query = ModelSharQ::forClass($TestModel::class)
@@ -842,7 +932,10 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $query = ModelSharQ::forClass($TestModel::class)
@@ -859,7 +952,10 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $query = ModelSharQ::forClass($TestModel::class)
@@ -876,7 +972,10 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $query = ModelSharQ::forClass($TestModel::class)
@@ -893,7 +992,10 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $query = ModelSharQ::forClass($TestModel::class)
@@ -910,7 +1012,10 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $subQuery = ModelSharQ::forClass($TestModel::class)
@@ -930,7 +1035,10 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $query = ModelSharQ::forClass($TestModel::class)
@@ -947,7 +1055,10 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $subQuery = ModelSharQ::forClass($TestModel::class)
@@ -969,7 +1080,10 @@ class SharQTest extends Unit
         {
             public int $a;
 
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $this->mockQueryResults = [[['a' => 1], ['a' => 2]]];
@@ -988,7 +1102,10 @@ class SharQTest extends Unit
         {
             public int $a;
 
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $this->mockQueryResults = [[['a' => 1]]];
@@ -1012,7 +1129,10 @@ class SharQTest extends Unit
             public int $e;
             public int $f;
 
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $this->mockQueryResults = [[['a' => 1]]];
@@ -1025,43 +1145,43 @@ class SharQTest extends Unit
         $this->expectExceptionMessage('abort');
 
         ModelSharQ::forClass($TestModel::class)
-            ->runBefore(function(ModelSharQ $builder) use(&$text)
-                {
-                    $this->assertInstanceOf(ModelSharQ::class, $builder);
-                    $text .= 'a';
-                })
-            ->onBuild(function(ModelSharQ $builder) use(&$text)
-                {
-                    $this->assertInstanceOf(ModelSharQ::class, $builder);
-                    $text .= 'b';
-                })
-            ->onBuildSharQ(function($iBuilder, $iSharQ) use(&$text)
-                {
-                    $this->assertInstanceOf(ModelSharQ::class, $iBuilder);
-                    // Assuming isSharQ() is equivalent to checking if $iSharQ is an instance of a specific class
-                    $this->assertInstanceOf(SharQ::class, $iSharQ);
-                    $text .= 'c';
-                })
-            ->runAfter(function($builder, ?array $data) use(&$text)
-                {
-                    $this->assertInstanceOf(ModelSharQ::class, $builder);
-                    $text .= 'd';
-                })
-            ->runAfter(function($builder, ?array $data) use(&$text)
-                {
-                    $this->assertInstanceOf(ModelSharQ::class, $builder);
-                    $text .= 'e';
-                })
-            ->runAfter(function() use($exception)
-                {
-                    throw $exception;
-                })
-            ->onError(function($builder, \Exception $err) use(&$text)
-                {
-                    $this->assertInstanceOf(ModelSharQ::class, $builder);
-                    $this->assertEquals('abort', $err->getMessage());
-                    $text .= 'f';
-                })
+            ->runBefore(function(ModelSharQ $builder) use (&$text)
+            {
+                $this->assertInstanceOf(ModelSharQ::class, $builder);
+                $text .= 'a';
+            })
+            ->onBuild(function(ModelSharQ $builder) use (&$text)
+            {
+                $this->assertInstanceOf(ModelSharQ::class, $builder);
+                $text .= 'b';
+            })
+            ->onBuildSharQ(function($iBuilder, $iSharQ) use (&$text)
+            {
+                $this->assertInstanceOf(ModelSharQ::class, $iBuilder);
+                // Assuming isSharQ() is equivalent to checking if $iSharQ is an instance of a specific class
+                $this->assertInstanceOf(SharQ::class, $iSharQ);
+                $text .= 'c';
+            })
+            ->runAfter(function($builder, ?array $data) use (&$text)
+            {
+                $this->assertInstanceOf(ModelSharQ::class, $builder);
+                $text .= 'd';
+            })
+            ->runAfter(function($builder, ?array $data) use (&$text)
+            {
+                $this->assertInstanceOf(ModelSharQ::class, $builder);
+                $text .= 'e';
+            })
+            ->runAfter(function() use ($exception)
+            {
+                throw $exception;
+            })
+            ->onError(function($builder, \Exception $err) use (&$text)
+            {
+                $this->assertInstanceOf(ModelSharQ::class, $builder);
+                $this->assertEquals('abort', $err->getMessage());
+                $text .= 'f';
+            })
             ->run();
 
         $this->assertEquals('abcdef', $text);
@@ -1073,7 +1193,10 @@ class SharQTest extends Unit
 
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $this->expectException(\Exception::class);
@@ -1081,14 +1204,14 @@ class SharQTest extends Unit
 
         ModelSharQ::forClass($TestModel::class)
             ->runBefore(function($result, $builder)
-                {
-                    throw new \Exception('run before error');
-                })
+            {
+                throw new \Exception('run before error');
+            })
             ->onError(function($builder, $err) use (&$called)
-                {
-                    $this->assertInstanceOf(ModelSharQ::class, $builder);
-                    $called = true;
-                })
+            {
+                $this->assertInstanceOf(ModelSharQ::class, $builder);
+                $called = true;
+            })
             ->run();
 
         $this->assertTrue($called);
@@ -1098,7 +1221,10 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $result = null;
@@ -1106,13 +1232,13 @@ class SharQTest extends Unit
         $result = ModelSharQ::forClass($TestModel::class)
             ->returnError(true)
             ->runBefore(function($builder, $result)
-                {
-                    throw new \Exception('run before error');
-                })
+            {
+                throw new \Exception('run before error');
+            })
             ->onError(function($builder, $err)
-                {
-                    return 'my custom error';
-                })
+            {
+                return 'my custom error';
+            })
             ->run();
 
         $this->assertEquals('my custom error', $result);
@@ -1120,7 +1246,7 @@ class SharQTest extends Unit
 
     public function testShouldCallRunMethodsInTheCorrectOrder(): void
     {
-        $this->mockQueryResults = [[['a'=>0]]];
+        $this->mockQueryResults = [[['a' => 0]]];
 
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
@@ -1128,46 +1254,51 @@ class SharQTest extends Unit
 
             protected static array $metadataCache =
             [
-                'Model'=>
+                'Model' =>
                 [
                     [
-                        'Field'=>'a',
+                        'Field' => 'a',
                     ]
                 ]
             ];
 
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $res = 0;
 
         ModelSharQ::forClass($TestModel::class)
-            ->runBefore(function() use(&$res)
-                {
-                    $this->assertEquals(0, $res);
-                    ++$res;
-                })
-            ->runBefore(function() use(&$res)
-                {
-                    $this->assertEquals(1, $res);
-                    ++$res;
-                })
-            ->runBefore(function() use(&$res)
-                {
-                    $this->assertEquals(2, $res);
-                    ++$res;
-                })
-            ->runAfter(function($builder) use(&$res)
-                {
-                    $this->assertEquals(3, $res);
-                    // Assuming there's a delay or wait function available in PHP
-                    return ++$res;
-                })
-            ->runAfter(function($builder) use(&$res)
-                {
-                    $this->assertEquals(4, $res);
-                    return ++$res;
-                })
+            ->runBefore(function() use (&$res)
+            {
+                $this->assertEquals(0, $res);
+                ++$res;
+            })
+            ->runBefore(function() use (&$res)
+            {
+                $this->assertEquals(1, $res);
+                ++$res;
+            })
+            ->runBefore(function() use (&$res)
+            {
+                $this->assertEquals(2, $res);
+                ++$res;
+            })
+            ->runAfter(function($builder) use (&$res)
+            {
+                $this->assertEquals(3, $res);
+
+                // Assuming there's a delay or wait function available in PHP
+                return ++$res;
+            })
+            ->runAfter(function($builder) use (&$res)
+            {
+                $this->assertEquals(4, $res);
+
+                return ++$res;
+            })
             ->run();
 
         $this->assertEquals(5, $res);
@@ -1177,7 +1308,10 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $this->executedQueries = [];
@@ -1187,17 +1321,17 @@ class SharQTest extends Unit
 
         ModelSharQ::forClass($TestModel::class)
             ->runBefore(function()
-                {
-                    throw new \Exception('some error');
-                })
+            {
+                throw new \Exception('some error');
+            })
             ->onBuild(function()
-                {
-                    $this->fail('should not get here');
-                })
+            {
+                $this->fail('should not get here');
+            })
             ->runAfter(function()
-                {
-                    $this->fail('should not get here');
-                })
+            {
+                $this->fail('should not get here');
+            })
             ->run();
     }
 
@@ -1209,26 +1343,29 @@ class SharQTest extends Unit
 
             protected static array $metadataCache =
             [
-                'Model'=>
+                'Model' =>
                 [
                     [
-                        'Field'=>'a',
+                        'Field' => 'a',
                     ]
                 ]
             ];
 
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $this->executedQueries = [];
 
         $builder = ModelSharQ::forClass($TestModel::class)
             ->findOperationFactory(function($iBuilder)
-                {
-                    $iFindOperation = self::createFindOperation($iBuilder, ['a' => 1]);
+            {
+                $iFindOperation = self::createFindOperation($iBuilder, ['a' => 1]);
 
-                    return $iFindOperation;
-                })
+                return $iFindOperation;
+            })
             ->run();
 
         // Replace 'executedQueries' with the appropriate method to get the executed queries
@@ -1244,24 +1381,27 @@ class SharQTest extends Unit
 
             protected static array $metadataCache =
             [
-                'Model'=>
+                'Model' =>
                 [
                     [
-                        'Field'=>'a',
+                        'Field' => 'a',
                     ]
                 ]
             ];
 
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $this->executedQueries = [];
 
         $builder = ModelSharQ::forClass($TestModel::class)
             ->findOperationFactory(function($iBuilder)
-                {
-                    return self::createFindOperation($iBuilder, ['a' => 1]);
-                })
+            {
+                return self::createFindOperation($iBuilder, ['a' => 1]);
+            })
             ->insert(['a' => 1])
             ->run();
 
@@ -1276,26 +1416,29 @@ class SharQTest extends Unit
         {
             protected static array $metadataCache =
             [
-                'Model'=>
+                'Model' =>
                 [
                     [
-                        'Field'=>'a',
+                        'Field' => 'a',
                     ]
                 ]
             ];
 
             public int $a;
 
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $this->executedQueries = [];
 
         $builder = ModelSharQ::forClass($TestModel::class)
             ->findOperationFactory(function($iBuilder)
-                {
-                    return self::createFindOperation($iBuilder, ['a' => 1]);
-                })
+            {
+                return self::createFindOperation($iBuilder, ['a' => 1]);
+            })
             ->update(['a' => 1])
             ->run();
 
@@ -1312,24 +1455,27 @@ class SharQTest extends Unit
 
             protected static array $metadataCache =
             [
-                'Model'=>
+                'Model' =>
                 [
                     [
-                        'Field'=>'a',
+                        'Field' => 'a',
                     ]
                 ]
             ];
 
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $this->executedQueries = [];
 
         $builder = ModelSharQ::forClass($TestModel::class)
             ->findOperationFactory(function($iBuilder)
-                {
-                    return self::createFindOperation($iBuilder, ['a' => 1]);
-                })
+            {
+                return self::createFindOperation($iBuilder, ['a' => 1]);
+            })
             ->delete()
             ->run();
 
@@ -1342,28 +1488,31 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public ?int $a=null;
-            public ?int $b=null;
+            public ?int $a = null;
+            public ?int $b = null;
 
             protected static array $metadataCache =
             [
-                'Model'=>
+                'Model' =>
                 [
-                    [ 'Field'=>'a', ],
-                    [ 'Field'=>'b', ]
+                    [ 'Field' => 'a', ],
+                    [ 'Field' => 'b', ]
                 ]
             ];
 
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $this->executedQueries = [];
 
         $result = ModelSharQ::forClass($TestModel::class)
             ->insertOperationFactory(function($iBuilder)
-                {
-                    return self::createInsertOperation($iBuilder, ['b'=>2]);
-                })
+            {
+                return self::createInsertOperation($iBuilder, ['b' => 2]);
+            })
             ->insert(['a' => 1])
             ->run();
 
@@ -1375,26 +1524,30 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public ?int $a=null;
-            public ?int $b=null;
+            public ?int $a = null;
+            public ?int $b = null;
 
             protected static array $metadataCache =
             [
-                'Model'=>
+                'Model' =>
                 [
-                    [ 'Field'=>'a', ],
-                    [ 'Field'=>'b', ]
+                    [ 'Field' => 'a', ],
+                    [ 'Field' => 'b', ]
                 ]
             ];
 
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $this->executedQueries = [];
 
         $result = ModelSharQ::forClass($TestModel::class)
-            ->updateOperationFactory(function ($iBuilder) {
-                return self::createUpdateOperation($iBuilder, ['b'=>2]);
+            ->updateOperationFactory(function ($iBuilder)
+            {
+                return self::createUpdateOperation($iBuilder, ['b' => 2]);
             })
             ->update(['a' => 1])
             ->run();
@@ -1407,26 +1560,30 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public ?int $a=null;
-            public ?int $b=null;
+            public ?int $a = null;
+            public ?int $b = null;
 
             protected static array $metadataCache =
             [
-                'Model'=>
+                'Model' =>
                 [
-                    [ 'Field'=>'a', ],
-                    [ 'Field'=>'b', ]
+                    [ 'Field' => 'a', ],
+                    [ 'Field' => 'b', ]
                 ]
             ];
 
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $this->executedQueries = [];
 
         $result = ModelSharQ::forClass($TestModel::class)
-            ->patchOperationFactory(function ($iBuilder) {
-                return self::createUpdateOperation($iBuilder, ['b'=>2]);
+            ->patchOperationFactory(function ($iBuilder)
+            {
+                return self::createUpdateOperation($iBuilder, ['b' => 2]);
             })
             ->patch(['a' => 1])
             ->run();
@@ -1439,28 +1596,31 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public ?int $a=null;
-            public ?int $b=null;
+            public ?int $a = null;
+            public ?int $b = null;
 
             protected static array $metadataCache =
             [
-                'Model'=>
+                'Model' =>
                 [
-                    [ 'Field'=>'a', ],
-                    [ 'Field'=>'b', ]
+                    [ 'Field' => 'a', ],
+                    [ 'Field' => 'b', ]
                 ]
             ];
 
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $this->executedQueries = [];
 
         $result = ModelSharQ::forClass($TestModel::class)
             ->deleteOperationFactory(function($iBuilder)
-                {
-                    return self::createDeleteOperation($iBuilder, ['id'=>100]);
-                })
+            {
+                return self::createDeleteOperation($iBuilder, ['id' => 100]);
+            })
             ->delete()
             ->run();
 
@@ -1472,29 +1632,32 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public ?int $a=null;
-            public ?int $b=null;
+            public ?int $a = null;
+            public ?int $b = null;
 
             protected static array $metadataCache =
             [
-                'Model'=>
+                'Model' =>
                 [
-                    [ 'Field'=>'a', ],
-                    [ 'Field'=>'b', ]
+                    [ 'Field' => 'a', ],
+                    [ 'Field' => 'b', ]
                 ]
             ];
 
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $this->executedQueries = [];
 
         $result = ModelSharQ::forClass($TestModel::class)
             ->relateOperationFactory(function($iBuilder)
-                {
-                    return self::createInsertOperation($iBuilder, ['b'=>2]);
-                })
-            ->relate(['a'=>1])
+            {
+                return self::createInsertOperation($iBuilder, ['b' => 2]);
+            })
+            ->relate(['a' => 1])
             ->run();
 
         $this->assertCount(1, $this->executedQueries);
@@ -1505,28 +1668,31 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public ?int $a=null;
-            public ?int $b=null;
+            public ?int $a = null;
+            public ?int $b = null;
 
             protected static array $metadataCache =
             [
-                'Model'=>
+                'Model' =>
                 [
-                    [ 'Field'=>'a', ],
-                    [ 'Field'=>'b', ]
+                    [ 'Field' => 'a', ],
+                    [ 'Field' => 'b', ]
                 ]
             ];
 
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $this->executedQueries = [];
 
         $result = ModelSharQ::forClass($TestModel::class)
             ->unrelateOperationFactory(function($iBuilder)
-                {
-                    return self::createDeleteOperation($iBuilder, ['id'=>100]);
-                })
+            {
+                return self::createDeleteOperation($iBuilder, ['id' => 100]);
+            })
             ->unrelate()
             ->run();
 
@@ -1538,24 +1704,27 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public ?int $a=null;
-            public ?int $b=null;
+            public ?int $a = null;
+            public ?int $b = null;
 
             protected static array $metadataCache =
             [
-                'Model'=>
+                'Model' =>
                 [
-                    [ 'Field'=>'a', ],
-                    [ 'Field'=>'b', ],
+                    [ 'Field' => 'a', ],
+                    [ 'Field' => 'b', ],
                 ]
             ];
 
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         /** @var ModelSharQ $query */
         $query = ModelSharQ::forClass($TestModel::class)
-        ->updateOperationFactory(function($builder)
+            ->updateOperationFactory(function($builder)
             {
                 return self::createUpdateOperation($builder, ['b' => 2]);
             })
@@ -1580,21 +1749,24 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public ?int $a=null;
-            public ?int $b=null;
-            public ?int $test=null;
+            public ?int $a    = null;
+            public ?int $b    = null;
+            public ?int $test = null;
 
             protected static array $metadataCache =
             [
-                'Model'=>
+                'Model' =>
                 [
-                    [ 'Field'=>'a', ],
-                    [ 'Field'=>'b', ],
-                    [ 'Field'=>'test' ],
+                    [ 'Field' => 'a', ],
+                    [ 'Field' => 'b', ],
+                    [ 'Field' => 'test' ],
                 ]
             ];
 
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $this->mockQueryResults = [[['count' => '123']]];
@@ -1618,36 +1790,42 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            protected ?int $id=null;
+            protected ?int $id = null;
             // protected ?string $count=null;
             
             public static $RelatedClass = null;
 
             protected static array $metadataCache =
             [
-                'Model'=>
+                'Model' =>
                 [
-                    [ 'Field'=>'id', ],
+                    [ 'Field' => 'id', ],
                     // [ 'Field'=>'count' ],
                 ]
             ];
 
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
 
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
             public static function getRelationMappings(): array
             {
                 $mappings =
                 [
-                    'iRelated'=>
+                    'iRelated' =>
                     [
-                        'relation' => Model::BELONGS_TO_ONE_RELATION,
+                        'relation'   => Model::BELONGS_TO_ONE_RELATION,
                         'modelClass' => static::$RelatedClass::class,
-                        'join'=>
+                        'join'       =>
                         [
                             'from' => 'Model.id',
-                            'to' => 'Related.id',
+                            'to'   => 'Related.id',
                         ],
                     ]
                 ];
@@ -1655,7 +1833,7 @@ class SharQTest extends Unit
                 return $mappings;
             }
 
-            public static function fetchTableMetadata(?Client $iClient=null, ?string $schema=null): array
+            public static function fetchTableMetadata(?Client $iClient = null, ?string $schema = null): array
             {
                 parent::fetchTableMetadata(); // Just to get the query executed
 
@@ -1665,21 +1843,27 @@ class SharQTest extends Unit
 
         $TestModelRelated = new class extends \Sharksmedia\Qarium\Model
         {
-            protected ?int $id=null;
+            protected ?int $id = null;
 
             protected static array $metadataCache =
             [
-                'Related'=>
+                'Related' =>
                 [
-                    [ 'Field'=>'id' ],
+                    [ 'Field' => 'id' ],
                 ]
             ];
 
-            public static function getTableName(): string { return 'Related'; }
+            public static function getTableName(): string
+            {
+                return 'Related';
+            }
 
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
-            public static function fetchTableMetadata(?Client $iClient=null, ?string $schema=null): array
+            public static function fetchTableMetadata(?Client $iClient = null, ?string $schema = null): array
             {
                 parent::fetchTableMetadata(); // Just to get the query executed
 
@@ -1701,9 +1885,9 @@ class SharQTest extends Unit
         [
             // "select * from information_schema.columns where table_name = 'Model' and table_catalog = current_database() and table_schema = 'someSchema'",
             // "select * from information_schema.columns where table_name = 'Related' and table_catalog = current_database() and table_schema = 'someSchema'",
-            ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings'=>['Model']],
-            ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings'=>['Related']],
-            ['sql'=>'SELECT `Model`.`id` AS `id`, `iRelated`.`id` AS `iRelated:id` FROM `someSchema`.`Model` LEFT JOIN `someSchema`.`Related` AS `iRelated` ON(`iRelated`.`id` = `Model`.`id`)', 'bindings'=>[]],
+            ['sql' => 'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings' => ['Model']],
+            ['sql' => 'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings' => ['Related']],
+            ['sql' => 'SELECT `Model`.`id` AS `id`, `iRelated`.`id` AS `iRelated:id` FROM `someSchema`.`Model` LEFT JOIN `someSchema`.`Related` AS `iRelated` ON(`iRelated`.`id` = `Model`.`id`)', 'bindings' => []],
         ];
 
         $this->assertCount(3, $this->executedQueries);
@@ -1714,9 +1898,12 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public ?string $a=null;
+            public ?string $a = null;
 
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $this->mockQueryResults = [[['a' => '1']], [['count' => '123']]];
@@ -1730,11 +1917,11 @@ class SharQTest extends Unit
         $this->assertCount(2, $this->executedQueries);
 
         $this->assertEquals([
-            ['sql'=>'SELECT `Model`.* FROM `Model` WHERE `test` = ? ORDER BY `order` ASC LIMIT ? OFFSET ?', 'bindings'=>[100, 101, 100]],
-            ['sql'=>'SELECT COUNT(*) AS `count` FROM (SELECT `Model`.* FROM `Model` WHERE `test` = ?) AS `temp`', 'bindings'=>[100]],
+            ['sql' => 'SELECT `Model`.* FROM `Model` WHERE `test` = ? ORDER BY `order` ASC LIMIT ? OFFSET ?', 'bindings' => [100, 101, 100]],
+            ['sql' => 'SELECT COUNT(*) AS `count` FROM (SELECT `Model`.* FROM `Model` WHERE `test` = ?) AS `temp`', 'bindings' => [100]],
         ], $this->executedQueries);
 
-        $iResultTestModel = new $TestModel();
+        $iResultTestModel    = new $TestModel();
         $iResultTestModel->a = '1';
 
         $this->assertEquals(123, $res['total']);
@@ -1745,9 +1932,12 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public ?string $a=null;
+            public ?string $a = null;
 
-            public static function getTableName(): string { return 'Model'; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
         };
 
         $this->mockQueryResults = [[['a' => '2']], [['count' => '123']]];
@@ -1760,11 +1950,11 @@ class SharQTest extends Unit
 
         $this->assertCount(2, $this->executedQueries);
         $this->assertEquals([
-            ['sql'=>'SELECT `Model`.* FROM `Model` WHERE `test` = ? ORDER BY `order` ASC LIMIT ? OFFSET ?', 'bindings'=>[100, 100, 1000]],
-            ['sql'=>'SELECT COUNT(*) AS `count` FROM (SELECT `Model`.* FROM `Model` WHERE `test` = ?) AS `temp`', 'bindings'=>[100]],
+            ['sql' => 'SELECT `Model`.* FROM `Model` WHERE `test` = ? ORDER BY `order` ASC LIMIT ? OFFSET ?', 'bindings' => [100, 100, 1000]],
+            ['sql' => 'SELECT COUNT(*) AS `count` FROM (SELECT `Model`.* FROM `Model` WHERE `test` = ?) AS `temp`', 'bindings' => [100]],
         ], $this->executedQueries);
 
-        $iResultTestModel = new $TestModel();
+        $iResultTestModel    = new $TestModel();
         $iResultTestModel->a = '2';
 
         $this->assertEquals(123, $res['total']);
@@ -1776,22 +1966,28 @@ class SharQTest extends Unit
         /** @var \Model $TestModel */
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public ?string $id=null;
+            public ?string $id = null;
 
-            public static $RelatedTestModelClass=null;
+            public static $RelatedTestModelClass = null;
 
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
             public static function getRelationMappings(): array
             {
                 return [
                     'someRel' => [
-                        'relation'=>Model::HAS_MANY_RELATION,
-                        'modelClass'=>static::$RelatedTestModelClass,
-                        'join' => [
-                            'from'=>'Model.id',
-                            'to'=>'ModelRelation.someRelId',
+                        'relation'   => Model::HAS_MANY_RELATION,
+                        'modelClass' => static::$RelatedTestModelClass,
+                        'join'       => [
+                            'from' => 'Model.id',
+                            'to'   => 'ModelRelation.someRelId',
                         ],
                     ],
                 ];
@@ -1800,36 +1996,44 @@ class SharQTest extends Unit
 
         $RelatedTestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            protected ?string $someRelId=null;
+            protected ?string $someRelId = null;
 
-            public static function getTableName(): string { return 'ModelRelation'; }
-            public static function getTableIDs(): array { return ['someRelId']; }
+            public static function getTableName(): string
+            {
+                return 'ModelRelation';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['someRelId'];
+            }
         };
 
         $TestModel::$RelatedTestModelClass = $RelatedTestModel::class;
 
         $queries = [
-            'find' => $TestModel::query(),
-            'insert' => $TestModel::query()->insert([]),
-            'update' => $TestModel::query()->update([]),
-            'patch' => $TestModel::query()->patch([]),
-            'delete' => $TestModel::query()->delete(),
-            'relate' => $TestModel::relatedQuery('someRel')->relate(1),
+            'find'     => $TestModel::query(),
+            'insert'   => $TestModel::query()->insert([]),
+            'update'   => $TestModel::query()->update([]),
+            'patch'    => $TestModel::query()->patch([]),
+            'delete'   => $TestModel::query()->delete(),
+            'relate'   => $TestModel::relatedQuery('someRel')->relate(1),
             'unrelate' => $TestModel::relatedQuery('someRel')->unrelate(),
         ];
 
-        $getMethodName = function ($name) {
-            return 'is' . ucfirst($name === 'patch' ? 'update' : $name);
+        $getMethodName = function ($name)
+        {
+            return 'is'.ucfirst($name === 'patch' ? 'update' : $name);
         };
 
-        foreach ($queries as $name => $query) {
-            foreach ($queries as $other => $_) {
+        foreach ($queries as $name => $query)
+        {
+            foreach ($queries as $other => $_)
+            {
                 $method = $getMethodName($other);
                 $this->assertEquals($method === $getMethodName($name), $query->$method(), "queries['$name']->$method()");
                 $this->assertEquals(str_contains($name, 'relate'), $query->hasWheres(), "queries['$name']->hasWheres()");
                 $this->assertFalse($query->hasSelects(), "queries['$name']->hasSelects()");
             }
-
         }
     }
 
@@ -1838,43 +2042,49 @@ class SharQTest extends Unit
         /** @var \Model $TestModel */
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public ?int $id=null;
-            public ?int $someId=null;
+            public ?int $id     = null;
+            public ?int $someId = null;
 
-            public static $RelatedTestModelClass=null;
+            public static $RelatedTestModelClass = null;
 
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
             public static function getRelationMappings(): array
             {
                 return [
                     'manyToManyRelation' => [
-                        'relation'=>Model::MANY_TO_MANY_RELATION,
-                        'modelClass'=>static::$RelatedTestModelClass,
-                        'join' => [
-                            'from'=>'Model.id',
-                            'through'=> [
-                                'from'=>'ModelRelation.someRelId',
-                                'to'=>'ModelRelation.someRelId',
+                        'relation'   => Model::MANY_TO_MANY_RELATION,
+                        'modelClass' => static::$RelatedTestModelClass,
+                        'join'       => [
+                            'from'    => 'Model.id',
+                            'through' => [
+                                'from' => 'ModelRelation.someRelId',
+                                'to'   => 'ModelRelation.someRelId',
                             ],
-                            'to'=>'ModelRelation.someRelId',
+                            'to' => 'ModelRelation.someRelId',
                         ],
                     ],
                     'hasManyRelation' => [
-                        'relation'=>Model::HAS_MANY_RELATION,
-                        'modelClass'=>static::$RelatedTestModelClass,
-                        'join' => [
-                            'from'=>'Model.id',
-                            'to'=>'ModelRelation.someRelId',
+                        'relation'   => Model::HAS_MANY_RELATION,
+                        'modelClass' => static::$RelatedTestModelClass,
+                        'join'       => [
+                            'from' => 'Model.id',
+                            'to'   => 'ModelRelation.someRelId',
                         ],
                     ],
-                    'belongsToOneRelation'=> [
-                        'relation'=>Model::BELONGS_TO_ONE_RELATION,
-                        'modelClass'=>static::$RelatedTestModelClass,
-                        'join' => [
-                            'from'=>'Model.id',
-                            'to'=>'ModelRelation.someRelId',
+                    'belongsToOneRelation' => [
+                        'relation'   => Model::BELONGS_TO_ONE_RELATION,
+                        'modelClass' => static::$RelatedTestModelClass,
+                        'join'       => [
+                            'from' => 'Model.id',
+                            'to'   => 'ModelRelation.someRelId',
                         ],
                     ],
                 ];
@@ -1883,11 +2093,16 @@ class SharQTest extends Unit
 
         $RelatedTestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            protected ?string $someRelId=null;
+            protected ?string $someRelId = null;
 
-            public static function getTableName(): string { return 'ModelRelation'; }
-            public static function getTableIDs(): array { return ['someRelId']; }
-
+            public static function getTableName(): string
+            {
+                return 'ModelRelation';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['someRelId'];
+            }
         };
 
         $TestModel::$RelatedTestModelClass = $RelatedTestModel::class;
@@ -1909,7 +2124,7 @@ class SharQTest extends Unit
             'whereNotColumn', 'andWhereNotColumn', 'orWhereNotColumn'
         ];
 
-        foreach($wheres as $name)
+        foreach ($wheres as $name)
         {
             $query = $TestModel::query()->$name(1, '=', 1);
             $this->assertTrue($query->hasWheres(), "TestModel::query()->$name()->hasWheres()");
@@ -1938,8 +2153,14 @@ class SharQTest extends Unit
         /** @var \Model $TestModel */
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
         $selects = [
@@ -1948,7 +2169,8 @@ class SharQTest extends Unit
             'avg', 'avgDistinct'
         ];
 
-        foreach ($selects as $name) {
+        foreach ($selects as $name)
+        {
             $query = $TestModel::query()->$name('arg');
             $this->assertTrue($query->hasSelects(), "TestModel::query()->$name('arg')->hasSelects()");
         }
@@ -1959,22 +2181,28 @@ class SharQTest extends Unit
         /** @var \Model $TestModel */
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public ?string $id=null;
+            public ?string $id = null;
 
-            public static $RelatedTestModelClass=null;
+            public static $RelatedTestModelClass = null;
 
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
             public static function getRelationMappings(): array
             {
                 return [
                     'someRel' => [
-                        'relation'=>Model::HAS_MANY_RELATION,
-                        'modelClass'=>static::$RelatedTestModelClass,
-                        'join' => [
-                            'from'=>'Model.id',
-                            'to'=>'ModelRelation.someRelId',
+                        'relation'   => Model::HAS_MANY_RELATION,
+                        'modelClass' => static::$RelatedTestModelClass,
+                        'join'       => [
+                            'from' => 'Model.id',
+                            'to'   => 'ModelRelation.someRelId',
                         ],
                     ],
                 ];
@@ -1983,14 +2211,20 @@ class SharQTest extends Unit
 
         $RelatedTestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            protected ?string $someRelId=null;
+            protected ?string $someRelId = null;
 
-            public static function getTableName(): string { return 'ModelRelation'; }
-            public static function getTableIDs(): array { return ['someRelId']; }
+            public static function getTableName(): string
+            {
+                return 'ModelRelation';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['someRelId'];
+            }
         };
 
         $TestModel::$RelatedTestModelClass = $RelatedTestModel::class;
-        $query = $TestModel::query();
+        $query                             = $TestModel::query();
         $this->assertFalse($query->hasWithGraph());
         $query->withGraphJoined('someRel');
         $this->assertTrue($query->hasWithGraph());
@@ -2003,8 +2237,14 @@ class SharQTest extends Unit
         /** @var \Model $TestModel */
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
         $operations = [
@@ -2013,9 +2253,12 @@ class SharQTest extends Unit
             'union', 'count', 'avg', 'with'
         ];
 
-        foreach ($operations as $operation) {
+        foreach ($operations as $operation)
+        {
             $query = $TestModel::query()->$operation('arg');
-            foreach ($operations as $testOperation) {
+
+            foreach ($operations as $testOperation)
+            {
                 $this->assertEquals($testOperation === $operation, $query->has($testOperation), "TestModel::query()->$operation('arg')->has('$testOperation')");
                 $this->assertEquals($testOperation === $operation, $query->has(preg_quote($testOperation, '/')), "TestModel::query()->$operation('arg')->has('/^$testOperation$/')");
             }
@@ -2027,23 +2270,32 @@ class SharQTest extends Unit
         /** @var \Model $TestModel */
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
         $operations = ['where', 'limit', 'offset', 'count'];
 
-        foreach($operations as $operation)
+        foreach ($operations as $operation)
         {
             $query = $TestModel::query();
-            foreach($operations as $operationToApply)
+
+            foreach ($operations as $operationToApply)
             {
                 $query->$operationToApply('arg');
             }
 
             $this->assertTrue($query->has($operation), "query()->has('$operation')");
             $this->assertFalse($query->clear($operation)->has($operation), "query()->clear('$operation')->has('$operation')");
-            foreach($operations as $testOperation) {
+
+            foreach ($operations as $testOperation)
+            {
                 $this->assertEquals($testOperation !== $operation, $query->has($testOperation), "query()->has('$testOperation')");
             }
         }
@@ -2058,25 +2310,31 @@ class SharQTest extends Unit
             public $b;
             public $c;
 
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
             protected static array $metadataCache =
             [
-                'Model'=>
+                'Model' =>
                 [
-                    [ 'Field'=>'a' ],
-                    [ 'Field'=>'b' ],
-                    [ 'Field'=>'c' ],
+                    [ 'Field' => 'a' ],
+                    [ 'Field' => 'b' ],
+                    [ 'Field' => 'c' ],
                 ]
             ];
 
-            public function lbeforeUpdate($context): void 
+            public function lbeforeUpdate($context): void
             {
                 $this->c = 'beforeUpdate';
             }
 
-            public function lafterFind($arguments): void 
+            public function lafterFind($arguments): void
             {
                 throw new \Exception('$afterFind should not be called');
             }
@@ -2094,7 +2352,7 @@ class SharQTest extends Unit
         $this->assertEquals(
             [
                 // ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings'=>['Model']],
-                ['sql'=>'UPDATE `Model` SET `a` = ?, `b` = ?, `c` = ?', 'bindings'=>[10, 'test', 'beforeUpdate']],
+                ['sql' => 'UPDATE `Model` SET `a` = ?, `b` = ?, `c` = ?', 'bindings' => [10, 'test', 'beforeUpdate']],
             ],
             $this->executedQueries
         );
@@ -2111,23 +2369,29 @@ class SharQTest extends Unit
 
             protected static array $metadataCache =
             [
-                'Model'=>
+                'Model' =>
                 [
-                    [ 'Field'=>'a' ],
-                    [ 'Field'=>'b' ],
-                    [ 'Field'=>'c' ],
+                    [ 'Field' => 'a' ],
+                    [ 'Field' => 'b' ],
+                    [ 'Field' => 'c' ],
                 ]
             ];
 
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
-            public function lbeforeUpdate($context): void 
+            public function lbeforeUpdate($context): void
             {
                 $this->c = 'beforeUpdate';
             }
 
-            public function lafterFind($arguments): void 
+            public function lafterFind($arguments): void
             {
                 throw new \Exception('$afterFind should not be called');
             }
@@ -2142,7 +2406,7 @@ class SharQTest extends Unit
         $this->assertCount(1, $this->executedQueries);
         $this->assertEquals([
             // ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings'=>['Model']],
-            ['sql'=>'UPDATE `Model` SET `a` = ?, `b` = ?, `c` = ?', 'bindings'=>['10', 'test', 'beforeUpdate']],
+            ['sql' => 'UPDATE `Model` SET `a` = ?, `b` = ?, `c` = ?', 'bindings' => ['10', 'test', 'beforeUpdate']],
         ], $this->executedQueries);
     }
 
@@ -2157,23 +2421,29 @@ class SharQTest extends Unit
 
             protected static array $metadataCache =
             [
-                'Model'=>
+                'Model' =>
                 [
-                    [ 'Field'=>'a' ],
-                    [ 'Field'=>'b' ],
-                    [ 'Field'=>'c' ],
+                    [ 'Field' => 'a' ],
+                    [ 'Field' => 'b' ],
+                    [ 'Field' => 'c' ],
                 ]
             ];
 
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
-            public function lbeforeUpdate($context): void 
+            public function lbeforeUpdate($context): void
             {
                 $this->c = 'beforeUpdate';
             }
 
-            public function lafterFind($arguments): void 
+            public function lafterFind($arguments): void
             {
                 throw new \Exception('$afterFind should not be called');
             }
@@ -2185,8 +2455,8 @@ class SharQTest extends Unit
         $this->assertEquals('beforeUpdate', $model->c);
         // Assuming lastQuery() gives us the latest query, if not you may need another mechanism.
         $this->assertEquals([
-            ['sql'=>'UPDATE `Model` SET `a` = ?, `b` = ?, `c` = ?', 'bindings'=>[10, 'test', 'beforeUpdate']],
-            ], $this->executedQueries);
+            ['sql' => 'UPDATE `Model` SET `a` = ?, `b` = ?, `c` = ?', 'bindings' => [10, 'test', 'beforeUpdate']],
+        ], $this->executedQueries);
     }
 
     public function testPatchShouldCallBeforeUpdateOnTheModelAsync(): void
@@ -2200,24 +2470,30 @@ class SharQTest extends Unit
 
             protected static array $metadataCache =
             [
-                'Model'=>
+                'Model' =>
                 [
-                    [ 'Field'=>'a' ],
-                    [ 'Field'=>'b' ],
-                    [ 'Field'=>'c' ],
+                    [ 'Field' => 'a' ],
+                    [ 'Field' => 'b' ],
+                    [ 'Field' => 'c' ],
                 ]
             ];
 
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
-            public function lbeforeUpdate($context): void 
+            public function lbeforeUpdate($context): void
             {
                 usleep(5000); // Simulate a delay of 5 milliseconds
                 $this->c = 'beforeUpdate';
             }
 
-            public function lafterFind($arguments): void 
+            public function lafterFind($arguments): void
             {
                 throw new \Exception('$afterFind should not be called');
             }
@@ -2228,7 +2504,7 @@ class SharQTest extends Unit
 
         $this->assertEquals('beforeUpdate', $model->c);
         $this->assertEquals([
-            ['sql'=>'UPDATE `Model` SET `a` = ?, `b` = ?, `c` = ?', 'bindings'=>[10, 'test', 'beforeUpdate']],
+            ['sql' => 'UPDATE `Model` SET `a` = ?, `b` = ?, `c` = ?', 'bindings' => [10, 'test', 'beforeUpdate']],
         ], $this->executedQueries);
     }
 
@@ -2243,23 +2519,29 @@ class SharQTest extends Unit
 
             protected static array $metadataCache =
             [
-                'Model'=>
+                'Model' =>
                 [
-                    [ 'Field'=>'a' ],
-                    [ 'Field'=>'b' ],
-                    [ 'Field'=>'c' ],
+                    [ 'Field' => 'a' ],
+                    [ 'Field' => 'b' ],
+                    [ 'Field' => 'c' ],
                 ]
             ];
 
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
-            public function lbeforeInsert($context): void 
+            public function lbeforeInsert($context): void
             {
                 $this->c = 'beforeInsert';
             }
 
-            public function lafterFind($arguments): void 
+            public function lafterFind($arguments): void
             {
                 throw new \Exception('$afterFind should not be called');
             }
@@ -2270,7 +2552,7 @@ class SharQTest extends Unit
 
         $this->assertEquals('beforeInsert', $model->c);
         $this->assertEquals([
-            ['sql'=>'INSERT INTO `Model` (`a`, `b`, `c`) VALUES (?, ?, ?)', 'bindings'=>[10, 'test', 'beforeInsert']],
+            ['sql' => 'INSERT INTO `Model` (`a`, `b`, `c`) VALUES (?, ?, ?)', 'bindings' => [10, 'test', 'beforeInsert']],
         ], $this->executedQueries);
     }
 
@@ -2285,24 +2567,30 @@ class SharQTest extends Unit
 
             protected static array $metadataCache =
             [
-                'Model'=>
+                'Model' =>
                 [
-                    [ 'Field'=>'a' ],
-                    [ 'Field'=>'b' ],
-                    [ 'Field'=>'c' ],
+                    [ 'Field' => 'a' ],
+                    [ 'Field' => 'b' ],
+                    [ 'Field' => 'c' ],
                 ]
             ];
 
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
-            public function lbeforeInsert($context): void 
+            public function lbeforeInsert($context): void
             {
                 usleep(5000); // Simulate a delay of 5 milliseconds
                 $this->c = 'beforeInsert';
             }
 
-            public function lafterFind($arguments): void 
+            public function lafterFind($arguments): void
             {
                 throw new \Exception('$afterFind should not be called');
             }
@@ -2313,7 +2601,7 @@ class SharQTest extends Unit
 
         $this->assertEquals('beforeInsert', $model->c);
         $this->assertEquals([
-            ['sql'=>'INSERT INTO `Model` (`a`, `b`, `c`) VALUES (?, ?, ?)', 'bindings'=>[10, 'test', 'beforeInsert']],
+            ['sql' => 'INSERT INTO `Model` (`a`, `b`, `c`) VALUES (?, ?, ?)', 'bindings' => [10, 'test', 'beforeInsert']],
         ], $this->executedQueries);
     }
 
@@ -2331,10 +2619,16 @@ class SharQTest extends Unit
             public $a;
             public $b;
 
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
-            public function lafterFind($context): void 
+            public function lafterFind($context): void
             {
                 $this->b = $this->a * 2 + $context->x;
             }
@@ -2362,10 +2656,16 @@ class SharQTest extends Unit
             public $a;
             public $b;
 
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
-            public function lafterFind($context): void 
+            public function lafterFind($context): void
             {
                 // usleep(10000); // Simulate a delay of 10 milliseconds
                 $this->b = $this->a * 2 + $context->x;
@@ -2394,10 +2694,16 @@ class SharQTest extends Unit
             public $a;
             public $b;
 
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
-            public function lafterFind($context): void 
+            public function lafterFind($context): void
             {
                 $this->b = $this->a * 2 + $context->x;
             }
@@ -2406,10 +2712,11 @@ class SharQTest extends Unit
         $models = $TestModel::query()
             ->context(['x' => 10])
             ->runAfter(function($iBuilder, $result)
-                {
-                    $iBuilder->context(['x' => 666]);
-                    return $result;
-                })
+            {
+                $iBuilder->context(['x' => 666]);
+
+                return $result;
+            })
             ->run();
 
         $this->assertInstanceOf($TestModel::class, $models[0]);
@@ -2439,13 +2746,21 @@ class SharQTest extends Unit
         /** @var \Model $TestModel */
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
         $SharQ = ModelSharQ::forClass($TestModel::class)
-            ->withGraphJoined('a(f).b', ['f' => function(){}])
-            ->modifyGraph('a', function(){});
+            ->withGraphJoined('a(f).b', ['f' => function()
+            {}])
+            ->modifyGraph('a', function()
+            {});
 
         $this->assertNotNull($SharQ->findOperation('eager'));
         $SharQ->clearWithGraph();
@@ -2457,8 +2772,14 @@ class SharQTest extends Unit
         /** @var \Model $TestModel */
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
         $SharQ = ModelSharQ::forClass($TestModel::class);
@@ -2481,22 +2802,28 @@ class SharQTest extends Unit
             [
                 'M1' =>
                 [
-                    ['Field'=>'id'],
-                    ['Field'=>'m2id']
+                    ['Field' => 'id'],
+                    ['Field' => 'm2id']
                 ],
                 'M2' =>
                 [
-                    ['Field'=>'id'],
-                    ['Field'=>'m1Id']
+                    ['Field' => 'id'],
+                    ['Field' => 'm1Id']
                 ],
                 'Model' =>
                 [
-                    ['Field'=>'id'],
+                    ['Field' => 'id'],
                 ]
             ];
             
-            public static function getTableName(): string { return 'M1'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'M1';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
         $M2 = new class extends \Sharksmedia\Qarium\Model
@@ -2510,32 +2837,38 @@ class SharQTest extends Unit
             [
                 'M1' =>
                 [
-                    ['Field'=>'id'],
-                    ['Field'=>'m2Id']
+                    ['Field' => 'id'],
+                    ['Field' => 'm2Id']
                 ],
                 'M2' =>
                 [
-                    ['Field'=>'id'],
-                    ['Field'=>'m1Id']
+                    ['Field' => 'id'],
+                    ['Field' => 'm1Id']
                 ],
                 'Model' =>
                 [
-                    ['Field'=>'id'],
+                    ['Field' => 'id'],
                 ]
             ];
             
-            public static function getTableName(): string { return 'M2'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'M2';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
             public static function getRelationMappings(): array
             {
                 return [
                     'm1' => [
-                        'relation' => Model::HAS_MANY_RELATION,
+                        'relation'   => Model::HAS_MANY_RELATION,
                         'modelClass' => static::$M1class,
-                        'join' => [
+                        'join'       => [
                             'from' => 'M2.id',
-                            'to' => 'M1.m2Id',
+                            'to'   => 'M1.m2Id',
                         ],
                     ],
                 ];
@@ -2571,13 +2904,19 @@ class SharQTest extends Unit
             [
                 'Bar' =>
                 [
-                    ['Field'=>'id'],
-                    ['Field'=>'foo']
+                    ['Field' => 'id'],
+                    ['Field' => 'foo']
                 ],
             ];
 
-            public static function getTableName(): string { return 'Bar'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Bar';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
             public function getUnsafeSharQ(): ?SharQ
             {
@@ -2601,8 +2940,14 @@ class SharQTest extends Unit
         /** @var \Model $TestModel */
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
         $TestModel::query()->first()->run();
@@ -2616,8 +2961,14 @@ class SharQTest extends Unit
         {
             public const USE_LIMIT_IN_FIRST = true;
 
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
         $TestModel::query()->first()->run();
@@ -2629,8 +2980,14 @@ class SharQTest extends Unit
         /** @var \Model $TestModel */
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
         $query = $TestModel::query();
@@ -2640,13 +2997,20 @@ class SharQTest extends Unit
     public function testTableNameForShouldReturnTheTableNameGivenInFrom(): void
     {
         $this->markTestSkipped('Not implemented yet');
+
         return;
         
         /** @var \Model $TestModel */
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
         $query = $TestModel::query()->from('Lol');
@@ -2658,8 +3022,14 @@ class SharQTest extends Unit
         /** @var \Model $TestModel */
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
         $query = $TestModel::query();
@@ -2671,8 +3041,14 @@ class SharQTest extends Unit
         /** @var \Model $TestModel */
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
         $query = $TestModel::query()->alias('Lyl');
@@ -2682,20 +3058,27 @@ class SharQTest extends Unit
     public function testShouldUseModelSharQInBuilderMethods(): void
     {
         $this->markTestSkipped('Not implemented yet');
+
         return;
 
         /** @var \Model $TestModel */
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
             public static $ModelSharQ;
             public static $CustomSharQClass;
 
-            public static function query($iTransactionOrClient=null): ModelSharQ
+            public static function query($iTransactionOrClient = null): ModelSharQ
             {
-                if(static::$ModelSharQ === null)
+                if (static::$ModelSharQ === null)
                 {
                     static::$ModelSharQ = new static::$CustomSharQClass(static::class);
                 }
@@ -2709,27 +3092,29 @@ class SharQTest extends Unit
             }
         };
 
-        $CustomSharQ = new class($TestModel::class) extends ModelSharQ {};
+        $CustomSharQ = new class($TestModel::class) extends ModelSharQ
+        {
+        };
 
         $TestModel::$CustomSharQClass = $CustomSharQ::class;
 
         $checks = [];
 
         $TestModel::query()
-        ->select('*', function($builder) use(&$checks, $CustomSharQ)
+            ->select('*', function($builder) use (&$checks, $CustomSharQ)
             {
                 $checks[] = $builder instanceof $CustomSharQ;
             })
-        ->where(function($builder) use(&$checks, $CustomSharQ)
+            ->where(function($builder) use (&$checks, $CustomSharQ)
             {
                 $checks[] = $builder instanceof $CustomSharQ;
 
-                $builder->where(function($builder) use(&$checks, $CustomSharQ)
+                $builder->where(function($builder) use (&$checks, $CustomSharQ)
                 {
                     $checks[] = $builder instanceof $CustomSharQ;
                 });
             })
-        ->modify(function($builder) use(&$checks, $CustomSharQ)
+            ->modify(function($builder) use (&$checks, $CustomSharQ)
             {
                 $checks[] = $builder instanceof $CustomSharQ;
             })
@@ -2747,8 +3132,14 @@ class SharQTest extends Unit
         /** @var \Model $TestModel */
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
         $this->assertTrue($TestModel::query()->hasSelectionAs('foo', 'foo'));
@@ -2774,8 +3165,14 @@ class SharQTest extends Unit
         /** @var \Model $TestModel */
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
         $this->assertTrue($TestModel::query()->hasSelection('foo'));
@@ -2806,39 +3203,40 @@ class SharQTest extends Unit
     public function testParseRelationExpression(): void
     {
         $this->markTestSkipped('Not implemented yet');
+
         return;
 
         $parsed = ModelSharQ::parseRelationExpression('[foo, bar.baz]');
 
         $expected = [
-            '$name' => null,
-            '$relation' => null,
-            '$modify' => [],
-            '$recursive' => false,
+            '$name'         => null,
+            '$relation'     => null,
+            '$modify'       => [],
+            '$recursive'    => false,
             '$allRecursive' => false,
-            '$childNames' => ['foo', 'bar'],
-            'foo' => [
-                '$name' => 'foo',
-                '$relation' => 'foo',
-                '$modify' => [],
-                '$recursive' => false,
+            '$childNames'   => ['foo', 'bar'],
+            'foo'           => [
+                '$name'         => 'foo',
+                '$relation'     => 'foo',
+                '$modify'       => [],
+                '$recursive'    => false,
                 '$allRecursive' => false,
-                '$childNames' => [],
+                '$childNames'   => [],
             ],
             'bar' => [
-                '$name' => 'bar',
-                '$relation' => 'bar',
-                '$modify' => [],
-                '$recursive' => false,
+                '$name'         => 'bar',
+                '$relation'     => 'bar',
+                '$modify'       => [],
+                '$recursive'    => false,
                 '$allRecursive' => false,
-                '$childNames' => ['baz'],
-                'baz' => [
-                    '$name' => 'baz',
-                    '$relation' => 'baz',
-                    '$modify' => [],
-                    '$recursive' => false,
+                '$childNames'   => ['baz'],
+                'baz'           => [
+                    '$name'         => 'baz',
+                    '$relation'     => 'baz',
+                    '$modify'       => [],
+                    '$recursive'    => false,
                     '$allRecursive' => false,
-                    '$childNames' => [],
+                    '$childNames'   => [],
                 ],
             ],
         ];
@@ -2855,25 +3253,32 @@ class SharQTest extends Unit
             public $id;
             public $a;
 
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
             public static function getRelationMappings(): array
             {
                 return [
-                    'a'=>[
-                        'relation' => Model::HAS_ONE_RELATION,
+                    'a' => [
+                        'relation'   => Model::HAS_ONE_RELATION,
                         'modelClass' => static::class,
-                        'join' => [
+                        'join'       => [
                             'from' => 'Model.id',
-                            'to' => 'Model.id',
+                            'to'   => 'Model.id',
                         ],
                     ]
                 ];
             }
         };
 
-        $TestModel->query()->allowGraph('a')->withGraphJoined('a(f1)', ['f1' => function () {}])->run();
+        $TestModel->query()->allowGraph('a')->withGraphJoined('a(f1)', ['f1' => function ()
+        {}])->run();
 
         $this->assertCount(1, $this->executedQueries);
     }
@@ -2887,25 +3292,32 @@ class SharQTest extends Unit
             public $id;
             public $a;
 
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
             public static function getRelationMappings(): array
             {
                 return [
-                    'a'=>[
-                        'relation' => Model::HAS_ONE_RELATION,
+                    'a' => [
+                        'relation'   => Model::HAS_ONE_RELATION,
                         'modelClass' => static::class,
-                        'join' => [
+                        'join'       => [
                             'from' => 'Model.id',
-                            'to' => 'Model.id',
+                            'to'   => 'Model.id',
                         ],
                     ]
                 ];
             }
         };
 
-        $TestModel->query()->withGraphJoined('a(f1)', ['f1' => function () {}])->allowGraph('a')->run();
+        $TestModel->query()->withGraphJoined('a(f1)', ['f1' => function ()
+        {}])->allowGraph('a')->run();
 
         $this->assertCount(1, $this->executedQueries);
     }
@@ -2919,21 +3331,27 @@ class SharQTest extends Unit
 
             public static array $metadataCache =
             [
-                'Model'=>[ ['Field'=>'a'] ]
+                'Model' => [ ['Field' => 'a'] ]
             ];
 
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
             public static function getRelationMappings(): array
             {
                 return [
-                    'a'=>[
-                        'relation' => Model::HAS_ONE_RELATION,
+                    'a' => [
+                        'relation'   => Model::HAS_ONE_RELATION,
                         'modelClass' => static::class,
-                        'join' => [
+                        'join'       => [
                             'from' => 'Model.id',
-                            'to' => 'Model.id',
+                            'to'   => 'Model.id',
                         ],
                     ]
                 ];
@@ -2953,41 +3371,47 @@ class SharQTest extends Unit
 
             public static array $metadataCache =
             [
-                'Model'=>[
-                    ['Field'=>'id'],
-                    ['Field'=>'a'],
-                    ['Field'=>'c'],
+                'Model' => [
+                    ['Field' => 'id'],
+                    ['Field' => 'a'],
+                    ['Field' => 'c'],
                 ]
             ];
 
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
             public static function getRelationMappings(): array
             {
                 return [
-                    'a'=>[
-                        'relation' => Model::HAS_ONE_RELATION,
+                    'a' => [
+                        'relation'   => Model::HAS_ONE_RELATION,
                         'modelClass' => static::class,
-                        'join' => [
+                        'join'       => [
                             'from' => 'Model.id',
-                            'to' => 'Model.id',
+                            'to'   => 'Model.id',
                         ],
                     ],
-                    'b'=>[
-                        'relation' => Model::HAS_ONE_RELATION,
+                    'b' => [
+                        'relation'   => Model::HAS_ONE_RELATION,
                         'modelClass' => static::class,
-                        'join' => [
+                        'join'       => [
                             'from' => 'Model.id',
-                            'to' => 'Model.id',
+                            'to'   => 'Model.id',
                         ],
                     ],
-                    'c'=>[
-                        'relation' => Model::HAS_ONE_RELATION,
+                    'c' => [
+                        'relation'   => Model::HAS_ONE_RELATION,
                         'modelClass' => static::class,
-                        'join' => [
+                        'join'       => [
                             'from' => 'Model.id',
-                            'to' => 'Model.id',
+                            'to'   => 'Model.id',
                         ],
                     ],
                 ];
@@ -3017,44 +3441,50 @@ class SharQTest extends Unit
 
             public static array $metadataCache =
             [
-                'Model'=>[
-                    ['Field'=>'id'],
-                    ['Field'=>'b'],
-                    ['Field'=>'c'],
-                    ['Field'=>'e'],
+                'Model' => [
+                    ['Field' => 'id'],
+                    ['Field' => 'b'],
+                    ['Field' => 'c'],
+                    ['Field' => 'e'],
                 ]
             ];
 
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
             public static $relatedClass;
 
             public static function getRelationMappings(): array
             {
                 return [
-                    'b'=>[
-                        'relation' => Model::HAS_ONE_RELATION,
-                        'modelClass'=>static::$relatedClass,
-                        'join' => [
+                    'b' => [
+                        'relation'   => Model::HAS_ONE_RELATION,
+                        'modelClass' => static::$relatedClass,
+                        'join'       => [
                             'from' => 'Model.id',
-                            'to' => 'Model.id',
+                            'to'   => 'Model.id',
                         ],
                     ],
-                    'c'=>[
-                        'relation'=>Model::HAS_ONE_RELATION,
-                        'modelClass'=>static::$relatedClass,
-                        'join' => [
+                    'c' => [
+                        'relation'   => Model::HAS_ONE_RELATION,
+                        'modelClass' => static::$relatedClass,
+                        'join'       => [
                             'from' => 'Model.id',
-                            'to' => 'Model.id',
+                            'to'   => 'Model.id',
                         ],
                     ],
-                    'e'=>[
-                        'relation' => Model::HAS_ONE_RELATION,
-                        'modelClass'=>static::$relatedClass,
-                        'join' => [
+                    'e' => [
+                        'relation'   => Model::HAS_ONE_RELATION,
+                        'modelClass' => static::$relatedClass,
+                        'join'       => [
                             'from' => 'Model.id',
-                            'to' => 'Model.id',
+                            'to'   => 'Model.id',
                         ],
                     ],
                 ];
@@ -3084,33 +3514,39 @@ class SharQTest extends Unit
 
             public static array $metadataCache =
             [
-                'Model'=>[
-                    ['Field'=>'id'],
-                    ['Field'=>'a'],
-                    ['Field'=>'b'],
+                'Model' => [
+                    ['Field' => 'id'],
+                    ['Field' => 'a'],
+                    ['Field' => 'b'],
                 ]
             ];
 
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
             public static function getRelationMappings(): array
             {
                 return [
-                    'a'=>[
-                        'relation' => Model::HAS_ONE_RELATION,
+                    'a' => [
+                        'relation'   => Model::HAS_ONE_RELATION,
                         'modelClass' => static::class,
-                        'join' => [
+                        'join'       => [
                             'from' => 'Model.id',
-                            'to' => 'Model.id',
+                            'to'   => 'Model.id',
                         ],
                     ],
-                    'b'=>[
-                        'relation' => Model::HAS_ONE_RELATION,
+                    'b' => [
+                        'relation'   => Model::HAS_ONE_RELATION,
                         'modelClass' => static::class,
-                        'join' => [
+                        'join'       => [
                             'from' => 'Model.id',
-                            'to' => 'Model.id',
+                            'to'   => 'Model.id',
                         ],
                     ],
                 ];
@@ -3139,33 +3575,39 @@ class SharQTest extends Unit
 
             public static array $metadataCache =
             [
-                'Model'=>[
-                    ['Field'=>'id'],
-                    ['Field'=>'a'],
-                    ['Field'=>'b'],
+                'Model' => [
+                    ['Field' => 'id'],
+                    ['Field' => 'a'],
+                    ['Field' => 'b'],
                 ]
             ];
 
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
             public static function getRelationMappings(): array
             {
                 return [
-                    'a'=>[
-                        'relation' => Model::HAS_ONE_RELATION,
+                    'a' => [
+                        'relation'   => Model::HAS_ONE_RELATION,
                         'modelClass' => static::class,
-                        'join' => [
+                        'join'       => [
                             'from' => 'Model.id',
-                            'to' => 'Model.id',
+                            'to'   => 'Model.id',
                         ],
                     ],
-                    'b'=>[
-                        'relation' => Model::HAS_ONE_RELATION,
+                    'b' => [
+                        'relation'   => Model::HAS_ONE_RELATION,
                         'modelClass' => static::class,
-                        'join' => [
+                        'join'       => [
                             'from' => 'Model.id',
-                            'to' => 'Model.id',
+                            'to'   => 'Model.id',
                         ],
                     ],
                 ];
@@ -3196,34 +3638,40 @@ class SharQTest extends Unit
             protected static array $metadataCache =
             [
                 'Model' => [
-                    ['Field'=>'id'],
-                    ['Field'=>'a'],
-                    ['Field'=>'c'],
+                    ['Field' => 'id'],
+                    ['Field' => 'a'],
+                    ['Field' => 'c'],
                 ],
             ];
 
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
             public static $aclass;
 
             public static function getRelationMappings(): array
             {
                 return [
-                    'a'=>[
-                        'relation'=>self::HAS_MANY_RELATION,
-                        'modelClass'=>static::class,
-                        'join'=>[
-                            'from'=>'Model.id',
-                            'to'=>'Model.id'
+                    'a' => [
+                        'relation'   => self::HAS_MANY_RELATION,
+                        'modelClass' => static::class,
+                        'join'       => [
+                            'from' => 'Model.id',
+                            'to'   => 'Model.id'
                         ],
                     ],
-                    'c'=>[
-                        'relation'=>self::HAS_MANY_RELATION,
-                        'modelClass'=>static::class,
-                        'join'=>[
-                            'from'=>'Model.id',
-                            'to'=>'Model.id'
+                    'c' => [
+                        'relation'   => self::HAS_MANY_RELATION,
+                        'modelClass' => static::class,
+                        'join'       => [
+                            'from' => 'Model.id',
+                            'to'   => 'Model.id'
                         ],
                     ]
                 ];
@@ -3235,8 +3683,8 @@ class SharQTest extends Unit
         $this->assertCount(2, $this->executedQueries);
         $this->assertEquals(
             [
-                ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings'=>['Model']],
-                ['sql'=>'SELECT `Model`.`id` AS `id`, `Model`.`a` AS `a`, `Model`.`c` AS `c`, `a`.`id` AS `a:id`, `a`.`a` AS `a:a`, `a`.`c` AS `a:c`, `a:c`.`id` AS `a:c:id`, `a:c`.`a` AS `a:c:a`, `a:c`.`c` AS `a:c:c` FROM `Model` LEFT JOIN `Model` AS `a` ON(`a`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `a:c` ON(`a:c`.`id` = `Model`.`id`)', 'bindings'=>[]],
+                ['sql' => 'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings' => ['Model']],
+                ['sql' => 'SELECT `Model`.`id` AS `id`, `Model`.`a` AS `a`, `Model`.`c` AS `c`, `a`.`id` AS `a:id`, `a`.`a` AS `a:a`, `a`.`c` AS `a:c`, `a:c`.`id` AS `a:c:id`, `a:c`.`a` AS `a:c:a`, `a:c`.`c` AS `a:c:c` FROM `Model` LEFT JOIN `Model` AS `a` ON(`a`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `a:c` ON(`a:c`.`id` = `Model`.`id`)', 'bindings' => []],
             ],
             $this->executedQueries
         );
@@ -3253,34 +3701,40 @@ class SharQTest extends Unit
             protected static array $metadataCache =
             [
                 'Model' => [
-                    ['Field'=>'id'],
-                    ['Field'=>'a'],
-                    ['Field'=>'b'],
+                    ['Field' => 'id'],
+                    ['Field' => 'a'],
+                    ['Field' => 'b'],
                 ],
             ];
 
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
             public static $aclass;
 
             public static function getRelationMappings(): array
             {
                 return [
-                    'a'=>[
-                        'relation'=>self::HAS_MANY_RELATION,
-                        'modelClass'=>static::class,
-                        'join'=>[
-                            'from'=>'Model.id',
-                            'to'=>'Model.id'
+                    'a' => [
+                        'relation'   => self::HAS_MANY_RELATION,
+                        'modelClass' => static::class,
+                        'join'       => [
+                            'from' => 'Model.id',
+                            'to'   => 'Model.id'
                         ],
                     ],
-                    'b'=>[
-                        'relation'=>self::HAS_MANY_RELATION,
-                        'modelClass'=>static::class,
-                        'join'=>[
-                            'from'=>'Model.id',
-                            'to'=>'Model.id'
+                    'b' => [
+                        'relation'   => self::HAS_MANY_RELATION,
+                        'modelClass' => static::class,
+                        'join'       => [
+                            'from' => 'Model.id',
+                            'to'   => 'Model.id'
                         ],
                     ]
                 ];
@@ -3292,8 +3746,8 @@ class SharQTest extends Unit
         $this->assertCount(2, $this->executedQueries);
         $this->assertEquals(
             [
-                ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings'=>['Model']],
-                ['sql'=>'SELECT `Model`.`id` AS `id`, `Model`.`a` AS `a`, `Model`.`b` AS `b`, `b`.`id` AS `b:id`, `b`.`a` AS `b:a`, `b`.`b` AS `b:b`, `b:a`.`id` AS `b:a:id`, `b:a`.`a` AS `b:a:a`, `b:a`.`b` AS `b:a:b` FROM `Model` LEFT JOIN `Model` AS `b` ON(`b`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `b:a` ON(`b:a`.`id` = `Model`.`id`)', 'bindings'=>[]],
+                ['sql' => 'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings' => ['Model']],
+                ['sql' => 'SELECT `Model`.`id` AS `id`, `Model`.`a` AS `a`, `Model`.`b` AS `b`, `b`.`id` AS `b:id`, `b`.`a` AS `b:a`, `b`.`b` AS `b:b`, `b:a`.`id` AS `b:a:id`, `b:a`.`a` AS `b:a:a`, `b:a`.`b` AS `b:a:b` FROM `Model` LEFT JOIN `Model` AS `b` ON(`b`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `b:a` ON(`b:a`.`id` = `Model`.`id`)', 'bindings' => []],
             ],
             $this->executedQueries
         );
@@ -3307,31 +3761,37 @@ class SharQTest extends Unit
 
             protected static array $metadataCache =
             [
-                'Model' => [ ['Field'=>'id'], ],
+                'Model' => [ ['Field' => 'id'], ],
             ];
 
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
             public static $aclass;
 
             public static function getRelationMappings(): array
             {
                 return [
-                    'b'=>[
-                        'relation'=>self::HAS_MANY_RELATION,
-                        'modelClass'=>static::class,
-                        'join'=>[
-                            'from'=>'Model.id',
-                            'to'=>'Model.id'
+                    'b' => [
+                        'relation'   => self::HAS_MANY_RELATION,
+                        'modelClass' => static::class,
+                        'join'       => [
+                            'from' => 'Model.id',
+                            'to'   => 'Model.id'
                         ],
                     ],
-                    'c'=>[
-                        'relation'=>self::HAS_MANY_RELATION,
-                        'modelClass'=>static::class,
-                        'join'=>[
-                            'from'=>'Model.id',
-                            'to'=>'Model.id'
+                    'c' => [
+                        'relation'   => self::HAS_MANY_RELATION,
+                        'modelClass' => static::class,
+                        'join'       => [
+                            'from' => 'Model.id',
+                            'to'   => 'Model.id'
                         ],
                     ],
                 ];
@@ -3342,8 +3802,8 @@ class SharQTest extends Unit
 
         $this->assertEquals(
             [
-                ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings'=>['Model']],
-                ['sql'=>'SELECT `Model`.`id` AS `id`, `b`.`id` AS `b:id`, `b:c`.`id` AS `b:c:id` FROM `Model` LEFT JOIN `Model` AS `b` ON(`b`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `b:c` ON(`b:c`.`id` = `Model`.`id`)', 'bindings'=>[]],
+                ['sql' => 'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings' => ['Model']],
+                ['sql' => 'SELECT `Model`.`id` AS `id`, `b`.`id` AS `b:id`, `b:c`.`id` AS `b:c:id` FROM `Model` LEFT JOIN `Model` AS `b` ON(`b`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `b:c` ON(`b:c`.`id` = `Model`.`id`)', 'bindings' => []],
             ],
             $this->executedQueries
         );
@@ -3359,32 +3819,38 @@ class SharQTest extends Unit
             protected static array $metadataCache =
             [
                 'Model' => [
-                    ['Field'=>'id'],
-                    ['Field'=>'b'],
-                    ['Field'=>'c'],
+                    ['Field' => 'id'],
+                    ['Field' => 'b'],
+                    ['Field' => 'c'],
                 ],
             ];
 
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
             public static function getRelationMappings(): array
             {
                 return [
-                    'b'=>[
-                        'relation'=>self::HAS_MANY_RELATION,
-                        'modelClass'=>static::class,
-                        'join'=>[
-                            'from'=>'Model.id',
-                            'to'=>'Model.id'
+                    'b' => [
+                        'relation'   => self::HAS_MANY_RELATION,
+                        'modelClass' => static::class,
+                        'join'       => [
+                            'from' => 'Model.id',
+                            'to'   => 'Model.id'
                         ],
                     ],
-                    'c'=>[
-                        'relation'=>self::HAS_MANY_RELATION,
-                        'modelClass'=>static::class,
-                        'join'=>[
-                            'from'=>'Model.id',
-                            'to'=>'Model.id'
+                    'c' => [
+                        'relation'   => self::HAS_MANY_RELATION,
+                        'modelClass' => static::class,
+                        'join'       => [
+                            'from' => 'Model.id',
+                            'to'   => 'Model.id'
                         ],
                     ]
                 ];
@@ -3398,8 +3864,8 @@ class SharQTest extends Unit
         $this->assertCount(2, $this->executedQueries);
         $this->assertEquals(
             [
-                ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings'=>['Model']],
-                ['sql'=>'SELECT `Model`.`id` AS `id`, `Model`.`b` AS `b`, `Model`.`c` AS `c`, `b`.`id` AS `b:id`, `b`.`b` AS `b:b`, `b`.`c` AS `b:c`, `b:c`.`id` AS `b:c:id`, `b:c`.`b` AS `b:c:b`, `b:c`.`c` AS `b:c:c`, `b:c:b`.`id` AS `b:c:b:id`, `b:c:b`.`b` AS `b:c:b:b`, `b:c:b`.`c` AS `b:c:b:c` FROM `Model` LEFT JOIN `Model` AS `b` ON(`b`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `b:c` ON(`b:c`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `b:c:b` ON(`b:c:b`.`id` = `Model`.`id`)', 'bindings'=>[]],
+                ['sql' => 'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings' => ['Model']],
+                ['sql' => 'SELECT `Model`.`id` AS `id`, `Model`.`b` AS `b`, `Model`.`c` AS `c`, `b`.`id` AS `b:id`, `b`.`b` AS `b:b`, `b`.`c` AS `b:c`, `b:c`.`id` AS `b:c:id`, `b:c`.`b` AS `b:c:b`, `b:c`.`c` AS `b:c:c`, `b:c:b`.`id` AS `b:c:b:id`, `b:c:b`.`b` AS `b:c:b:b`, `b:c:b`.`c` AS `b:c:b:c` FROM `Model` LEFT JOIN `Model` AS `b` ON(`b`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `b:c` ON(`b:c`.`id` = `Model`.`id`) LEFT JOIN `Model` AS `b:c:b` ON(`b:c:b`.`id` = `Model`.`id`)', 'bindings' => []],
             ],
             $this->executedQueries
         );
@@ -3416,32 +3882,38 @@ class SharQTest extends Unit
             protected static array $metadataCache =
             [
                 'Model' => [
-                    ['Field'=>'id'],
-                    ['Field'=>'a'],
-                    ['Field'=>'b'],
+                    ['Field' => 'id'],
+                    ['Field' => 'a'],
+                    ['Field' => 'b'],
                 ],
             ];
 
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
             public static function getRelationMappings(): array
             {
                 return [
-                    'a'=>[
-                        'relation'=>self::HAS_MANY_RELATION,
-                        'modelClass'=>static::class,
-                        'join'=>[
-                            'from'=>'Model.id',
-                            'to'=>'Model.id'
+                    'a' => [
+                        'relation'   => self::HAS_MANY_RELATION,
+                        'modelClass' => static::class,
+                        'join'       => [
+                            'from' => 'Model.id',
+                            'to'   => 'Model.id'
                         ],
                     ],
-                    'b'=>[
-                        'relation'=>self::HAS_MANY_RELATION,
-                        'modelClass'=>static::class,
-                        'join'=>[
-                            'from'=>'Model.id',
-                            'to'=>'Model.id'
+                    'b' => [
+                        'relation'   => self::HAS_MANY_RELATION,
+                        'modelClass' => static::class,
+                        'join'       => [
+                            'from' => 'Model.id',
+                            'to'   => 'Model.id'
                         ],
                     ],
                 ];
@@ -3458,8 +3930,14 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
         $this->expectException(\InvalidArgumentException::class);
@@ -3472,8 +3950,14 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
         $this->expectException(\InvalidArgumentException::class);
@@ -3486,8 +3970,14 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
         $this->expectException(\InvalidArgumentException::class);
@@ -3500,8 +3990,14 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
         $this->expectException(\InvalidArgumentException::class);
@@ -3514,8 +4010,14 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
         $this->expectException(\InvalidArgumentException::class);
@@ -3527,45 +4029,52 @@ class SharQTest extends Unit
     public function testGraphExpressionObjectShouldReturnEagerExpressionAsObject(): void
     {
         $this->markTestSkipped('Not implemented yet');
+
         return;
 
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
         $builder = $TestModel::query()->withGraphJoined('[a, b.c(foo)]');
 
         $expected = [
-            '$name' => null,
-            '$relation' => null,
-            '$modify' => [],
-            '$recursive' => false,
+            '$name'         => null,
+            '$relation'     => null,
+            '$modify'       => [],
+            '$recursive'    => false,
             '$allRecursive' => false,
-            '$childNames' => ['a', 'b'],
-            'a' => [
-                '$name' => 'a',
-                '$relation' => 'a',
-                '$modify' => [],
-                '$recursive' => false,
+            '$childNames'   => ['a', 'b'],
+            'a'             => [
+                '$name'         => 'a',
+                '$relation'     => 'a',
+                '$modify'       => [],
+                '$recursive'    => false,
                 '$allRecursive' => false,
-                '$childNames' => [],
+                '$childNames'   => [],
             ],
             'b' => [
-                '$name' => 'b',
-                '$relation' => 'b',
-                '$modify' => [],
-                '$recursive' => false,
+                '$name'         => 'b',
+                '$relation'     => 'b',
+                '$modify'       => [],
+                '$recursive'    => false,
                 '$allRecursive' => false,
-                '$childNames' => ['c'],
-                'c' => [
-                    '$name' => 'c',
-                    '$relation' => 'c',
-                    '$modify' => ['foo'],
-                    '$recursive' => false,
+                '$childNames'   => ['c'],
+                'c'             => [
+                    '$name'         => 'c',
+                    '$relation'     => 'c',
+                    '$modify'       => ['foo'],
+                    '$recursive'    => false,
                     '$allRecursive' => false,
-                    '$childNames' => [],
+                    '$childNames'   => [],
                 ],
             ],
         ];
@@ -3577,11 +4086,18 @@ class SharQTest extends Unit
     {
         $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'Model'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'Model';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
-        $foo = function ($builder) {
+        $foo = function ($builder)
+        {
             return $builder->where('foo');
         };
 
@@ -3596,15 +4112,18 @@ class SharQTest extends Unit
         {
             public $id;
 
-            public static function getTableName(): string { return 'M1'; }
+            public static function getTableName(): string
+            {
+                return 'M1';
+            }
             
-            static $M2class;
-            static $M1ModelSharQClass;
+            public static $M2class;
+            public static $M1ModelSharQClass;
 
             protected static array $metadataCache =
             [
-                'M1'=>[
-                    ['Field'=>'id'],
+                'M1' => [
+                    ['Field' => 'id'],
                 ]
             ];
 
@@ -3612,17 +4131,17 @@ class SharQTest extends Unit
             {
                 return [
                     'm2' => [
-                        'relation' => static::HAS_MANY_RELATION,
+                        'relation'   => static::HAS_MANY_RELATION,
                         'modelClass' => static::$M2class,
-                        'join' => [
-                            'from'=>'M1.id',
-                            'to'=>'M2.m1Id'
+                        'join'       => [
+                            'from' => 'M1.id',
+                            'to'   => 'M2.m1Id'
                         ],
                     ],
                 ];
             }
             
-            public static function query($iTransactionOrClient=null): ModelSharQ
+            public static function query($iTransactionOrClient = null): ModelSharQ
             {
                 return new static::$M1ModelSharQClass(static::class);
             }
@@ -3633,15 +4152,18 @@ class SharQTest extends Unit
             public $id;
             public $m1Id;
 
-            public static function getTableName(): string { return 'M2'; }
+            public static function getTableName(): string
+            {
+                return 'M2';
+            }
 
-            static $M3class;
-            static $M2ModelSharQClass;
+            public static $M3class;
+            public static $M2ModelSharQClass;
 
             protected static array $metadataCache =
             [
-                'M2'=>[
-                    ['Field'=>'id'],
+                'M2' => [
+                    ['Field' => 'id'],
                 ]
             ];
             
@@ -3649,17 +4171,17 @@ class SharQTest extends Unit
             {
                 return [
                     'm3' => [
-                        'relation' => static::BELONGS_TO_ONE_RELATION,
+                        'relation'   => static::BELONGS_TO_ONE_RELATION,
                         'modelClass' => static::$M3class,
-                        'join' => [
-                            'from'=>'M2.id',
-                            'to'=>'M3.m2Id'
+                        'join'       => [
+                            'from' => 'M2.id',
+                            'to'   => 'M3.m2Id'
                         ],
                     ],
                 ];
             }
             
-            public static function query($iTransactionOrClient=null): ModelSharQ
+            public static function query($iTransactionOrClient = null): ModelSharQ
             {
                 return new static::$M2ModelSharQClass(static::class);
             }
@@ -3670,32 +4192,41 @@ class SharQTest extends Unit
             public $id;
             public $m2Id;
 
-            public static function getTableName(): string { return 'M3'; }
+            public static function getTableName(): string
+            {
+                return 'M3';
+            }
             
-            static $M3ModelSharQClass;
+            public static $M3ModelSharQClass;
 
             protected static array $metadataCache =
             [
-                'M3'=>[
-                    ['Field'=>'id'],
+                'M3' => [
+                    ['Field' => 'id'],
                 ]
             ];
 
-            public static function query($iTransactionOrClient=null): ModelSharQ
+            public static function query($iTransactionOrClient = null): ModelSharQ
             {
                 return new static::$M3ModelSharQClass(static::class);
             }
         };
 
-        $M1ModelSharQ = new class($M1::class) extends \Sharksmedia\Qarium\ModelSharQ {};
-        $M2ModelSharQ = new class($M2::class) extends \Sharksmedia\Qarium\ModelSharQ {};
-        $M3ModelSharQ = new class($M3::class) extends \Sharksmedia\Qarium\ModelSharQ {};
+        $M1ModelSharQ = new class($M1::class) extends \Sharksmedia\Qarium\ModelSharQ
+        {
+        };
+        $M2ModelSharQ = new class($M2::class) extends \Sharksmedia\Qarium\ModelSharQ
+        {
+        };
+        $M3ModelSharQ = new class($M3::class) extends \Sharksmedia\Qarium\ModelSharQ
+        {
+        };
 
 
-        $M1::$M2class = $M2::class;
+        $M1::$M2class           = $M2::class;
         $M1::$M1ModelSharQClass = $M1ModelSharQ::class;
 
-        $M2::$M3class = $M3::class;
+        $M2::$M3class           = $M3::class;
         $M2::$M2ModelSharQClass = $M2ModelSharQ::class;
 
         $M3::$M3ModelSharQClass = $M3ModelSharQ::class;
@@ -3712,22 +4243,22 @@ class SharQTest extends Unit
 
         $M1::query()
             ->withGraphJoined('m2.m3')
-            ->modifyGraph('m2', function($builder) use(&$filter1Check, $M2ModelSharQ)
-                {
-                    $filter1Check = $builder instanceof $M2ModelSharQ;
-                })
-            ->modifyGraph('m2.m3', function($builder) use(&$filter2Check, $M3ModelSharQ)
-                {
-                    $filter2Check = $builder instanceof $M3ModelSharQ;
-                })
+            ->modifyGraph('m2', function($builder) use (&$filter1Check, $M2ModelSharQ)
+            {
+                $filter1Check = $builder instanceof $M2ModelSharQ;
+            })
+            ->modifyGraph('m2.m3', function($builder) use (&$filter2Check, $M3ModelSharQ)
+            {
+                $filter2Check = $builder instanceof $M3ModelSharQ;
+            })
             ->run();
 
         $executedQueries = [
-            ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings'=>['M1']],
-            ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings'=>['M2']],
-            ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings'=>['M3']],
+            ['sql' => 'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings' => ['M1']],
+            ['sql' => 'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings' => ['M2']],
+            ['sql' => 'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings' => ['M3']],
 
-            ['sql'=>'SELECT `M1`.`id` AS `id`, `m2`.`id` AS `m2:id`, `m2:m3`.`id` AS `m2:m3:id` FROM `M1` LEFT JOIN `M2` AS `m2` ON(`m2`.`m1Id` = `M1`.`id`) LEFT JOIN `M3` AS `m2:m3` ON(`m2:m3`.`m2Id` = `M2`.`id`)', 'bindings'=>[]],
+            ['sql' => 'SELECT `M1`.`id` AS `id`, `m2`.`id` AS `m2:id`, `m2:m3`.`id` AS `m2:m3:id` FROM `M1` LEFT JOIN `M2` AS `m2` ON(`m2`.`m1Id` = `M1`.`id`) LEFT JOIN `M3` AS `m2:m3` ON(`m2:m3`.`m2Id` = `M2`.`id`)', 'bindings' => []],
         ];
 
         $this->assertEquals($executedQueries, $this->executedQueries);
@@ -3742,23 +4273,29 @@ class SharQTest extends Unit
             public static $M1class;
 
             public $someRel = [];
-            public $ids = [];
+            public $ids     = [];
 
             public $id;
             public $m1Id;
 
             protected static array $metadataCache =
             [
-                'M1'=>[
-                    ['Field'=>'id'],
-                    ['Field'=>'m1Id'],
+                'M1' => [
+                    ['Field' => 'id'],
+                    ['Field' => 'm1Id'],
                 ]
             ];
 
-            public static function getTableName(): string { return 'M1'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'M1';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
-            public function lafterFind($context) 
+            public function lafterFind($context)
             {
                 $this->ids = array_map(function($item)
                 {
@@ -3772,11 +4309,11 @@ class SharQTest extends Unit
             {
                 return [
                     'someRel' => [
-                        'relation' => static::HAS_MANY_RELATION,
+                        'relation'   => static::HAS_MANY_RELATION,
                         'modelClass' => static::$M1class,
-                        'join' => [
-                            'from'=>'M1.id',
-                            'to'=>'M1.m1Id'
+                        'join'       => [
+                            'from' => 'M1.id',
+                            'to'   => 'M1.m1Id'
                         ],
                     ],
                 ];
@@ -3805,30 +4342,30 @@ class SharQTest extends Unit
         [
             [], // Metadata
             [
-	            [ "id"=>1, "m1Id"=>null, "someRel:id"=>4, "someRel:m1Id"=>1, "someRel:someRel:id"=>10, "someRel:someRel:m1Id"=>4 ],
-	            [ "id"=>1, "m1Id"=>null, "someRel:id"=>4, "someRel:m1Id"=>1, "someRel:someRel:id"=>9, "someRel:someRel:m1Id"=>4 ],
-	            [ "id"=>1, "m1Id"=>null, "someRel:id"=>3, "someRel:m1Id"=>1, "someRel:someRel:id"=>8, "someRel:someRel:m1Id"=>3 ],
-	            [ "id"=>1, "m1Id"=>null, "someRel:id"=>3, "someRel:m1Id"=>1, "someRel:someRel:id"=>7, "someRel:someRel:m1Id"=>3 ],
-	            [ "id"=>2, "m1Id"=>null, "someRel:id"=>6, "someRel:m1Id"=>2, "someRel:someRel:id"=>14, "someRel:someRel:m1Id"=>6 ],
-	            [ "id"=>2, "m1Id"=>null, "someRel:id"=>6, "someRel:m1Id"=>2, "someRel:someRel:id"=>13, "someRel:someRel:m1Id"=>6 ],
-	            [ "id"=>2, "m1Id"=>null, "someRel:id"=>5, "someRel:m1Id"=>2, "someRel:someRel:id"=>12, "someRel:someRel:m1Id"=>5 ],
-	            [ "id"=>2, "m1Id"=>null, "someRel:id"=>5, "someRel:m1Id"=>2, "someRel:someRel:id"=>11, "someRel:someRel:m1Id"=>5 ],
-	            [ "id"=>3, "m1Id"=>1, "someRel:id"=>8, "someRel:m1Id"=>3, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
-	            [ "id"=>3, "m1Id"=>1, "someRel:id"=>7, "someRel:m1Id"=>3, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
-	            [ "id"=>4, "m1Id"=>1, "someRel:id"=>10, "someRel:m1Id"=>4, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
-	            [ "id"=>4, "m1Id"=>1, "someRel:id"=>9, "someRel:m1Id"=>4, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
-	            [ "id"=>5, "m1Id"=>2, "someRel:id"=>12, "someRel:m1Id"=>5, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
-	            [ "id"=>5, "m1Id"=>2, "someRel:id"=>11, "someRel:m1Id"=>5, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
-	            [ "id"=>6, "m1Id"=>2, "someRel:id"=>14, "someRel:m1Id"=>6, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
-	            [ "id"=>6, "m1Id"=>2, "someRel:id"=>13, "someRel:m1Id"=>6, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
-	            [ "id"=>7, "m1Id"=>3, "someRel:id"=>null, "someRel:m1Id"=>null, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
-	            [ "id"=>8, "m1Id"=>3, "someRel:id"=>null, "someRel:m1Id"=>null, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
-	            [ "id"=>9, "m1Id"=>4, "someRel:id"=>null, "someRel:m1Id"=>null, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
-	            [ "id"=>10, "m1Id"=>4, "someRel:id"=>null, "someRel:m1Id"=>null, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
-	            [ "id"=>11, "m1Id"=>5, "someRel:id"=>null, "someRel:m1Id"=>null, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
-	            [ "id"=>12, "m1Id"=>5, "someRel:id"=>null, "someRel:m1Id"=>null, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
-	            [ "id"=>13, "m1Id"=>6, "someRel:id"=>null, "someRel:m1Id"=>null, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ],
-	            [ "id"=>14, "m1Id"=>6, "someRel:id"=>null, "someRel:m1Id"=>null, "someRel:someRel:id"=>null, "someRel:someRel:m1Id"=>null ]
+                [ "id" => 1, "m1Id" => null, "someRel:id" => 4, "someRel:m1Id" => 1, "someRel:someRel:id" => 10, "someRel:someRel:m1Id" => 4 ],
+                [ "id" => 1, "m1Id" => null, "someRel:id" => 4, "someRel:m1Id" => 1, "someRel:someRel:id" => 9, "someRel:someRel:m1Id" => 4 ],
+                [ "id" => 1, "m1Id" => null, "someRel:id" => 3, "someRel:m1Id" => 1, "someRel:someRel:id" => 8, "someRel:someRel:m1Id" => 3 ],
+                [ "id" => 1, "m1Id" => null, "someRel:id" => 3, "someRel:m1Id" => 1, "someRel:someRel:id" => 7, "someRel:someRel:m1Id" => 3 ],
+                [ "id" => 2, "m1Id" => null, "someRel:id" => 6, "someRel:m1Id" => 2, "someRel:someRel:id" => 14, "someRel:someRel:m1Id" => 6 ],
+                [ "id" => 2, "m1Id" => null, "someRel:id" => 6, "someRel:m1Id" => 2, "someRel:someRel:id" => 13, "someRel:someRel:m1Id" => 6 ],
+                [ "id" => 2, "m1Id" => null, "someRel:id" => 5, "someRel:m1Id" => 2, "someRel:someRel:id" => 12, "someRel:someRel:m1Id" => 5 ],
+                [ "id" => 2, "m1Id" => null, "someRel:id" => 5, "someRel:m1Id" => 2, "someRel:someRel:id" => 11, "someRel:someRel:m1Id" => 5 ],
+                [ "id" => 3, "m1Id" => 1, "someRel:id" => 8, "someRel:m1Id" => 3, "someRel:someRel:id" => null, "someRel:someRel:m1Id" => null ],
+                [ "id" => 3, "m1Id" => 1, "someRel:id" => 7, "someRel:m1Id" => 3, "someRel:someRel:id" => null, "someRel:someRel:m1Id" => null ],
+                [ "id" => 4, "m1Id" => 1, "someRel:id" => 10, "someRel:m1Id" => 4, "someRel:someRel:id" => null, "someRel:someRel:m1Id" => null ],
+                [ "id" => 4, "m1Id" => 1, "someRel:id" => 9, "someRel:m1Id" => 4, "someRel:someRel:id" => null, "someRel:someRel:m1Id" => null ],
+                [ "id" => 5, "m1Id" => 2, "someRel:id" => 12, "someRel:m1Id" => 5, "someRel:someRel:id" => null, "someRel:someRel:m1Id" => null ],
+                [ "id" => 5, "m1Id" => 2, "someRel:id" => 11, "someRel:m1Id" => 5, "someRel:someRel:id" => null, "someRel:someRel:m1Id" => null ],
+                [ "id" => 6, "m1Id" => 2, "someRel:id" => 14, "someRel:m1Id" => 6, "someRel:someRel:id" => null, "someRel:someRel:m1Id" => null ],
+                [ "id" => 6, "m1Id" => 2, "someRel:id" => 13, "someRel:m1Id" => 6, "someRel:someRel:id" => null, "someRel:someRel:m1Id" => null ],
+                [ "id" => 7, "m1Id" => 3, "someRel:id" => null, "someRel:m1Id" => null, "someRel:someRel:id" => null, "someRel:someRel:m1Id" => null ],
+                [ "id" => 8, "m1Id" => 3, "someRel:id" => null, "someRel:m1Id" => null, "someRel:someRel:id" => null, "someRel:someRel:m1Id" => null ],
+                [ "id" => 9, "m1Id" => 4, "someRel:id" => null, "someRel:m1Id" => null, "someRel:someRel:id" => null, "someRel:someRel:m1Id" => null ],
+                [ "id" => 10, "m1Id" => 4, "someRel:id" => null, "someRel:m1Id" => null, "someRel:someRel:id" => null, "someRel:someRel:m1Id" => null ],
+                [ "id" => 11, "m1Id" => 5, "someRel:id" => null, "someRel:m1Id" => null, "someRel:someRel:id" => null, "someRel:someRel:m1Id" => null ],
+                [ "id" => 12, "m1Id" => 5, "someRel:id" => null, "someRel:m1Id" => null, "someRel:someRel:id" => null, "someRel:someRel:m1Id" => null ],
+                [ "id" => 13, "m1Id" => 6, "someRel:id" => null, "someRel:m1Id" => null, "someRel:someRel:id" => null, "someRel:someRel:m1Id" => null ],
+                [ "id" => 14, "m1Id" => 6, "someRel:id" => null, "someRel:m1Id" => null, "someRel:someRel:id" => null, "someRel:someRel:m1Id" => null ]
             ]
         ];
 
@@ -3839,8 +4376,8 @@ class SharQTest extends Unit
 
         $this->assertCount(2, $this->executedQueries);
         $this->assertEquals([
-            ['sql'=>'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings'=>['M1']],
-            ['sql'=>'SELECT `M1`.`id` AS `id`, `M1`.`m1Id` AS `m1Id`, `someRel`.`id` AS `someRel:id`, `someRel`.`m1Id` AS `someRel:m1Id`, `someRel:someRel`.`id` AS `someRel:someRel:id`, `someRel:someRel`.`m1Id` AS `someRel:someRel:m1Id` FROM `M1` LEFT JOIN `M1` AS `someRel` ON(`someRel`.`m1Id` = `M1`.`id`) LEFT JOIN `M1` AS `someRel:someRel` ON(`someRel:someRel`.`m1Id` = `M1`.`id`)', 'bindings'=>[]],
+            ['sql' => 'SELECT * FROM `information_schema`.`columns` WHERE `table_name` = ? AND `table_catalog` = DATABASE()', 'bindings' => ['M1']],
+            ['sql' => 'SELECT `M1`.`id` AS `id`, `M1`.`m1Id` AS `m1Id`, `someRel`.`id` AS `someRel:id`, `someRel`.`m1Id` AS `someRel:m1Id`, `someRel:someRel`.`id` AS `someRel:someRel:id`, `someRel:someRel`.`m1Id` AS `someRel:someRel:m1Id` FROM `M1` LEFT JOIN `M1` AS `someRel` ON(`someRel`.`m1Id` = `M1`.`id`) LEFT JOIN `M1` AS `someRel:someRel` ON(`someRel:someRel`.`m1Id` = `M1`.`id`)', 'bindings' => []],
         ], $this->executedQueries);
 
         $this->assertEquals([
@@ -3851,8 +4388,8 @@ class SharQTest extends Unit
                             (object) ['someRel' => [], 'ids' => [], 'id' => 10, 'm1Id' => 4],
                             (object) ['someRel' => [], 'ids' => [], 'id' => 9, 'm1Id' => 4]
                         ],
-                        'ids' => [],
-                        'id' => 4,
+                        'ids'  => [],
+                        'id'   => 4,
                         'm1Id' => 1
                     ],
                     (object) [
@@ -3860,13 +4397,13 @@ class SharQTest extends Unit
                             (object) ['someRel' => [], 'ids' => [], 'id' => 8, 'm1Id' => 3],
                             (object) ['someRel' => [], 'ids' => [], 'id' => 7, 'm1Id' => 3]
                         ],
-                        'ids' => [],
-                        'id' => 3,
+                        'ids'  => [],
+                        'id'   => 3,
                         'm1Id' => 1
                     ]
                 ],
-                'ids' => [4, 3],
-                'id' => 1,
+                'ids'  => [4, 3],
+                'id'   => 1,
                 'm1Id' => null
             ],
             (object) [
@@ -3876,8 +4413,8 @@ class SharQTest extends Unit
                             (object) ['someRel' => [], 'ids' => [], 'id' => 14, 'm1Id' => 6],
                             (object) ['someRel' => [], 'ids' => [], 'id' => 13, 'm1Id' => 6]
                         ],
-                        'ids' => [],
-                        'id' => 6,
+                        'ids'  => [],
+                        'id'   => 6,
                         'm1Id' => 2
                     ],
                     (object) [
@@ -3885,13 +4422,13 @@ class SharQTest extends Unit
                             (object) ['someRel' => [], 'ids' => [], 'id' => 12, 'm1Id' => 5],
                             (object) ['someRel' => [], 'ids' => [], 'id' => 11, 'm1Id' => 5]
                         ],
-                        'ids' => [],
-                        'id' => 5,
+                        'ids'  => [],
+                        'id'   => 5,
                         'm1Id' => 2
                     ]
                 ],
-                'ids' => [6, 5],
-                'id' => 2,
+                'ids'  => [6, 5],
+                'id'   => 2,
                 'm1Id' => null
             ],
             (object) [
@@ -3899,8 +4436,8 @@ class SharQTest extends Unit
                     (object) ['someRel' => [], 'ids' => [], 'id' => 8, 'm1Id' => 3],
                     (object) ['someRel' => [], 'ids' => [], 'id' => 7, 'm1Id' => 3]
                 ],
-                'ids' => [8, 7],
-                'id' => 3,
+                'ids'  => [8, 7],
+                'id'   => 3,
                 'm1Id' => 1
             ],
             (object) [
@@ -3908,8 +4445,8 @@ class SharQTest extends Unit
                     (object) ['someRel' => [], 'ids' => [], 'id' => 10, 'm1Id' => 4],
                     (object) ['someRel' => [], 'ids' => [], 'id' => 9, 'm1Id' => 4]
                 ],
-                'ids' => [10, 9],
-                'id' => 4,
+                'ids'  => [10, 9],
+                'id'   => 4,
                 'm1Id' => 1
             ],
             (object) [
@@ -3917,8 +4454,8 @@ class SharQTest extends Unit
                     (object) ['someRel' => [], 'ids' => [], 'id' => 12, 'm1Id' => 5],
                     (object) ['someRel' => [], 'ids' => [], 'id' => 11, 'm1Id' => 5]
                 ],
-                'ids' => [12, 11],
-                'id' => 5,
+                'ids'  => [12, 11],
+                'id'   => 5,
                 'm1Id' => 2
             ],
             (object) [
@@ -3926,8 +4463,8 @@ class SharQTest extends Unit
                     (object) ['someRel' => [], 'ids' => [], 'id' => 14, 'm1Id' => 6],
                     (object) ['someRel' => [], 'ids' => [], 'id' => 13, 'm1Id' => 6]
                 ],
-                'ids' => [14, 13],
-                'id' => 6,
+                'ids'  => [14, 13],
+                'id'   => 6,
                 'm1Id' => 2
             ],
             (object) ['someRel' => [], 'ids' => [], 'id' => 7, 'm1Id' => 3],
@@ -3943,10 +4480,16 @@ class SharQTest extends Unit
 
     public function testContextShouldMergeContext(): void
     {
-        $TestModel = new class extends \Sharksmedia\Qarium\Model 
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'TestModel'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'TestModel';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
         $builder = $TestModel::query()->context(['a' => 1])->context(['b' => 2]);
@@ -3959,10 +4502,16 @@ class SharQTest extends Unit
 
     public function testClearContextShouldClearTheContext(): void
     {
-        $TestModel = new class extends \Sharksmedia\Qarium\Model 
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'TestModel'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'TestModel';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
         $builder = $TestModel::query()->context(['a' => 1])->clearContext();
@@ -3971,10 +4520,16 @@ class SharQTest extends Unit
 
     public function testContextWithoutPreviousContext(): void
     {
-        $TestModel = new class extends \Sharksmedia\Qarium\Model 
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'TestModel'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'TestModel';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
         $builder = $TestModel::query()->context(['a' => 1])->context(['b' => 2]);
@@ -3987,10 +4542,16 @@ class SharQTest extends Unit
 
     public function testCloningSharQShouldCloneContext(): void
     {
-        $TestModel = new class extends \Sharksmedia\Qarium\Model 
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'TestModel'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'TestModel';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
         $builder = $TestModel::query()->context(['a' => 1]);
@@ -4006,13 +4567,19 @@ class SharQTest extends Unit
     {
         $this->markTestSkipped('This test is not working yet.');
 
-        $TestModel = new class extends \Sharksmedia\Qarium\Model 
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'TestModel'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'TestModel';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
-        $builder = $TestModel::query()->context(['a' => 1]);
+        $builder  = $TestModel::query()->context(['a' => 1]);
         $builder2 = $TestModel::query()->childQueryOf($builder)->context(['b' => 2]);
 
         $this->assertEquals(['a' => 1, 'b' => 2], $builder->context()->getInternalData());
@@ -4021,13 +4588,19 @@ class SharQTest extends Unit
 
     public function testChildQueryOfWithForkOptionShouldCopyContext(): void
     {
-        $TestModel = new class extends \Sharksmedia\Qarium\Model 
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public static function getTableName(): string { return 'TestModel'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'TestModel';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
-        $builder = $TestModel::query()->context(['a' => 1]);
+        $builder  = $TestModel::query()->context(['a' => 1]);
         $builder2 = $TestModel::query()->childQueryOf($builder, true)->context(['b' => 2]);
 
         $this->assertEquals(['a' => 1], $builder->context()->getInternalData());
@@ -4036,20 +4609,26 @@ class SharQTest extends Unit
 
     public function testValuesSavedToContextInHooksShouldBeAvailableLater(): void
     {
-        $TestModel = new class extends \Sharksmedia\Qarium\Model 
+        $TestModel = new class extends \Sharksmedia\Qarium\Model
         {
-            public $a = null;
+            public $a          = null;
             public static $foo = null;
 
-            public static function getTableName(): string { return 'TestModel'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'TestModel';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
             public function lbeforeUpdate($context): void
             {
                 $context->foo = 101;
             }
 
-            public function lafterUpdate($context): void 
+            public function lafterUpdate($context): void
             {
                 static::$foo = $context->foo;
             }
@@ -4061,55 +4640,73 @@ class SharQTest extends Unit
 
     public function testQueryUpdate(): void
     {
-        $person = new class extends \Sharksmedia\Qarium\Model 
+        $person = new class extends \Sharksmedia\Qarium\Model
         {
             public $id;
             public $foo;
 
-            public static function getTableName(): string { return 'person'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'person';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
         $query = $person::query()->update(['foo' => 'bar'])->where('name', 'like', '%foo');
-        $sql = $query->toFindQuery()->toString();
+        $sql   = $query->toFindQuery()->toString();
 
         $this->assertEquals('SELECT `person`.* FROM `person` WHERE `name` LIKE ?', $sql);
     }
 
     public function testRelatedQueryHasManyUpdate(): void
     {
-        $person = new class extends \Sharksmedia\Qarium\Model 
+        $person = new class extends \Sharksmedia\Qarium\Model
         {
             public $id;
 
             public static $petClass;
             
-            public static function getTableName(): string { return 'person'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'person';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
             public static function getRelationMappings(): array
             {
                 return [
                     'pets' => [
-                        'relation'=>self::HAS_MANY_RELATION,
-                        'modelClass'=>self::$petClass,
-                        'join' => [
-                            'from'=>'person.id',
-                            'to'=>'pet.owner_id'
+                        'relation'   => self::HAS_MANY_RELATION,
+                        'modelClass' => self::$petClass,
+                        'join'       => [
+                            'from' => 'person.id',
+                            'to'   => 'pet.owner_id'
                         ]
                     ]
                 ];
             }
         };
 
-        $pet = new class extends \Sharksmedia\Qarium\Model 
+        $pet = new class extends \Sharksmedia\Qarium\Model
         {
             public $id;
             public $owner_id;
             public $foo;
 
-            public static function getTableName(): string { return 'pet'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'pet';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
         $person::$petClass = $pet::class;
@@ -4117,41 +4714,53 @@ class SharQTest extends Unit
         $instance = $person::createFromDatabaseArray(['id' => 1]);
 
         $query = $instance->lrelatedQuery('pets')->update(['foo' => 'bar'])->where('name', 'like', '%foo');
-        $sql = $query->toFindQuery()->toString();
+        $sql   = $query->toFindQuery()->toString();
         
         $this->assertEquals('SELECT `pet`.* FROM `pet` WHERE `pet`.`owner_id` IN(?) AND `name` LIKE ?', $sql);
     }
 
     public function testRelatedQueryBelongsToOneUpdate(): void
     {
-        $person = new class extends \Sharksmedia\Qarium\Model 
+        $person = new class extends \Sharksmedia\Qarium\Model
         {
             public $id;
             public $foo;
             
-            public static function getTableName(): string { return 'person'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'person';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
         };
 
-        $pet = new class extends \Sharksmedia\Qarium\Model 
+        $pet = new class extends \Sharksmedia\Qarium\Model
         {
             public $id;
             public $owner_id;
 
             public static $personClass;
 
-            public static function getTableName(): string { return 'pet'; }
-            public static function getTableIDs(): array { return ['id']; }
+            public static function getTableName(): string
+            {
+                return 'pet';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['id'];
+            }
 
             public static function getRelationMappings(): array
             {
                 return [
-                    'owner'=> [
-                        'relation'=>self::BELONGS_TO_ONE_RELATION,
-                        'modelClass'=>self::$personClass,
-                        'join'=>[
-                            'from'=>'pet.owner_id',
-                            'to'=>'person.id'
+                    'owner' => [
+                        'relation'   => self::BELONGS_TO_ONE_RELATION,
+                        'modelClass' => self::$personClass,
+                        'join'       => [
+                            'from' => 'pet.owner_id',
+                            'to'   => 'person.id'
                         ]
                     ]
                 ];
@@ -4161,8 +4770,8 @@ class SharQTest extends Unit
         $pet::$personClass = $person::class;
 
         $instance = $pet::createFromDatabaseArray(['owner_id' => 1]);
-        $query = $instance->lrelatedQuery('owner')->patch(['foo' => 'bar'])->where('name', 'like', '%foo');
-        $sql = $query->toFindQuery()->toString();
+        $query    = $instance->lrelatedQuery('owner')->patch(['foo' => 'bar'])->where('name', 'like', '%foo');
+        $sql      = $query->toFindQuery()->toString();
         
         $this->assertEquals('SELECT `person`.* FROM `person` WHERE `person`.`id` IN(?) AND `name` LIKE ?', $sql);
     }
@@ -4178,37 +4787,43 @@ class SharQTest extends Unit
 
             protected static array $metadataCache =
             [
-                'Persons'=>
+                'Persons' =>
                 [
-                    ['Field'=>'personID']
+                    ['Field' => 'personID']
                 ]
             ];
 
-            public static function getTableName(): string { return 'Persons'; }
-            public static function getTableIDs(): array { return ['personID']; }
+            public static function getTableName(): string
+            {
+                return 'Persons';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['personID'];
+            }
 
             public static function getRelationMappings(): array
             {
                 $relationsMap =
                 [
-                    'iParents'=>
+                    'iParents' =>
                     [
-                        'relation'=>Model::HAS_MANY_RELATION,
-                        'modelClass'=>self::class,
-                        'join'=>
+                        'relation'   => Model::HAS_MANY_RELATION,
+                        'modelClass' => self::class,
+                        'join'       =>
                         [
-                            'from'=>'Persons.personID',
-                            'to'=>'Persons.parentID'
+                            'from' => 'Persons.personID',
+                            'to'   => 'Persons.parentID'
                         ]
                     ],
-                    'iPets'=>
+                    'iPets' =>
                     [
-                        'relation'=>Model::HAS_MANY_RELATION,
-                        'modelClass'=>self::$Petclass,
-                        'join'=>
+                        'relation'   => Model::HAS_MANY_RELATION,
+                        'modelClass' => self::$Petclass,
+                        'join'       =>
                         [
-                            'from'=>'Persons.personID',
-                            'to'=>'Pets.ownerID'
+                            'from' => 'Persons.personID',
+                            'to'   => 'Pets.ownerID'
                         ]
                     ]
                 ];
@@ -4228,30 +4843,36 @@ class SharQTest extends Unit
 
             protected static array $metadataCache =
             [
-                'Pets'=>
+                'Pets' =>
                 [
-                    ['Field'=>'petID'],
-                    ['Field'=>'ownerID'],
-                    ['Field'=>'name'],
-                    ['Field'=>'species'],
+                    ['Field' => 'petID'],
+                    ['Field' => 'ownerID'],
+                    ['Field' => 'name'],
+                    ['Field' => 'species'],
                 ]
             ];
 
-            public static function getTableName(): string { return 'Pets'; }
-            public static function getTableIDs(): array { return ['petID']; }
+            public static function getTableName(): string
+            {
+                return 'Pets';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['petID'];
+            }
 
             public static function getRelationMappings(): array
             {
                 $relations =
                 [
-                    'iFavoriteFood'=>
+                    'iFavoriteFood' =>
                     [
-                        'relation'=>Model::BELONGS_TO_ONE_RELATION,
-                        'modelClass'=>self::$foodClass,
-                        'join'=>
+                        'relation'   => Model::BELONGS_TO_ONE_RELATION,
+                        'modelClass' => self::$foodClass,
+                        'join'       =>
                         [
-                            'from'=>'Pets.favoriteFoodID',
-                            'to'=>'Foods.foodID'
+                            'from' => 'Pets.favoriteFoodID',
+                            'to'   => 'Foods.foodID'
                         ]
                     ]
                 ];
@@ -4267,19 +4888,25 @@ class SharQTest extends Unit
 
             protected static array $metadataCache =
             [
-                'Foods'=>
+                'Foods' =>
                 [
-                    ['Field'=>'foodID'],
-                    ['Field'=>'name'],
+                    ['Field' => 'foodID'],
+                    ['Field' => 'name'],
                 ]
             ];
 
-            public static function getTableName(): string { return 'Foods'; }
-            public static function getTableIDs(): array { return ['foodID']; }
+            public static function getTableName(): string
+            {
+                return 'Foods';
+            }
+            public static function getTableIDs(): array
+            {
+                return ['foodID'];
+            }
         };
 
         $Person::$Petclass = $Pet::class;
-        $Pet::$foodClass = $Food::class;
+        $Pet::$foodClass   = $Food::class;
 
         // Should be instance of Model at RelationOwner constructor
 
@@ -4292,15 +4919,15 @@ class SharQTest extends Unit
         $iQuery = $iDogsQuery->toQuery();
         
         $this->assertEquals([
-            'sql'=>'SELECT `Pets`.* FROM `Pets` WHERE `Pets`.`ownerID` IN(?) AND `species` = ? ORDER BY `name` ASC',
-            'bindings'=>[1, 'Dog']
+            'sql'      => 'SELECT `Pets`.* FROM `Pets` WHERE `Pets`.`ownerID` IN(?) AND `species` = ? ORDER BY `name` ASC',
+            'bindings' => [1, 'Dog']
         ],
-        [
-            'sql'=>$iQuery->getSQL(),
-            'bindings'=>$iQuery->getBindings()
-        ]);
+            [
+                'sql'      => $iQuery->getSQL(),
+                'bindings' => $iQuery->getBindings()
+            ]);
 
-        $iPerson = $Person::createFromDatabaseArray(['personID'=>1]);
+        $iPerson = $Person::createFromDatabaseArray(['personID' => 1]);
 
         $iCatsQuery = $iPerson->lrelatedQuery('iPets')
             ->where('species', 'Cat')
@@ -4309,13 +4936,13 @@ class SharQTest extends Unit
         $iQuery = $iCatsQuery->toQuery();
 
         $this->assertEquals([
-            'sql'=>'SELECT `Pets`.* FROM `Pets` WHERE `Pets`.`ownerID` IN(?) AND `species` = ? ORDER BY `name` ASC',
-            'bindings'=>[1, 'Cat']
+            'sql'      => 'SELECT `Pets`.* FROM `Pets` WHERE `Pets`.`ownerID` IN(?) AND `species` = ? ORDER BY `name` ASC',
+            'bindings' => [1, 'Cat']
         ],
-        [
-            'sql'=>$iQuery->getSQL(),
-            'bindings'=>$iQuery->getBindings()
-        ]);
+            [
+                'sql'      => $iQuery->getSQL(),
+                'bindings' => $iQuery->getBindings()
+            ]);
 
         $iDogsWithFoodQuery = $Person::relatedQuery('iPets')
             ->for(1)
@@ -4326,13 +4953,13 @@ class SharQTest extends Unit
         $iQuery = $iDogsWithFoodQuery->toQuery();
 
         $this->assertEquals([
-            'sql'=>'SELECT `Pets`.`petID` AS `petID`, `Pets`.`ownerID` AS `ownerID`, `Pets`.`name` AS `name`, `Pets`.`species` AS `species`, `iFavoriteFood`.`foodID` AS `iFavoriteFood:foodID`, `iFavoriteFood`.`name` AS `iFavoriteFood:name` FROM `Pets` LEFT JOIN `Foods` AS `iFavoriteFood` ON(`iFavoriteFood`.`foodID` = `Pets`.`favoriteFoodID`) WHERE `Pets`.`ownerID` IN(?) AND `species` = ? ORDER BY `name` ASC',
-            'bindings'=>[1, 'Dog']
+            'sql'      => 'SELECT `Pets`.`petID` AS `petID`, `Pets`.`ownerID` AS `ownerID`, `Pets`.`name` AS `name`, `Pets`.`species` AS `species`, `iFavoriteFood`.`foodID` AS `iFavoriteFood:foodID`, `iFavoriteFood`.`name` AS `iFavoriteFood:name` FROM `Pets` LEFT JOIN `Foods` AS `iFavoriteFood` ON(`iFavoriteFood`.`foodID` = `Pets`.`favoriteFoodID`) WHERE `Pets`.`ownerID` IN(?) AND `species` = ? ORDER BY `name` ASC',
+            'bindings' => [1, 'Dog']
         ],
-        [
-            'sql'=>$iQuery->getSQL(),
-            'bindings'=>$iQuery->getBindings()
-        ]);
+            [
+                'sql'      => $iQuery->getSQL(),
+                'bindings' => $iQuery->getBindings()
+            ]);
 
         $iCatsWithFoodQuery = $iPerson->lrelatedQuery('iPets')
             ->where('species', 'Cat')
@@ -4342,17 +4969,18 @@ class SharQTest extends Unit
         $iQuery = $iCatsWithFoodQuery->toQuery();
 
         $this->assertEquals([
-            'sql'=>'SELECT `Pets`.`petID` AS `petID`, `Pets`.`ownerID` AS `ownerID`, `Pets`.`name` AS `name`, `Pets`.`species` AS `species`, `iFavoriteFood`.`foodID` AS `iFavoriteFood:foodID`, `iFavoriteFood`.`name` AS `iFavoriteFood:name` FROM `Pets` LEFT JOIN `Foods` AS `iFavoriteFood` ON(`iFavoriteFood`.`foodID` = `Pets`.`favoriteFoodID`) WHERE `Pets`.`ownerID` IN(?) AND `species` = ? ORDER BY `name` ASC',
-            'bindings'=>[1, 'Cat']
+            'sql'      => 'SELECT `Pets`.`petID` AS `petID`, `Pets`.`ownerID` AS `ownerID`, `Pets`.`name` AS `name`, `Pets`.`species` AS `species`, `iFavoriteFood`.`foodID` AS `iFavoriteFood:foodID`, `iFavoriteFood`.`name` AS `iFavoriteFood:name` FROM `Pets` LEFT JOIN `Foods` AS `iFavoriteFood` ON(`iFavoriteFood`.`foodID` = `Pets`.`favoriteFoodID`) WHERE `Pets`.`ownerID` IN(?) AND `species` = ? ORDER BY `name` ASC',
+            'bindings' => [1, 'Cat']
         ],
-        [
-            'sql'=>$iQuery->getSQL(),
-            'bindings'=>$iQuery->getBindings()
-        ]);
+            [
+                'sql'      => $iQuery->getSQL(),
+                'bindings' => $iQuery->getBindings()
+            ]);
 
         $iPerson = $Person::query()
             ->withGraphJoined('[iParents, iPets]')
-            ->modifyGraph('iParents', function ($iParentsQuery) {
+            ->modifyGraph('iParents', function ($iParentsQuery)
+            {
                 $iParentsQuery->where('name', 'John');
             })
             ->findById(1);
@@ -4360,12 +4988,12 @@ class SharQTest extends Unit
         $iQuery = $iPerson->toQuery();
 
         $this->assertEquals([
-            'sql'=>'SELECT `Persons`.`personID` AS `personID`, `iParents`.`personID` AS `iParents:personID`, `iPets`.`petID` AS `iPets:petID`, `iPets`.`ownerID` AS `iPets:ownerID`, `iPets`.`name` AS `iPets:name`, `iPets`.`species` AS `iPets:species` FROM `Persons` LEFT JOIN (SELECT `Persons`.* FROM `Persons` WHERE `name` = ?) AS `iParents` ON(`iParents`.`parentID` = `Persons`.`personID`) LEFT JOIN `Pets` AS `iPets` ON(`iPets`.`ownerID` = `Persons`.`personID`) WHERE `Persons`.`personID` = ?',
-            'bindings'=>['John', 1]
+            'sql'      => 'SELECT `Persons`.`personID` AS `personID`, `iParents`.`personID` AS `iParents:personID`, `iPets`.`petID` AS `iPets:petID`, `iPets`.`ownerID` AS `iPets:ownerID`, `iPets`.`name` AS `iPets:name`, `iPets`.`species` AS `iPets:species` FROM `Persons` LEFT JOIN (SELECT `Persons`.* FROM `Persons` WHERE `name` = ?) AS `iParents` ON(`iParents`.`parentID` = `Persons`.`personID`) LEFT JOIN `Pets` AS `iPets` ON(`iPets`.`ownerID` = `Persons`.`personID`) WHERE `Persons`.`personID` = ?',
+            'bindings' => ['John', 1]
         ],
-        [
-            'sql'=>$iQuery->getSQL(),
-            'bindings'=>$iQuery->getBindings()
-        ]);
+            [
+                'sql'      => $iQuery->getSQL(),
+                'bindings' => $iQuery->getBindings()
+            ]);
     }
 }

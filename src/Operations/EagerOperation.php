@@ -32,11 +32,11 @@ class EagerOperation extends ModelSharQOperation
      */
     private ?array $graphOptions = null;
 
-    public function __construct(string $name, array $options=[])
+    public function __construct(string $name, array $options = [])
     {
         parent::__construct($name, $options);
 
-        $this->graphOptions = $this->options['defaultGraphOptions'] ?? null;
+        $this->graphOptions        = $this->options['defaultGraphOptions'] ?? null;
         $this->iRelationExpression = RelationExpression::create();
     }
 
@@ -71,7 +71,7 @@ class EagerOperation extends ModelSharQOperation
 
     public function addModifierAtPath(string $path, \Closure $modifier): self
     {
-        $this->modifiersAtPath[] = ['path'=>$path, 'modifier'=>$modifier];
+        $this->modifiersAtPath[] = ['path' => $path, 'modifier' => $modifier];
 
         return $this;
     }
@@ -80,13 +80,13 @@ class EagerOperation extends ModelSharQOperation
     {
         $expression = clone $this->iRelationExpression;
 
-        foreach($this->modifiersAtPath as $i=>$modifier)
+        foreach ($this->modifiersAtPath as $i => $modifier)
         {
             $name = self::getModifierName($i);
 
             $iPath = RelationExpression::create($modifier['path']);
 
-            foreach($expression->expressionAtPath($iPath) as $expr)
+            foreach ($expression->expressionAtPath($iPath) as $expr)
             {
                 // $expr->addModifier($modifier->modifier);
                 $expr->addModifier($name);
@@ -100,9 +100,9 @@ class EagerOperation extends ModelSharQOperation
     {
         $modifiers = $iBuilder->getModifiers();
 
-        foreach($this->modifiersAtPath as $i=>$modifier)
+        foreach ($this->modifiersAtPath as $i => $modifier)
         {
-            $name = self::getModifierName($i);
+            $name             = self::getModifierName($i);
             $modifiers[$name] = $modifier['modifier'];
         }
 
@@ -113,5 +113,4 @@ class EagerOperation extends ModelSharQOperation
     {
         return "_f{$index}_";
     }
-
 }

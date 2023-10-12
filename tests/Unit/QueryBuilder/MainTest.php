@@ -38,24 +38,21 @@ class MainTest extends \Codeception\Test\Unit
 
         $cases['modelClass() should return the model class'] = function()
         {
-            
             $case =
             [
                 Person::query()
-                    ->insert(['name'=>'Magnus', 'parentID'=>null]),
+                    ->insert(['name' => 'Magnus', 'parentID' => null]),
                 [
-                    'mysql'=>
+                    'mysql' =>
                     [
-                        'sql'=>'INSERT INTO `Persons` (`name`, `parentID`) VALUES (?, NULL)',
-                        'bindings'=>['Magnus'],
-                        'expected'=>$iPerson->getObject(),
+                        'sql'      => 'INSERT INTO `Persons` (`name`, `parentID`) VALUES (?, NULL)',
+                        'bindings' => ['Magnus'],
+                        'expected' => $iPerson->getObject(),
                     ]
                 ]
             ];
             
             return $case;
         };
-
     }
-
 }

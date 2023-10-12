@@ -36,5 +36,4 @@ class HasMany extends Relation
     {
         $iModel->setID($iValue);
     }
-
 }

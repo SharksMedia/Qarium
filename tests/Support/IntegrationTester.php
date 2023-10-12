@@ -18,7 +18,7 @@ namespace Tests\Support;
  * @method void pause($vars = [])
  *
  * @SuppressWarnings(PHPMD)
-*/
+ */
 class IntegrationTester extends \Codeception\Actor
 {
     use _generated\UnitTesterActions;
