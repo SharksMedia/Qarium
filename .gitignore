@@ -1,3 +1,5 @@
 /vendor/
 objection.js
 src/test*
+.php-cs-fixer.cache
+.phpactor.json

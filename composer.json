@@ -41,7 +41,9 @@
     "require-dev": {
         "codeception/codeception": "^5.0",
         "codeception/module-asserts": "*",
-        "codeception/module-db": "^3.1"
+        "codeception/module-db": "^3.1",
+        "friendsofphp/php-cs-fixer": "^3.34",
+        "kubawerlos/php-cs-fixer-custom-fixers": "^3.16"
     },
     "require": {
         "sharksmedia/sharq": "master"
