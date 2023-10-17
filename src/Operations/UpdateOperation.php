@@ -87,7 +87,7 @@ class UpdateOperation extends ModelSharQOperation
     {
         $json = $this->iModel->toDatabaseArray($iBuilder);
 
-        $convertedJson = $this->convertFieldExpressionsToRaw($iBuilder, $this->iModel, $json);
+        $convertedJson = self::convertFieldExpressionsToRaw($iBuilder, $this->iModel, $json);
 
         return $iSharQ->update(array_merge($convertedJson, $this->updateData));
     }
@@ -153,7 +153,7 @@ class UpdateOperation extends ModelSharQOperation
         return $maybeResult !== null ? $maybeResult : $result;
     }
 
-    private function convertFieldExpressionsToRaw(ModelSharQ $iBuilder, ?Model $iModel, array $json): array
+    public static function convertFieldExpressionsToRaw(ModelSharQ $iBuilder, ?Model $iModel, array $json): array
     {
         // You need to implement or find a suitable library for ref() function or its equivalent in PHP.
         // Similar changes will be required for isKnexSharQ() and isKnexRaw() functions.

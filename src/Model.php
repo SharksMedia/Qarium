@@ -105,6 +105,27 @@ abstract class Model
     {
         return static::$idColumn;
     }
+    /**
+     * @param mixed $iModels
+     */
+    public static function getIdsFromModels($iModels): array
+    {
+        $idProps = static::getTableIDs();
+        $ids     = array_map(function($iModel) use ($idProps)
+        {
+            // TODO: implement multi id
+            $id = [];
+
+            foreach ($idProps as $idProp)
+            {
+                $id[$idProp] = $iModel->$idProp;
+            }
+
+            return $id;
+        }, $iModels);
+
+        return $ids;
+    }
     // abstract static function getTableIDs(): array;
     
     public function lhasIDs(): bool
@@ -136,27 +157,27 @@ abstract class Model
     {
         return count(static::getTableIDs()) > 1;
     }
-
-    public function getID()
-    {
-        if (!$this->lhasIDs())
-        {
-            $idColumn = $this->getTableIDs()[0];
-
-            return $this->$idColumn;
-        }
-
-        $ids = [];
-
-        foreach ($this->getTableIDs() as $idColumn)
-        {
-            $ids[] = $this->$idColumn;
-        }
-
-        return $ids;
-    }
-
     /**
+     * @return <missing>|arraypublic function getID()
+     * {
+     * if (!$this->lhasIDs())
+     * {
+     * $idColumn = $this->getTableIDs()[0];
+     *
+     * return $this->$idColumn;
+     * }
+     *
+     * $ids = [];
+     *
+     * foreach ($this->getTableIDs() as $idColumn)
+     * {
+     * $ids[] = $this->$idColumn;
+     * }
+     *
+     * return $ids;
+     * }
+     *
+     * /**
      * 2023-06-12
      * @var SharQ
      */
@@ -170,12 +191,16 @@ abstract class Model
     {
         return array_combine(static::getTableIDs(), static::getTableIDs());
     }
-
+    /**
+     * @return array<int,string>
+     */
     public static function getIdColumnArray()
     {
         return static::getTableIDs();
     }
-
+    /**
+     * @return array<int,mixed>|mixed
+     */
     public static function fetchTableMetadata(?Client $iClient = null, ?string $schema = null): array
     {
         $iClient = $iClient ?? Qarium::getClient();
@@ -188,8 +213,8 @@ abstract class Model
         $iQB = (new SharQ($iClient, $schema))
             ->select('*')
             ->from('information_schema.columns')
-            ->where('table_name', '=', $tableName)
-            ->andWhere('table_catalog', '=', new Raw('DATABASE()'));
+            ->where('table_name', '=', $tableName);
+        // ->andWhere('table_catalog', '=', new Raw('DATABASE()'));
 
         if ($schema !== null)
         {
@@ -203,27 +228,33 @@ abstract class Model
             $iClient->initializeDriver();
         }
 
-        $statement = $iClient->query($iQuery);
+        return $iQB->run();
 
-        // static::$metadataCache[$tableName] = $statement->fetchAll(\PDO::FETCH_ASSOC);
+        // $statement = $iClient->query($iQuery);
         //
-        // return static::$metadataCache[$tableName];
-
-        return $statement->fetchAll(\PDO::FETCH_ASSOC);
+        // // static::$metadataCache[$tableName] = $statement->fetchAll(\PDO::FETCH_ASSOC);
+        // //
+        // // return static::$metadataCache[$tableName];
+        //
+        // return $statement->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     public static function getOmitPropsFromDatabaseArray(): array
     {
         return [];
     }
-
+    /**
+     * @param array<int,mixed> $options
+     */
     public static function getTableMetadata(array $options = []): ?array
     {// 2023-07-31
         $tableName = static::getTableName();
 
         return static::$metadataCache[$tableName] ?? null;
     }
-
+    /**
+     * @return RelationProperty
+     */
     public static function getIdRelationProperty()
     {
         $idColumn = static::getTableIDs();
@@ -248,7 +279,7 @@ abstract class Model
 
         return array_map(function($column)
         {
-            return $column['Field'];
+            return $column['COLUMN_NAME'];
         }, $metadata);
     }
 
@@ -410,6 +441,7 @@ abstract class Model
      * 2023-06-12
      * @param Transaction|Client|null $iTransaction
      * @return ModelSharQ
+     * @param mixed $iTransactionOrClient
      */
     public static function query($iTransactionOrClient = null): ModelSharQ
     {
@@ -420,7 +452,9 @@ abstract class Model
 
         return $query;
     }
-
+    /**
+     * @param mixed $iTransactionOrClient
+     */
     public function lquery($iTransactionOrClient = null): ModelSharQ
     {
         return self::instanceQuery($this, $iTransactionOrClient);
@@ -512,7 +546,9 @@ abstract class Model
                 return $iRelation->unrelate($iBuilder, $iRelationOwner);
             });
     }
-
+    /**
+     * @param mixed $iTransactionOrClient
+     */
     public function lrelatedQuery(string $relationsName, $iTransactionOrClient = null): ModelSharQ
     {
         $iBuilder = static::__relatedQuery(static::class, $relationsName, $iTransactionOrClient, false)
@@ -548,38 +584,67 @@ abstract class Model
     public static function onCreateQuery(): void
     { /* Do nothing by default. */
     }
-
+    /**
+     * @param mixed $context
+     */
     public function lbeforeFind($context): void
     { /* Do nothing by default. */
     }
+    /**
+     * @param mixed $context
+     */
     public function lafterFind($context)
     {
         return $context;
     }
+    /**
+     * @param mixed $context
+     */
     public function lbeforeInsert($context): void
     { /* Do nothing by default. */
     }
+    /**
+     * @param mixed $arguments
+     */
     public function lafterInsert($arguments)
     {
         return $arguments;
     }
+    /**
+     * @param mixed $context
+     */
     public function lbeforeUpdate($context): void
     { /* Do nothing by default. */
     }
+    /**
+     * @param mixed $arguments
+     */
     public function lafterUpdate($arguments)
     {
         return $arguments;
     }
+    /**
+     * @param mixed $context
+     */
     public function lbeforePatch($context): void
     { /* Do nothing by default. */
     }
+    /**
+     * @param mixed $arguments
+     */
     public function lafterPatch($arguments)
     {
         return $arguments;
     }
+    /**
+     * @param mixed $context
+     */
     public function lbeforeDelete($context): void
     { /* Do nothing by default. */
     }
+    /**
+     * @param mixed $arguments
+     */
     public function lafterDelete($arguments)
     {
         return $arguments;
@@ -596,6 +661,7 @@ abstract class Model
     /**
      * 2023-06-12
      * @return void
+     * @param mixed $arguments
      */
     public static function afterFind($arguments)
     {
@@ -615,10 +681,12 @@ abstract class Model
      * 2023-06-12
      * Runs after the insert query is executed.
      * @return void
+     * @param mixed $arguments
      */
     public static function afterInsert($arguments)
     {
-        return $arguments;
+        return null;
+        // return $arguments;
     }
 
     /**
@@ -792,7 +860,10 @@ abstract class Model
 
         return $array;
     }
-    
+    /**
+     * @return bool
+     * @param mixed $value
+     */
     private static function isQueryProp($value)
     {
         if (!is_object($value))
@@ -832,7 +903,10 @@ abstract class Model
             throw new \Exception("Unknown query prop type.");
         }
     }
-
+    /**
+     * @param array<int,mixed> $array
+     * @param array<int,mixed> $options
+     */
     private function formatDatabaseArray(array $array, array $options): array
     {
         // $columnNameMappers = $this->getColumnNameMappers();
@@ -869,6 +943,7 @@ abstract class Model
      * @param Model $iModel
      * @param array|Model $arrayOrModel
      * @param array $options
+     * @return Model
      */
     public static function parseRelationsIntoModelInstances(Model $iModel, $arrayOrModel, $options = [])
     {
@@ -896,7 +971,11 @@ abstract class Model
 
         return $iModel;
     }
-
+    /**
+     * @return array
+     * @param array<int,mixed> $array
+     * @param array<int,mixed> $options
+     */
     public function parseRelation(array $array, Relations\Relation $iRelation, array $options)
     {
         $models    = [];
@@ -916,7 +995,10 @@ abstract class Model
 
         return $didChange ? $models : $array;
     }
-
+    /**
+     * @param array<int,mixed> $options
+     * @param mixed $arrayOrModel
+     * @return <missing>|Model*/
     public function parseRelationObject($arrayOrModel, Relations\Relation $iRelation, array $options)
     {
         if (!is_array($arrayOrModel) & !is_object($arrayOrModel))
@@ -933,7 +1015,11 @@ abstract class Model
 
         $modelClass::fromArray($arrayOrModel, $options);
     }
-
+    /**
+     * @return null|<missing>|Model
+     * @param mixed $model
+     * @param mixed $options
+     */
     public static function ensureModel($model, $options = [])
     {
         $modelClass = static::class;
@@ -954,7 +1040,10 @@ abstract class Model
             return self::createFromDatabaseArray($model);
         }
     }
-
+    /**
+     * @param mixed $models
+     * @param mixed $options
+     */
     public static function ensureModelArray($models, $options): array
     {
         $iModels = [];
@@ -978,14 +1067,18 @@ abstract class Model
 
         return $iModels;
     }
-
+    /**
+     * @return array
+     * @param array<int,mixed> $options
+     */
     private static function toDatabaseArrayImplementation(Model $iModel, array $options)
     {
         $array = [];
 
         $metaData = $iModel->getTableMetadata($options) ?? $iModel->fetchTableMetadata();
 
-        $databaseProps = array_column($metaData, 'Field');
+        // $databaseProps = array_column($metaData, 'Field');
+        $databaseProps = array_column($metaData, 'COLUMN_NAME');
 
         foreach ($databaseProps as $index => $propName)
         {
@@ -994,7 +1087,11 @@ abstract class Model
 
         return $array;
     }
-
+    /**
+     * @param array<int,mixed> $array
+     * @param mixed $value
+     * @param array<int,mixed> $options
+     */
     private static function assignArrayValue(array &$array, string $propName, /* mixed */ $value, array $options): void
     {
         $type = gettype($value);
@@ -1002,7 +1099,8 @@ abstract class Model
         $valid =
         (
             $type !== 'object'                     && // Note: In PHP, function is considered as 'object', so 'function' is removed
-            $type !== 'NULL'                       &&
+            // $type !== 'NULL'                       &&
+            !self::isNullKey($propName, $value)    &&
             !self::isInternalProp($propName)       &&
             !self::shouldOmit($propName, $options) &&
             self::shouldPick($propName, $options)
@@ -1015,12 +1113,23 @@ abstract class Model
                 : $value;
         }
     }
+    /**
+     * @param mixed $value
+     */
+    private static function isNullKey(string $propName, $value): bool
+    {
+        $ids = self::getTableIDsMap();
+
+        return isset($ids[$propName]) && gettype($value) === 'NULL';
+    }
 
     private static function isInternalProp(string $propName): bool
     {
         return false;
     }
-
+    /**
+     * @param array<int,mixed> $options
+     */
     private static function shouldOmit(string $propName, array $options): bool
     {
         $shouldOmit =
@@ -1031,7 +1140,9 @@ abstract class Model
 
         return $shouldOmit;
     }
-
+    /**
+     * @param array<int,mixed> $options
+     */
     private static function shouldPick(string $propName, array $options): bool
     {
         return !isset($options['pick']) || array_key_exists($propName, $options['pick']);

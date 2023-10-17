@@ -12,7 +12,9 @@
         }
     },
     "scripts": {
-        "unit-tests": "./vendor/bin/codecept run unit --debug"
+        "unit-tests": "./vendor/bin/codecept run unit",
+        "integration-tests": "./vendor/bin/codecept run integration",
+        "codecept-build": "./vendor/bin/codecept build"
     },
     "scripts-descriptions": {
         "unit-tests": "Run unit tests"

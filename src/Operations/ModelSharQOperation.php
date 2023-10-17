@@ -350,6 +350,7 @@ abstract class ModelSharQOperation
      * This method must return a SharQ instance.
      * @param ModelSharQ $iBuilder
      * @param \Throwable $error
+     * @return void
      */
     public function onError(ModelSharQ $iBuilder, ...$arguments)
     {

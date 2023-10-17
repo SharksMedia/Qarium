@@ -6,20 +6,20 @@ namespace Tests\Support;
 
 use ReflectionClass;
 
-class ModelTester
+class ObjectTester
 {
     private $iClassObject;
     private $iObject;
 
-    public function __construct(string $objectClass, ...$constructorArgs)
+    public function __construct($object)
     {
-        $this->iObject      = new $objectClass(...$constructorArgs);
-        $this->iClassObject = new ReflectionClass($objectClass);
+        $this->iObject      = $object;
+        $this->iClassObject = new ReflectionClass($object);
     }
 
-    public static function create(string $objectClass, ...$constructorArgs)
+    public static function create($object)
     {
-        return new self($objectClass, ...$constructorArgs);
+        return new self($object);
     }
 
     public function __get(string $name)

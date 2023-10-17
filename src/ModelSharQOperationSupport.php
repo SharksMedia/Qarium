@@ -382,7 +382,10 @@ abstract class ModelSharQOperationSupport
         $operationsToRemove  = [];
 
         $operationSelectorCallback = function($operation)
-        { return $operation->hasToFindOperation(); };
+        {
+            return $operation->hasToFindOperation();
+        };
+
         $callback = function($operation) use (&$findQuery, &$operationsToReplace, &$operationsToRemove)
         {
             $findOperation = $operation->toFindOperation($findQuery);

@@ -327,7 +327,7 @@ class RelationJoiner
             throw new \Exception("table metadata has not been fetched for table '$table'. Are you trying to call toSharQQuery? To make sure the table metadata is fetched see the Qarium::initialize function.");
         }
 
-        $columnNames = array_column($tableMeta, 'Field');
+        $columnNames = array_column($tableMeta, 'COLUMN_NAME');
 
         $selections = array_map(function($columnName) use ($iTableNode)
         {

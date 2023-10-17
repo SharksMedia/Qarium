@@ -17,13 +17,14 @@ suites:
                 # add more modules here
                 - Asserts
                 - Db:
-                    dsn: 'mysql:host=localhost;dbname=testdb'
-                    user: 'root'
-                    password: ''
-                    dump: 'tests/_data/dump.sql'
-                    populate: true # run populator before all tests
-                    cleanup: true # run populator before each test
-                    populator: 'mysql -u $user -h $host $dbname < $dump'
+                    dsn: 'mysql:host=127.0.0.1;dbname=testdb'
+                    user: 'user'
+                    password: 'password'
+                    # dump: 'tests/_data/dump.sql'
+                    # populate: true # run populator before all tests
+                    cleanup: true # run populator before each test. Wrap test in a transaction and roll it back afterwards
+                    # populator: 'mysql -u $user -p$password -h $host $dbname < $dump'
+                - Tests\Support\Helper\DbConfig
         step_decorators: ~
 
 settings:

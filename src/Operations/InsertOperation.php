@@ -55,12 +55,14 @@ class InsertOperation extends ModelSharQOperation
 
     public function onBuildSharQ(ModelSharQOperationSupport $iBuilder, $iSharQ)
     {
-        return $iSharQ->insert(array_map(function(Model $iModel) use ($iBuilder)
+        $query = $iSharQ->insert(array_map(function(Model $iModel) use ($iBuilder)
         {
             $data = $iModel->toDatabaseArray($iBuilder);
 
             return $data;
         }, $this->iModels));
+
+        return $query;
     }
 
     public function onAfter1(ModelSharQOperationSupport $iBuilder, &$result)
@@ -138,6 +140,6 @@ class InsertOperation extends ModelSharQOperation
         $arguments = StaticHookArguments::create($iBuilder, $iResult);
         $result    = $modelClass::afterInsert($arguments);
 
-        return $result;
+        return $result ?? $iResult;
     }
 }

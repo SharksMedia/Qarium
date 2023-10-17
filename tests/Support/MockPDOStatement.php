@@ -23,6 +23,11 @@ class MockPDOStatement extends \PDOStatement
         return true;
     }
 
+    public function rowCount(): int
+    {
+        return count($this->results);
+    }
+
     public function getIterator(): \Iterator
     {
         return new \ArrayIterator($this->results);

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b4189b502a2345770fd18954ab8ec29f",
+    "content-hash": "1eaf7df5f5756c5d1c18e025d054d5d6",
     "packages": [
         {
             "name": "sharksmedia/sharq",
@@ -12,13 +12,16 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/SharksMedia/SharQ.git",
-                "reference": "dd0545f157ea57ca706a044e699a73768ff014b7"
+                "reference": "32a0843c2d18226c7c60e63dd0d7870530a2e5de"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SharksMedia/SharQ/zipball/dd0545f157ea57ca706a044e699a73768ff014b7",
-                "reference": "dd0545f157ea57ca706a044e699a73768ff014b7",
+                "url": "https://api.github.com/repos/SharksMedia/SharQ/zipball/32a0843c2d18226c7c60e63dd0d7870530a2e5de",
+                "reference": "32a0843c2d18226c7c60e63dd0d7870530a2e5de",
                 "shasum": ""
+            },
+            "require": {
+                "php": ">=7.4"
             },
             "require-dev": {
                 "codeception/codeception": "^5.0",
@@ -55,7 +58,7 @@
                 "source": "https://github.com/SharksMedia/SharQ/tree/master",
                 "issues": "https://github.com/SharksMedia/SharQ/issues"
             },
-            "time": "2023-10-09T09:19:26+00:00"
+            "time": "2023-10-13T13:28:38+00:00"
         }
     ],
     "packages-dev": [
@@ -664,16 +667,16 @@
         },
         {
             "name": "friendsofphp/php-cs-fixer",
-            "version": "v3.34.1",
+            "version": "v3.35.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer.git",
-                "reference": "98bf1b1068b4ceddbbc2a2b70b67a5e380add9e3"
+                "reference": "ec1ccc264994b6764882669973ca435cf05bab08"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHP-CS-Fixer/PHP-CS-Fixer/zipball/98bf1b1068b4ceddbbc2a2b70b67a5e380add9e3",
-                "reference": "98bf1b1068b4ceddbbc2a2b70b67a5e380add9e3",
+                "url": "https://api.github.com/repos/PHP-CS-Fixer/PHP-CS-Fixer/zipball/ec1ccc264994b6764882669973ca435cf05bab08",
+                "reference": "ec1ccc264994b6764882669973ca435cf05bab08",
                 "shasum": ""
             },
             "require": {
@@ -706,8 +709,6 @@
                 "phpspec/prophecy": "^1.16",
                 "phpspec/prophecy-phpunit": "^2.0",
                 "phpunit/phpunit": "^9.5",
-                "phpunitgoodpractices/polyfill": "^1.6",
-                "phpunitgoodpractices/traits": "^1.9.2",
                 "symfony/phpunit-bridge": "^6.2.3",
                 "symfony/yaml": "^5.4 || ^6.0"
             },
@@ -747,7 +748,7 @@
             ],
             "support": {
                 "issues": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/issues",
-                "source": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/tree/v3.34.1"
+                "source": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/tree/v3.35.1"
             },
             "funding": [
                 {
@@ -755,7 +756,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2023-10-03T23:51:05+00:00"
+            "time": "2023-10-12T13:47:26+00:00"
         },
         {
             "name": "kubawerlos/php-cs-fixer-custom-fixers",
@@ -4166,7 +4167,9 @@
     "stability-flags": [],
     "prefer-stable": true,
     "prefer-lowest": false,
-    "platform": [],
+    "platform": {
+        "php": ">=7.4"
+    },
     "platform-dev": [],
     "plugin-api-version": "2.6.0"
 }

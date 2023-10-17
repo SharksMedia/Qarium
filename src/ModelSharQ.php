@@ -910,9 +910,17 @@ class ModelSharQ extends ModelSharQBase
 
         $results = $iSharQ->run();
 
-        $results = Utilities::arrayRemoveFalsey($results);
+        if (is_array($results))
+        {
+            $results = Utilities::arrayRemoveFalsey($results);
+        }
 
         $results = self::chainOperationHooks($results, $iBuilder, 'onRawResult');
+
+        if (!is_array($results) && !($results instanceof StaticHookArguments))
+        {
+            return $results;
+        }
 
         $iModels = self::createModels($results, $iBuilder);
 
@@ -940,14 +948,14 @@ class ModelSharQ extends ModelSharQBase
             {
                 foreach ($result as &$re)
                 {
-                    /** @var \Model $modelClass */
+                    /** @var Model $modelClass */
                     $re = $modelClass::createFromDatabaseArray($re);
                 }
             }
         }
         else if (self::shouldBeConvertedToModel($result, $modelClass))
         {
-            /** @var \Model $modelClass */
+            /** @var Model $modelClass */
             $result = $modelClass::createFromDatabaseArray($result);
         }
 
