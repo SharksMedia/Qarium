@@ -8,7 +8,7 @@ use Sharksmedia\Qarium\Model;
 
 class Person extends Model
 {
-    protected int       $personID;
+    protected ?int      $personID;
     protected ?int      $parentID;
     protected string    $name;
 
@@ -39,6 +39,11 @@ class Person extends Model
     //         $this->{$columnName} = $columnValue;
     //     }
     // }
+
+    public function getPersonID(): ?int
+    {// 2023-06-12
+        return $this->personID;
+    }
 
     public static function getRelationMappings(): array
     {// 2023-06-12

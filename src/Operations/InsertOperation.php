@@ -67,11 +67,15 @@ class InsertOperation extends ModelSharQOperation
 
     public function onAfter1(ModelSharQOperationSupport $iBuilder, &$result)
     {
-        if (!is_array($result) || count($result) === 0 || $result === $this->iModels)
-        {
-            // Early exit if there is nothing to do.
-            return $this->iModels;
-        }
+        // var_dump('onAfter1', $result);
+        //
+        // if (!is_array($result) || count($result) === 0 || $result === $this->iModels)
+        // {
+        //     var_dump('early exit', $this->iModels);
+        //
+        //     // Early exit if there is nothing to do.
+        //     return $this->iModels;
+        // }
 
         // if (isObject(ret[0])) {
         //   // If the user specified a `returning` clause the result may be an array of objects.
@@ -86,10 +90,7 @@ class InsertOperation extends ModelSharQOperation
         {
             // Don't set the id if the model already has one. MySQL and Sqlite don't return the correct
             // primary key value if the id is not generated in db, but given explicitly.
-            if ($iModel->getID() === null)
-            {
-                $iModel->setID($result[$i]);
-            }
+            $iModel->lsetIDs([$result]);
         }
 
         return $this->iModels;

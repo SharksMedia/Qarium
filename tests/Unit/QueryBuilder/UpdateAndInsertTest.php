@@ -160,7 +160,6 @@ class UpdateAndInsertTest extends Unit
         ], $this->executedQueries);
     }
 
-
     public function testPatchShouldCallBeforeUpdateOnTheModelAsync(): void
     {
         /** @var \Model $TestModel */

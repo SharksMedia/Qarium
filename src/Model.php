@@ -118,7 +118,7 @@ abstract class Model
 
             foreach ($idProps as $idProp)
             {
-                $id[$idProp] = $iModel->$idProp;
+                $id[$idProp] = $iModel->$idProp ?? null;
             }
 
             return $id;
@@ -128,6 +128,16 @@ abstract class Model
     }
     // abstract static function getTableIDs(): array;
     
+    public function lsetIDs(array $ids)
+    {
+        $idProps = static::getTableIDs();
+
+        foreach ($idProps as $j => $idProp)
+        {
+            $this->{$idProp} ??= is_numeric($ids[$j]) ? (int)$ids[$j] : $ids[$j];
+        }
+    }
+
     public function lhasIDs(): bool
     {
         foreach (static::getTableIDs() as $idColumn)
@@ -1071,7 +1081,7 @@ abstract class Model
      * @return array
      * @param array<int,mixed> $options
      */
-    private static function toDatabaseArrayImplementation(Model $iModel, array $options)
+    private static function toDatabaseArrayImplementation(Model $iModel, array $options): array
     {
         $array = [];
 
@@ -1082,7 +1092,7 @@ abstract class Model
 
         foreach ($databaseProps as $index => $propName)
         {
-            self::assignArrayValue($array, $propName, $iModel->{$propName}, $options);
+            self::assignArrayValue($array, $propName, $iModel->{$propName} ?? null, $options);
         }
 
         return $array;

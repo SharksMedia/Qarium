@@ -71,6 +71,33 @@ class InsertsCest
         });
     }
 
+    public function testInsertAndFetchFirstAutoIncrement(IntegrationTester $I): void
+    {
+        $personData = [
+            'parentID' => null,
+            'name'     => 'John Doe',
+        ];
+
+        $iPerson = Person::query()
+            ->insertAndFetch($personData)
+            ->first()
+            ->run();
+
+        $I->seeInDatabase('Persons', [
+            'personID' => $iPerson->getPersonID(),
+            'parentID' => null,
+            'name'     => 'John Doe',
+        ]);
+
+        $I->assertInstanceOf(Person::class, $iPerson);
+
+        $TestPerson = ObjectTester::create($iPerson);
+
+        // $I->assertEquals(1, $TestPerson->personID);
+        $I->assertEquals(null, $TestPerson->parentID);
+        $I->assertEquals('John Doe', $TestPerson->name);
+    }
+
     public function testInsertAndFetchFirst(IntegrationTester $I): void
     {
         $personData = [
@@ -92,6 +119,39 @@ class InsertsCest
         $I->assertEquals(1, $TestPerson->personID);
         $I->assertEquals(null, $TestPerson->parentID);
         $I->assertEquals('John Doe', $TestPerson->name);
+    }
+
+    public function testUpsertAndFetchFirst(IntegrationTester $I): void
+    {
+        $personData = [
+            'personID' => 1,
+            'parentID' => null,
+            'name'     => 'John Doe',
+        ];
+
+        Person::query()
+            ->insert($personData)
+            ->run();
+
+        $I->seeInDatabase('Persons', $personData);
+
+        $personData['name'] = 'Jane Doe';
+
+        $iPerson = Person::query()
+            ->insertAndFetch($personData)
+            ->first()
+            ->onConflict('personID')
+            ->merge()
+            ->run();
+
+        $I->seeInDatabase('Persons', $personData);
+        $I->assertInstanceOf(Person::class, $iPerson);
+
+        $TestPerson = ObjectTester::create($iPerson);
+
+        $I->assertEquals(1, $TestPerson->personID);
+        $I->assertEquals(null, $TestPerson->parentID);
+        $I->assertEquals('Jane Doe', $TestPerson->name);
     }
 
     public function testInsertMultipleAndFetch(IntegrationTester $I): void
