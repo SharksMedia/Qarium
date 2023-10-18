@@ -479,9 +479,8 @@ class MiscTest extends Unit
             ->run();
 
         $this->assertCount(1, $this->executedQueries);
-        $this->assertEquals('DELETE FROM `Model` WHERE `id` = ?', $this->executedQueries[0]['sql']);
+        $this->assertEquals('DELETE `Model` FROM `Model` WHERE `id` = ?', $this->executedQueries[0]['sql']);
     }
-
 
     public function testShouldCallCustomFindImplementationDefinedByFindOperationFactory(): void
     {
@@ -666,7 +665,7 @@ class MiscTest extends Unit
             ->run();
 
         $this->assertCount(1, $this->executedQueries);
-        $this->assertEquals('DELETE FROM `Model` WHERE `id` = ?', $this->executedQueries[0]['sql']);
+        $this->assertEquals('DELETE `Model` FROM `Model` WHERE `id` = ?', $this->executedQueries[0]['sql']);
     }
 
 
@@ -911,7 +910,7 @@ class MiscTest extends Unit
 
         // Replace 'executedQueries' with the appropriate method to get the executed queries
         $this->assertCount(1, $this->executedQueries);
-        $this->assertEquals('DELETE FROM `Model`', $this->executedQueries[0]['sql']);
+        $this->assertEquals('DELETE `Model` FROM `Model`', $this->executedQueries[0]['sql']);
     }
 
 

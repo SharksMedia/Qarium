@@ -42,4 +42,9 @@ class MockMySQLClient extends MySQL
 
         return $executor($iQuery, $options);
     }
+
+    public function getLastInsertId(): string
+    {
+        return '1';
+    }
 }

@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/SharksMedia/SharQ.git",
-                "reference": "db78d54646cb2981ca9eb613e89c4945ec1c4a9b"
+                "reference": "ce8f5efcdea3c87dd4284f82944fa9b71ee2f46d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SharksMedia/SharQ/zipball/db78d54646cb2981ca9eb613e89c4945ec1c4a9b",
-                "reference": "db78d54646cb2981ca9eb613e89c4945ec1c4a9b",
+                "url": "https://api.github.com/repos/SharksMedia/SharQ/zipball/ce8f5efcdea3c87dd4284f82944fa9b71ee2f46d",
+                "reference": "ce8f5efcdea3c87dd4284f82944fa9b71ee2f46d",
                 "shasum": ""
             },
             "require": {
@@ -58,7 +58,7 @@
                 "source": "https://github.com/SharksMedia/SharQ/tree/master",
                 "issues": "https://github.com/SharksMedia/SharQ/issues"
             },
-            "time": "2023-10-17T09:53:07+00:00"
+            "time": "2023-10-18T08:21:59+00:00"
         }
     ],
     "packages-dev": [
