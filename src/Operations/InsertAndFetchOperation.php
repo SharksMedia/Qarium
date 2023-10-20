@@ -39,26 +39,14 @@ class InsertAndFetchOperation extends DelegateOperation
         $modelClass     = $iBuilder->getModelClass();
         $insertedModels = parent::onAfter2($iBuilder, $result);
 
-        // $insertedModelArray = $modelClass::ensureModelArray($insertedModels);
         $insertedModelsArray = is_array($insertedModels) ? $insertedModels : [$insertedModels];
-        $idProps             = $modelClass::getTableIDs();
         $ids                 = $modelClass::getIdsFromModels($insertedModelsArray);
-
-        $sharq = $modelClass::query()
-            ->childQueryOf($iBuilder)
-            ->findByIds($ids)
-            ->castTo($modelClass)
-            ->toSharQ();
-
-        $q = $sharq->toQuery();
 
         $fetchedModels = $modelClass::query()
             ->childQueryOf($iBuilder)
             ->findByIds($ids)
             ->castTo($modelClass)
             ->run();
-
-        // $modelsById = [];
 
         return $fetchedModels;
     }
