@@ -3,8 +3,8 @@
     "description": "A objectionjs inspired ORM",
     "type": "library",
     "license": "MIT",
-    "version": "0.0.1",
-    "minimum-stability": "dev",
+    "version": "1.0.0-alpha",
+    "minimum-stability": "alpha",
     "prefer-stable": true,
     "config": {
         "platform": {
