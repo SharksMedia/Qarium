@@ -101,16 +101,13 @@ class RelationOwner
         return $value instanceof ModelSharQ;
     }
 
-    private static function findFirstNonPartialAncestorQuery(ModelSharQ $iBuilder): ModelSharQ
+    private static function findFirstNonPartialAncestorQuery(ModelSharQ $iBuilder): ?ModelSharQ
     {
         $iParentBuilder = $iBuilder->getParentQuery();
 
         while ($iParentBuilder->getIsPartial())
         {
-            if ($iParentBuilder->getParentQuery() === null)
-            {
-                break;
-            }
+            if ($iParentBuilder->getParentQuery() === null) break;
 
             $iParentBuilder = $iParentBuilder->getParentQuery();
         }
@@ -184,7 +181,7 @@ class RelationOwner
         /** @var Model[] $iModels */
         $iModels = is_array($this->iOwner) ? $this->iOwner : [$this->iOwner];
 
-        $iProperties = array_map(function($iModel) use ($iOwnerProperty)
+        $iProperties = array_map(function ($iModel) use ($iOwnerProperty)
         {
             return $iOwnerProperty->getProps($iModel);
         }, $iModels);
@@ -290,14 +287,14 @@ class RelationOwner
         {
             return $values;
         }
-        
+
         if ($iOwnerProperty->getSize() === 1)
         {
             return [[$values]];
         }
 
         return [
-            array_map(function($i) use ($values, $iOwnerProperty, $iBuilder)
+            array_map(function ($i) use ($values, $iOwnerProperty, $iBuilder)
             {
                 $clonedValues = clone $values;
 
