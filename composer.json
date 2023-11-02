@@ -12,6 +12,7 @@
     },
     "scripts": {
         "unit-tests": "./vendor/bin/codecept run unit",
+        "unit-tests-debug": "./vendor/bin/codecept run unit --debug",
         "integration-tests": "./vendor/bin/codecept run integration",
         "codecept-build": "./vendor/bin/codecept build"
     },
@@ -33,18 +34,12 @@
         "sharksmedia/sharq": {
             "type": "vcs",
             "url": "git@github.com:SharkMagnus/SharQ.git"
-        },
-        "sharksmedia/query-builder": {
-            "type": "vcs",
-            "url": "git@github.com:SharkMagnus/Qarium.git"
         }
     },
     "require-dev": {
-        "codeception/codeception": "^5.0",
+        "codeception/codeception": "^4.1",
         "codeception/module-asserts": "*",
-        "codeception/module-db": "^3.1",
-        "friendsofphp/php-cs-fixer": "^3.34",
-        "kubawerlos/php-cs-fixer-custom-fixers": "^3.16"
+        "codeception/module-db": "^2"
     },
     "require": {
         "sharksmedia/sharq": "master",
