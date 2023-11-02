@@ -101,9 +101,11 @@ class RelationOwner
         return $value instanceof ModelSharQ;
     }
 
-    private static function findFirstNonPartialAncestorQuery(ModelSharQ $iBuilder): ?ModelSharQ
+    private static function findFirstNonPartialAncestorQuery(ModelSharQ $iBuilder): ModelSharQ
     {
         $iParentBuilder = $iBuilder->getParentQuery();
+
+        if (!$iParentBuilder) throw new \Exception('query method `for` ommitted outside a subquery, can not figure out relation target');
 
         while ($iParentBuilder->getIsPartial())
         {
