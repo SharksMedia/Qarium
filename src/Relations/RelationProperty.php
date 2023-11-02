@@ -84,43 +84,43 @@ class RelationProperty
         $paths      = $this->createPaths($refs, $modelClassResolver);
         $modelClass = $this->resolveModelClass($paths);
 
-        $this->references = array_map(function($ref) use ($modelClass)
+        $this->references = array_map(function ($ref) use ($modelClass)
         {
             return $ref->model($modelClass);
         }, $refs);
 
         $this->modelClass = $modelClass;
 
-        $this->properties = array_map(function($it)
+        $this->properties = array_map(function ($it)
         {
             return $it->path[0];
         }, $paths);
 
-        $this->columns = array_map(function($it)
+        $this->columns = array_map(function ($it)
         {
             return $it->getColumn();
         }, $refs);
 
-        $this->propGetters = array_map(function($it)
+        $this->propGetters = array_map(function ($it)
         {
             return self::createGetter($it->path);
         }, $paths);
 
-        $this->propSetters = array_map(function($it)
+        $this->propSetters = array_map(function ($it)
         {
             return self::createSetter($it->path);
         }, $paths);
 
-        $this->propCheckers = array_map(function($it)
+        $this->propCheckers = array_map(function ($it)
         {
             return self::createChecker($it->path);
         }, $paths);
 
-        $this->patchers = array_map(function($it, $path)
+        $this->patchers = array_map(function ($it, $path)
         {
             return self::createPatcher($it, $path->path);
         }, $refs, $paths);
-        
+
 
 
         // this._propGetters = paths.map((it) => createGetter(it.path));
@@ -134,18 +134,24 @@ class RelationProperty
         {
             $prop = $path[0];
 
-            return function(&$obj) use ($prop)
+            return function (&$obj) use ($prop)
             {
                 $obj = (object)$obj;
 
                 $iReflectionProperty = new \ReflectionProperty($obj, $prop);
                 $iReflectionProperty->setAccessible(true);
 
+                if (PHP_VERSION_ID >= 70400 && !$iReflectionProperty->isInitialized($obj))
+                {
+                    // Handle uninitialized property here, e.g., return null or throw a custom exception
+                    return null;
+                }
+
                 return $iReflectionProperty->getValue($obj);
             };
         }
 
-        return function(&$obj) use ($path)
+        return function (&$obj) use ($path)
         {
             return Utilities::get($obj, $path);
         };
@@ -157,13 +163,13 @@ class RelationProperty
         {
             $prop = $path[0];
 
-            return function(&$obj, $value) use ($prop)
+            return function (&$obj, $value) use ($prop)
             {
                 $obj[$prop] = $value;
             };
         }
 
-        return function(&$obj, $value) use ($path)
+        return function (&$obj, $value) use ($path)
         {
             Utilities::set($obj, $path, $value);
         };
@@ -173,14 +179,14 @@ class RelationProperty
     {
         if ($ref->isPlainColumnRef())
         {
-            return function(&$patch, $value) use ($path)
+            return function (&$patch, $value) use ($path)
             {
                 $patch[$path[0]] = $value;
             };
         }
 
         // Qarium `patch`, `update` etc. methods understand field expressions.
-        return function(&$patch, $value) use ($ref)
+        return function (&$patch, $value) use ($ref)
         {
             $patch[$ref->getExpression()] = $value;
         };
@@ -192,7 +198,7 @@ class RelationProperty
         {
             $prop = $path[0];
 
-            return function(&$obj) use ($prop)
+            return function (&$obj) use ($prop)
             {
                 $obj = (object)$obj;
 
@@ -201,7 +207,7 @@ class RelationProperty
             };
         }
 
-        return function(&$obj) use ($path)
+        return function (&$obj) use ($path)
         {
             return Utilities::has($obj, $path);
         };
@@ -213,7 +219,7 @@ class RelationProperty
      * @return array
      */
     public function createReferences(array $references): array
-    {// 2023-08-01
+    { // 2023-08-01
         try
         {
             $refs = [];
@@ -234,7 +240,7 @@ class RelationProperty
 
             return $refs;
         }
-        catch(\Exception $error)
+        catch (\Exception $error)
         {
             throw new InvalidReferenceError();
         }
@@ -258,7 +264,7 @@ class RelationProperty
      */
     private function createPaths(array $iReferences, \Closure $modelClassResolver): array
     {
-        return array_map(function(ReferenceBuilder $iReference) use ($modelClassResolver)
+        return array_map(function (ReferenceBuilder $iReference) use ($modelClassResolver)
         {
             if ($iReference->getTableName() === null)
             {
@@ -275,7 +281,7 @@ class RelationProperty
 
             $prop = $modelClass::columnNameToPropertyName($iReference->getColumn());
 
-            $jsonPath = array_map(function($it)
+            $jsonPath = array_map(function ($it)
             {
                 return $it->iReference;
             }, $iReference->getParsedExpression()->access);
@@ -297,7 +303,7 @@ class RelationProperty
      */
     private function resolveModelClass(array $paths): string
     {
-        $modelClasses = array_map(function($it)
+        $modelClasses = array_map(function ($it)
         {
             return $it->modelClass;
         }, $paths);
@@ -313,12 +319,12 @@ class RelationProperty
     }
 
     public function getColumns(): array
-    {// 2023-08-01
+    { // 2023-08-01
         return $this->columns;
     }
 
     public function getProperties(): array
-    {// 2023-08-01
+    { // 2023-08-01
         return $this->properties;
     }
 
@@ -368,7 +374,7 @@ class RelationProperty
 
         if (!$patcher)
         {
-            throw new \Exception('No patcher for index: '.$index);
+            throw new \Exception('No patcher for index: ' . $index);
         }
 
         return $patcher($patch, $value);
@@ -381,7 +387,7 @@ class RelationProperty
 
         if (!$setter)
         {
-            throw new \Exception('No setter for index: '.$index);
+            throw new \Exception('No setter for index: ' . $index);
         }
 
         return $setter($obj, $value);
@@ -394,7 +400,7 @@ class RelationProperty
 
         if (!$getter)
         {
-            throw new \Exception('No getter for index: '.$index);
+            throw new \Exception('No getter for index: ' . $index);
         }
 
         return $getter($obj);
@@ -444,7 +450,7 @@ class RelationProperty
             return json_encode($value);
         }
 
-        return $value.'';
+        return $value . '';
     }
 
     public function hasProp(&$obj, int $index): bool
@@ -453,7 +459,7 @@ class RelationProperty
 
         if (!$checker)
         {
-            throw new \Exception('No getter for index: '.$index);
+            throw new \Exception('No getter for index: ' . $index);
         }
 
         return $checker($obj);
@@ -467,4 +473,3 @@ class RelationProperty
         return $iReference->getExpression();
     }
 }
-
